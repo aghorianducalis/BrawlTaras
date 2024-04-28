@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $id
  * @property int $ext_id
  * @property string $name
+ * @property int $brawler_id
  * @property Carbon $created_at
  * @property Carbon $updated_at
  * @property-read Brawler $brawler
@@ -24,10 +25,12 @@ class Accessory extends Model
     protected $fillable = [
         'ext_id',
         'name',
+        'brawler_id',
     ];
 
     protected $casts = [
-        'ext_id' => 'integer',
+        'ext_id'     => 'integer',
+        'brawler_id' => 'integer',
     ];
 
     /**
