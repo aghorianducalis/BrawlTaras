@@ -1,8 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Carbon\Carbon;
+use Database\Factories\AccessoryFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -41,5 +44,15 @@ class Accessory extends Model
     public function brawler(): BelongsTo
     {
         return $this->belongsTo(Brawler::class, 'brawler_id', 'id');
+    }
+
+    /**
+     * Create a new factory instance for the model.
+     *
+     * @return AccessoryFactory
+     */
+    protected static function newFactory(): AccessoryFactory
+    {
+        return AccessoryFactory::new();
     }
 }

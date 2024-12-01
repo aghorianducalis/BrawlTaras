@@ -1,8 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Carbon\Carbon;
+use Database\Factories\BrawlerFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -61,5 +64,15 @@ class Brawler extends Model
     public function playerBrawlers(): HasMany
     {
         return $this->hasMany(PlayerBrawler::class, 'brawler_id', 'id');
+    }
+
+    /**
+     * Create a new factory instance for the model.
+     *
+     * @return BrawlerFactory
+     */
+    protected static function newFactory(): BrawlerFactory
+    {
+        return BrawlerFactory::new();
     }
 }
