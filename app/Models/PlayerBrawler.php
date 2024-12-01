@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Carbon\Carbon;
@@ -52,7 +54,7 @@ class PlayerBrawler extends Model
     /**
      * Get the related player entity.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function player(): BelongsTo
     {
@@ -62,7 +64,7 @@ class PlayerBrawler extends Model
     /**
      * Get the related brawler entity.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function brawler(): BelongsTo
     {
@@ -72,7 +74,7 @@ class PlayerBrawler extends Model
     /**
      * Get the accessories for the brawler.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return HasMany
      */
     public function accessories(): HasMany
     {
@@ -83,7 +85,7 @@ class PlayerBrawler extends Model
     /**
      * Get the accessories for the brawler.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return HasMany
      */
     public function gears(): HasMany
     {
@@ -94,7 +96,7 @@ class PlayerBrawler extends Model
     /**
      * Get the star powers for the brawler.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return HasMany
      */
     public function starPowers(): HasMany
     {
