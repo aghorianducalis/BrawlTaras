@@ -8,49 +8,40 @@ use App\API\Exceptions\InvalidDTOException;
 
 final readonly class AccessoryDTO
 {
-    public int $extId;
-
-    public string $name;
-
-    public function __construct(int $extId, string $name)
-    {
-        $this->extId = $extId;
-        $this->name = $name;
-    }
+    public function __construct(
+        public int $extId,
+        public string $name
+    ) {}
 
     /**
-     * Factory method to create AccessoryDTO from an array.
+     * Factory method to create an AccessoryDTO.
      *
+     * @param array $data
+     * @return self
      * @throws InvalidDTOException if required fields are missing or invalid.
      */
-    public static function forAccessory(array $accessoryData): self
+    public static function fromArray(array $data): self
     {
-        if (!(isset($accessoryData['id']) && is_numeric($accessoryData['id']))) {
-            throw InvalidDTOException::fromString("Invalid or missing 'id' field in Accessory data");
+        if (!(isset($data['id']) && is_numeric($data['id']))) {
+            throw InvalidDTOException::fromMessage("Invalid or missing 'id' field in Accessory data");
         }
 
-        if (!(isset($accessoryData['name']) && is_string($accessoryData['name']) && !empty(trim($accessoryData['name'])))) {
-            throw InvalidDTOException::fromString("Invalid or missing 'name' field in Accessory data");
+        if (!(isset($data['name']) && is_string($data['name']) && !empty(trim($data['name'])))) {
+            throw InvalidDTOException::fromMessage("Invalid or missing 'name' field in Accessory data");
         }
 
-        return new self((int)$accessoryData['id'], $accessoryData['name']);
+        return new self((int)$data['id'], $data['name']);
     }
 
     /**
      * Factory method to create an array of AccessoryDTO.
      *
-     * @param array $accessoryListData
+     * @param array $list
      * @return array<int, AccessoryDTO>
      * @throws InvalidDTOException if required fields are missing or invalid.
      */
-    public static function forAccessoryList(array $accessoryListData): array
+    public static function fromList(array $list): array
     {
-        $accessoryDTOs = [];
-
-        foreach ($accessoryListData as $accessoryData) {
-            $accessoryDTOs[] = self::forAccessory($accessoryData);
-        }
-
-        return $accessoryDTOs;
+        return array_map(fn($item) => self::fromArray($item), $list);
     }
 }
