@@ -28,7 +28,7 @@ class StarPowerFactory extends Factory
     public function definition(): array
     {
         return [
-            'ext_id' => fake()->randomNumber(),
+            'ext_id' => fake()->unique()->randomNumber(),
             'name' => "StarPower #" . fake()->numerify(),
             'brawler_id' => Brawler::factory(),
         ];
