@@ -27,7 +27,7 @@ class BrawlerFactory extends Factory
     public function definition(): array
     {
         return [
-            'ext_id' => fake()->randomNumber(),
+            'ext_id' => fake()->unique()->randomNumber(),
             'name' => "Brawler #" . fake()->numerify(),
         ];
     }
