@@ -8,99 +8,62 @@ use App\API\Exceptions\InvalidDTOException;
 
 final readonly class BrawlerDTO
 {
-    public int $extId;
-
-    public string $name;
-
-    /** @var AccessoryDTO[] */
-    public array $accessories;
-
-    /** @var StarPowerDTO[] */
-    public array $starPowers;
-
+    /**
+     * @param int $extId
+     * @param string $name
+     * @param AccessoryDTO[] $accessories
+     * @param StarPowerDTO[] $starPowers
+     */
     public function __construct(
-        int $extId,
-        string $name,
-        array $accessories,
-        array $starPowers,
-    ) {
-        $this->extId = $extId;
-        $this->name = $name;
-        $this->accessories = $accessories;
-        $this->starPowers = $starPowers;
-    }
+        public int $extId,
+        public string $name,
+        public array $accessories,
+        public array $starPowers,
+    ) {}
 
     /**
-     * Factory method to create BrawlerDTO from an array.
+     * Factory method to create BrawlerDTO.
      *
+     * @param array $data
+     * @return self
      * @throws InvalidDTOException if required fields are missing or invalid.
      */
-    public static function forBrawler(array $rawResponseData): self
+    public static function fromArray(array $data): self
     {
-        // validate the response structure
-        if (! (
-            (array_keys($rawResponseData) === ['id', 'name', 'starPowers', 'gadgets']) &&
-            is_array($rawResponseData['starPowers']) &&
-            is_array($rawResponseData['gadgets'])
+        // Validate the structure of the data array
+        if (!(
+            isset($data['id'], $data['name'], $data['gadgets'], $data['starPowers']) &&
+            is_array($data['gadgets']) &&
+            is_array($data['starPowers'])
         )) {
-            throw InvalidDTOException::fromString("API response for brawler by id has invalid structure");
+            throw InvalidDTOException::fromMessage(
+                "Brawler data array has an invalid structure: " . json_encode($data)
+            );
         }
 
-        // validate the brawler's base properties
-        if (!isset($rawResponseData['id']) || !is_numeric($rawResponseData['id'])) {
-            throw InvalidDTOException::fromString("Invalid or missing 'id' field in Brawler data");
-        }
-
-        if (
-            !isset($rawResponseData['name']) ||
-            !is_string($rawResponseData['name']) ||
-            (trim($rawResponseData['name']) === '')
-        ) {
-            throw InvalidDTOException::fromString("Invalid or missing 'name' field in Brawler data");
-        }
-
-        // validate the brawler's accessories
-        if (!isset($rawResponseData['gadgets']) || !is_array($rawResponseData['gadgets'])) {
-            throw InvalidDTOException::fromString("Invalid or missing 'gadgets' field in Brawler data");
-        }
-
-        $accessories = AccessoryDTO::forAccessoryList($rawResponseData['gadgets']);
-
-        // validate the brawler's star powers
-        if (!isset($rawResponseData['starPowers']) || !is_array($rawResponseData['starPowers'])) {
-            throw InvalidDTOException::fromString("Invalid or missing 'starPowers' field in Brawler data");
-        }
-
-        $starPowers = StarPowerDTO::forStarPowerList($rawResponseData['starPowers']);
-
+        // Create a new BrawlerDTO instance
         return new self(
-            (int)$rawResponseData['id'],
-            $rawResponseData['name'],
-            $accessories,
-            $starPowers,
+            (int) $data['id'],
+            $data['name'],
+            AccessoryDTO::fromList($data['gadgets']),
+            StarPowerDTO::fromList($data['starPowers']),
         );
     }
 
     /**
-     * Factory method to create an array of BrawlerDTO from parsed raw data.
+     * Factory method to create an array of BrawlerDTO.
      *
-     * @param array $brawlerListData raw parsed data containing an array of brawler entities.
-     * @return array<int, BrawlerDTO> array of BrawlerDTO converted from the passed raw data array.
+     * @param array $list Raw parsed data containing an array of brawler entities.
+     * @return array<int, BrawlerDTO> Array of BrawlerDTO instances converted from the raw data array.
      * @throws InvalidDTOException if required fields are missing or invalid.
      */
-    public static function forBrawlersList(array $brawlerListData): array
+    public static function fromList(array $list): array
     {
-        // validate the response structure
-        if (array_keys($brawlerListData) !== ['items', 'paging']) {
-            throw InvalidDTOException::fromString("API response for list of brawlers has invalid structure");
+        // Validate the structure of the list
+        if (!isset($list['items']) || !is_array($list['items'])) {
+            throw InvalidDTOException::fromMessage("Invalid Brawler list data");
         }
 
-        $brawlerDTOs = [];
-
-        foreach ($brawlerListData['items'] as $brawlerData) {
-            $brawlerDTOs[] = BrawlerDTO::forBrawler($brawlerData);
-        }
-
-        return $brawlerDTOs;
+        return array_map(fn($item) => self::fromArray($item), $list['items']);
     }
 }

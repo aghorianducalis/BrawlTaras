@@ -7,108 +7,103 @@ namespace App\API\Client;
 use App\API\DTO\Response\BrawlerDTO;
 use App\API\Enums\APIEndpoints;
 use App\API\Exceptions\InvalidDTOException;
-use App\API\Exceptions\RequestException;
+use App\API\Exceptions\ResponseException;
 use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\Exception\GuzzleException;
+use Illuminate\Support\Facades\Log;
+use JsonException;
 
 final readonly class APIClient
 {
-    public string $apiBaseURI;
-
-    private string $apiKey;
-
     public function __construct(
-        protected GuzzleClient $httpClient = new GuzzleClient([]),
+        protected GuzzleClient $httpClient,
+        protected string $apiBaseURI,
+        protected string $apiKey
     ) {
-        $this->apiBaseURI = config('brawlstars_api.api_base_uri');
-        $this->apiKey = config('brawlstars_api.api_key');
+        //
     }
 
     /**
+     * Fetch all brawlers.
+     *
      * app(\App\API\Client\APIClient::class)->getBrawlers();
+     *
      * @return BrawlerDTO[]
-     * @throws RequestException
+     * @throws ResponseException
      * @throws InvalidDTOException
      */
     public function getBrawlers(): array
     {
-        $responseData = $this->makeRequest(APIEndpoints::Brawlers);
-
-        return BrawlerDTO::forBrawlersList($responseData);
+        try {
+            $responseData = $this->makeRequest(APIEndpoints::Brawlers);
+            return BrawlerDTO::fromList($responseData);
+        } catch (ResponseException|InvalidDTOException $e) {
+            Log::error("Error fetching brawlers: {$e->getMessage()}");
+            throw $e;
+        }
     }
 
     /**
+     * Fetch a brawler by its ID.
+     *
      * app(\App\API\Client\APIClient::class)->getBrawler(16000000)
+     *
      * @param int $extId
      * @return BrawlerDTO
-     * @throws RequestException
+     * @throws ResponseException
      * @throws InvalidDTOException
      */
     public function getBrawler(int $extId): BrawlerDTO
     {
-        $responseData = $this->makeRequest(APIEndpoints::BrawlerById, ['id' => $extId]);
-
-        return BrawlerDTO::forBrawler($responseData);
+        try {
+            $responseData = $this->makeRequest(APIEndpoints::BrawlerById, ['brawler_id' => $extId]);
+            return BrawlerDTO::fromArray($responseData);
+        } catch (ResponseException|InvalidDTOException $e) {
+            Log::error("Error fetching brawler with ID $extId: {$e->getMessage()}");
+            throw $e;
+        }
     }
 
     /**
+     * Make a request to the API.
+     *
      * @param APIEndpoints $apiEndpoint
      * @param array $requestData
+     * @param array $options Additional request options like query params or body.
      * @return array
-     * @throws RequestException
+     * @throws ResponseException
      */
-    private function makeRequest(APIEndpoints $apiEndpoint, array $requestData = []): array
+    private function makeRequest(APIEndpoints $apiEndpoint, array $requestData = [], array $options = []): array
     {
         $headers = [
-            'Authorization' => "Bearer {$this->apiKey}",
+            'Authorization' => "Bearer $this->apiKey",
             'Accept'        => 'application/json',
         ];
         $method = $apiEndpoint->method();
-        $uri = $this->constructRequestURI($apiEndpoint, $requestData);
-        $options = [
-            'headers' => $headers,
-        ];
+        $uri = $apiEndpoint->constructRequestURI(apiBaseURI: $this->apiBaseURI, requestData: $requestData);
+        $requestOptions = array_merge($options, ['headers' => $headers]);
 
         try {
             $response = $this->httpClient->request(
                 method: $method,
                 uri: $uri,
-                options: $options
+                options: $requestOptions
             );
-            $responseData = json_decode($response->getBody()->getContents(), true);
+            $responseBody = $response->getBody()->getContents();
+
+            return json_decode($responseBody, true, 512, JSON_THROW_ON_ERROR);
         } catch (GuzzleException $e) {
-            throw RequestException::fromGuzzleException($e);
+            Log::error("API request failed", [
+                'uri' => $uri,
+                'error' => $e->getMessage(),
+            ]);
+            throw ResponseException::fromException($e);
+        } catch (JsonException $e) {
+            Log::error("Failed to decode JSON response", [
+                'uri' => $uri,
+                'error' => $e->getMessage(),
+            ]);
+            throw ResponseException::fromMessage('Invalid JSON response from API');
         }
-
-        return $responseData;
-    }
-
-    /**
-     * Get the valid URI for specified API endpoint.
-     *
-     * @param APIEndpoints $apiEndpoint
-     * @param array $requestData
-     * @return string
-     */
-    public function constructRequestURI(APIEndpoints $apiEndpoint, array $requestData = []): string
-    {
-        $uri = $this->apiBaseURI . $apiEndpoint->value;
-
-        switch ($apiEndpoint) {
-            case APIEndpoints::Brawlers:
-                break;
-            case APIEndpoints::BrawlerById:
-                $uri = str_replace('{brawler_id}', (string) $requestData['id'], $uri);
-                break;
-            default:
-                break;
-        }
-
-        return $uri;
-    }
-
-    public static function getInstance(): self
-    {
-        return app(APIClient::class);
     }
 }
