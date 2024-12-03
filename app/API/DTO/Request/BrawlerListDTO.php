@@ -4,10 +4,7 @@ declare(strict_types=1);
 
 namespace App\API\DTO\Request;
 
-use App\API\DTO\Request\BrawlerDTO;
-use App\Models\Accessory;
 use App\Models\Brawler;
-use App\Models\StarPower;
 use JsonException;
 use JsonSerializable;
 

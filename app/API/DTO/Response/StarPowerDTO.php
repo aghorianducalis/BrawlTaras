@@ -8,7 +8,7 @@ use App\API\Exceptions\InvalidDTOException;
 
 final readonly class StarPowerDTO
 {
-    public function __construct(
+    private function __construct(
         public int $extId,
         public string $name
     ) {}

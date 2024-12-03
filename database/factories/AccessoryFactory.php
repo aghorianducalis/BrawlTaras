@@ -28,8 +28,8 @@ class AccessoryFactory extends Factory
     public function definition(): array
     {
         return [
-            'ext_id' => fake()->unique()->randomNumber(),
-            'name' => "Accessory #" . fake()->numerify(),
+            'ext_id' => $this->faker->unique()->randomNumber(),
+            'name' => "Accessory #" . $this->faker->numerify(),
             'brawler_id' => Brawler::factory(),
         ];
     }
