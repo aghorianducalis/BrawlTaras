@@ -21,24 +21,20 @@ trait CreatesBrawlers
      * @param int $starPowerCount
      * @return Brawler
      */
-    public function createBrawlerModelWithRelations(int $accessoryCount = 2, int $starPowerCount = 2): Brawler
+    public function createBrawlerWithRelations(int $accessoryCount = 2, int $starPowerCount = 2): Brawler
     {
-        /** @var Brawler $brawler */
-        $brawler = Brawler::factory()
+        return Brawler::factory()
             ->has(Accessory::factory()->count($accessoryCount))
             ->has(StarPower::factory()->count($starPowerCount))
             ->create();
-
-        $brawler->load(['accessories', 'starPowers']);
-
-        return $brawler;
     }
 
     #[NoReturn]
-    public function compareStructureOfBrawlerModelAndDTO(Brawler $brawler, BrawlerResponseDTO $brawlerDTO): void
+    public function assertBrawlerModelMatchesDTO(Brawler $brawler, BrawlerResponseDTO $brawlerDTO): void
     {
         $this->assertSame($brawler->ext_id, $brawlerDTO->extId);
         $this->assertSame($brawler->name, $brawlerDTO->name);
+
         $this->assertEquals(
             $brawler->accessories->toArray(),
             collect($brawlerDTO->accessories)->transform(fn(AccessoryDTO $accessory) => [

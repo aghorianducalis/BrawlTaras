@@ -14,7 +14,7 @@ final readonly class BrawlerDTO
      * @param AccessoryDTO[] $accessories
      * @param StarPowerDTO[] $starPowers
      */
-    public function __construct(
+    private function __construct(
         public int $extId,
         public string $name,
         public array $accessories,

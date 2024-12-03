@@ -4,48 +4,67 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Factory;
 
-use App\Models\Accessory;
-use App\Models\Brawler;
-use App\Models\StarPower;
+use Database\Factories\AccessoryFactory;
+use Database\Factories\BrawlerFactory;
+use Database\Factories\StarPowerFactory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\TestDox;
+use PHPUnit\Framework\Attributes\UsesClass;
 use Tests\TestCase;
 use Tests\Traits\CreatesBrawlers;
 
+#[Group('Factories')]
+#[CoversClass(BrawlerFactory::class)]
+#[CoversMethod(BrawlerFactory::class, 'definition')]
+#[UsesClass(AccessoryFactory::class)]
+#[UsesClass(StarPowerFactory::class)]
 class BrawlerFactoryTest extends TestCase
 {
     use CreatesBrawlers;
     use RefreshDatabase;
 
-    public function test_brawler_factory(): void
+    /**
+     * Tests the functionality of the BrawlerFactory's definition method
+     * by ensuring that it can create a Brawler with specified relations.
+     */
+    #[Test]
+    #[TestDox('Factory successfully creates a brawler with accessories and star powers')]
+    public function test_brawler_factory_creates_brawler_with_relations(): void
     {
-        $brawler = $this->createBrawlerModelWithRelations(2, 2);
+        $accessoryCount = 2;
+        $starPowerCount = 2;
 
-        $this->assertTrue($brawler->exists);
-        $this->assertIsNumeric($brawler->id);
-        $this->assertNotEmpty($brawler->name);
-        $this->assertCount(2, $brawler->accessories);
-        $this->assertCount(2, $brawler->starPowers);
+        // Using the custom trait method to create a brawler with related models
+        $brawler = $this->createBrawlerWithRelations(accessoryCount: $accessoryCount, starPowerCount: $starPowerCount);
 
-        /*
-         * Testing the database.
-         */
+        // Assertions for the Brawler model existence and relations
+        $this->assertTrue($brawler->exists, 'Brawler should exist in the database');
+        $this->assertIsNumeric($brawler->id, 'Brawler ID should be numeric');
+        $this->assertNotEmpty($brawler->name, 'Brawler name should not be empty');
+        $this->assertCount($accessoryCount, $brawler->accessories, 'Brawler should have the correct number of accessories');
+        $this->assertCount($starPowerCount, $brawler->starPowers, 'Brawler should have the correct number of star powers');
 
-        $this->assertDatabaseHas((new Brawler())->getTable(), ['id' => $brawler->id]);
+        // Database assertions to verify the records
+        $this->assertDatabaseHas($brawler->getTable(), ['id' => $brawler->id]);
 
         foreach ($brawler->accessories as $accessory) {
-            $this->assertDatabaseHas((new Accessory())->getTable(), [
-                'id' => $accessory->id,
-                'name' => $accessory->name,
-                'brawler_id' => $accessory->brawler_id,
-            ]);
+            $this->assertDatabaseHas($accessory->getTable(), $accessory->only([
+                'id',
+                'name',
+                'brawler_id',
+            ]));
         }
 
         foreach ($brawler->starPowers as $starPower) {
-            $this->assertDatabaseHas((new StarPower())->getTable(), [
-                'id' => $starPower->id,
-                'name' => $starPower->name,
-                'brawler_id' => $starPower->brawler_id,
-            ]);
+            $this->assertDatabaseHas($starPower->getTable(), $starPower->only([
+                'id',
+                'name',
+                'brawler_id',
+            ]));
         }
     }
 }

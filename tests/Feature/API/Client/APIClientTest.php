@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\API\Client;
+namespace Tests\Feature\API\Client;
 
 use App\API\Client\APIClient;
 use App\API\DTO\Request\BrawlerDTO as BrawlerRequestDTO;
@@ -11,21 +11,17 @@ use App\API\DTO\Response\BrawlerDTO as BrawlerResponseDTO;
 use App\API\Enums\APIEndpoints;
 use App\API\Exceptions\InvalidDTOException;
 use App\API\Exceptions\ResponseException;
-use Attribute;
 use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\Exception\RequestException;
-use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\Request;
+use GuzzleHttp\Psr7\Response;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Log;
-use JetBrains\PhpStorm\NoReturn;
 use JsonException;
 use Mockery;
 use Mockery\MockInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\CoversFunction;
 use PHPUnit\Framework\Attributes\CoversMethod;
-use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\TestDox;
@@ -51,6 +47,9 @@ use Tests\Traits\CreatesBrawlers;
  */
 #[Group('API client')]
 #[CoversClass(APIClient::class)]
+#[CoversMethod(APIClient::class, 'makeRequest')]
+#[CoversMethod(APIClient::class, 'getBrawler')]
+#[CoversMethod(APIClient::class, 'getBrawlers')]
 class APIClientTest extends TestCase
 {
     use CreatesBrawlers;
@@ -95,15 +94,11 @@ class APIClientTest extends TestCase
      * @throws JsonException
      */
     #[Test]
-    #[TestDox('Fetch all brawlers successfully')]
-    #[NoReturn]
-//    #[Attribute(Attribute::TARGET_CLASS | Attribute::TARGET_METHOD | Attribute::IS_REPEATABLE)]
-//    #[CoversMethod(APIClient::class, "getBrawlers")]
-//    #[CoversFunction("getBrawlers")]
+    #[TestDox('Fetch the list of all brawlers with related accessories and star powers successfully')]
     public function it_fetches_all_brawlers_successfully(): void
     {
         $apiEndpoint = APIEndpoints::Brawlers;
-        $brawlersExpected = array_map(fn () => $this->createBrawlerModelWithRelations(), range(2, 2));
+        $brawlersExpected = array_map(fn () => $this->createBrawlerWithRelations(), range(2, 2));
         $mockResponse = new Response(200, [], BrawlerListRequestDTO::fromListOfBrawlerModels($brawlersExpected)->toJson());
 
         $this->httpClientMock
@@ -125,7 +120,7 @@ class APIClientTest extends TestCase
 
         foreach ($brawlers as $i => $brawler) {
             $this->assertInstanceOf(BrawlerResponseDTO::class, $brawler);
-            $this->compareStructureOfBrawlerModelAndDTO($brawlersExpected[$i], $brawler);
+            $this->assertBrawlerModelMatchesDTO($brawlersExpected[$i], $brawler);
         }
     }
 
@@ -134,11 +129,10 @@ class APIClientTest extends TestCase
      * @throws JsonException|ResponseException
      */
     #[Test]
-    #[NoReturn]
     public function it_fetches_brawler_by_id_successfully(): void
     {
         $apiEndpoint = APIEndpoints::BrawlerById;
-        $brawlerExpected = $this->createBrawlerModelWithRelations();
+        $brawlerExpected = $this->createBrawlerWithRelations();
         $mockResponse = new Response(200, [], BrawlerRequestDTO::fromBrawlerModel($brawlerExpected)->toJson());
         $this->httpClientMock
             ->shouldReceive('request')
@@ -155,7 +149,7 @@ class APIClientTest extends TestCase
         $brawlerDTOFetched = $this->apiClient->getBrawler($brawlerExpected->ext_id);
 
         $this->assertInstanceOf(BrawlerResponseDTO::class, $brawlerDTOFetched);
-        $this->compareStructureOfBrawlerModelAndDTO($brawlerExpected, $brawlerDTOFetched);
+        $this->assertBrawlerModelMatchesDTO($brawlerExpected, $brawlerDTOFetched);
     }
 
     #[Test]
