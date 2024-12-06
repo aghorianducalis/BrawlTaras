@@ -6,6 +6,7 @@ namespace App\Services\Repositories;
 
 use App\API\DTO\Response\StarPowerDTO;
 use App\Models\StarPower;
+use Illuminate\Support\Facades\DB;
 
 final readonly class StarPowerRepository
 {
@@ -21,14 +22,15 @@ final readonly class StarPowerRepository
             $query->where('ext_id', '=', $searchCriteria['ext_id']);
         }
 
+        if (isset($searchCriteria['brawler_id'])) {
+            $query->where('brawler_id', '=', $searchCriteria['brawler_id']);
+        }
+
         if (isset($searchCriteria['name'])) {
             $query->where('name', 'like', "%{$searchCriteria['name']}%");
         }
 
-        /** @var StarPower $starPower */
-        $starPower = $query->first();
-
-        return $starPower;
+        return $query->first();
     }
 
     public function createOrUpdateStarPower(StarPowerDTO $starPowerDTO, int $brawlerId): StarPower
@@ -43,11 +45,13 @@ final readonly class StarPowerRepository
             'brawler_id' => $brawlerId,
         ];
 
-        if ($starPower) {
-            $starPower->update($newData);
-        } else {
-            $starPower = StarPower::query()->create($newData);
-        }
+        DB::transaction(function () use (&$starPower, $newData) {
+            if ($starPower) {
+                $starPower->update($newData);
+            } else {
+                $starPower = StarPower::query()->create($newData);
+            }
+        });
 
         return $starPower;
     }
