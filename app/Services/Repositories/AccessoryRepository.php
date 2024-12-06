@@ -6,6 +6,7 @@ namespace App\Services\Repositories;
 
 use App\API\DTO\Response\AccessoryDTO;
 use App\Models\Accessory;
+use Illuminate\Support\Facades\DB;
 
 final readonly class AccessoryRepository
 {
@@ -21,14 +22,15 @@ final readonly class AccessoryRepository
             $query->where('ext_id', '=', $searchCriteria['ext_id']);
         }
 
+        if (isset($searchCriteria['brawler_id'])) {
+            $query->where('brawler_id', '=', $searchCriteria['brawler_id']);
+        }
+
         if (isset($searchCriteria['name'])) {
             $query->where('name', 'like', "%{$searchCriteria['name']}%");
         }
 
-        /** @var Accessory $accessory */
-        $accessory = $query->first();
-
-        return $accessory;
+        return $query->first();
     }
 
     public function createOrUpdateAccessory(AccessoryDTO $accessoryDTO, int $brawlerId): Accessory
@@ -43,11 +45,13 @@ final readonly class AccessoryRepository
             'brawler_id' => $brawlerId,
         ];
 
-        if ($accessory) {
-            $accessory->update($newData);
-        } else {
-            $accessory = Accessory::query()->create($newData);
-        }
+        DB::transaction(function () use (&$accessory, $newData) {
+            if ($accessory) {
+                $accessory->update($newData);
+            } else {
+                $accessory = Accessory::query()->create($newData);
+            }
+        });
 
         return $accessory;
     }

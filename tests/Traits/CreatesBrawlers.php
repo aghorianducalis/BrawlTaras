@@ -10,7 +10,6 @@ use App\API\DTO\Response\StarPowerDTO;
 use App\Models\Accessory;
 use App\Models\Brawler;
 use App\Models\StarPower;
-use JetBrains\PhpStorm\NoReturn;
 
 trait CreatesBrawlers
 {
@@ -29,7 +28,6 @@ trait CreatesBrawlers
             ->create();
     }
 
-    #[NoReturn]
     public function assertBrawlerModelMatchesDTO(Brawler $brawler, BrawlerResponseDTO $brawlerDTO): void
     {
         $this->assertSame($brawler->ext_id, $brawlerDTO->extId);
