@@ -56,7 +56,7 @@ final readonly class BrawlerRepository
             // todo gears?
         });
 
-        return $brawler;
+        return $brawler->refresh();
     }
 
     /**
@@ -77,9 +77,9 @@ final readonly class BrawlerRepository
     /**
      * @param Brawler $brawler
      * @param AccessoryDTO[] $accessoryDTOs
-     * @return Brawler
+     * @return void
      */
-    private function syncBrawlerAccessories(Brawler $brawler, array $accessoryDTOs): Brawler
+    private function syncBrawlerAccessories(Brawler $brawler, array $accessoryDTOs): void
     {
         $accessoryRepository = AccessoryRepository::getInstance();
 
@@ -91,18 +91,14 @@ final readonly class BrawlerRepository
 
         // delete old accessories
         $brawler->accessories()->whereNotIn('id', collect($accessories)->pluck('id')->toArray())->delete();
-
-        $brawler->refresh();
-
-        return $brawler;
     }
 
     /**
      * @param Brawler $brawler
      * @param StarPowerDTO[] $starPowerDTOs
-     * @return Brawler
+     * @return void
      */
-    private function syncBrawlerStarPowers(Brawler $brawler, array $starPowerDTOs): Brawler
+    private function syncBrawlerStarPowers(Brawler $brawler, array $starPowerDTOs): void
     {
         $starPowerRepository = StarPowerRepository::getInstance();
 
@@ -114,10 +110,6 @@ final readonly class BrawlerRepository
 
         // delete old star powers
         $brawler->starPowers()->whereNotIn('id', collect($starPowers)->pluck('id')->toArray())->delete();
-
-        $brawler->refresh();
-
-        return $brawler;
     }
 
     public static function getInstance(): self
