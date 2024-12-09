@@ -40,8 +40,8 @@ final readonly class StarPowerRepository
             'brawler_id' => $brawlerId,
         ]);
         $newData = [
-            'name'       => $starPowerDTO->name,
-            'ext_id'     => $starPowerDTO->extId,
+            'name' => $starPowerDTO->name,
+            'ext_id' => $starPowerDTO->extId,
             'brawler_id' => $brawlerId,
         ];
 

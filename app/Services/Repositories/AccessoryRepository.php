@@ -40,8 +40,8 @@ final readonly class AccessoryRepository
             'brawler_id' => $brawlerId,
         ]);
         $newData = [
-            'name'       => $accessoryDTO->name,
-            'ext_id'     => $accessoryDTO->extId,
+            'name' => $accessoryDTO->name,
+            'ext_id' => $accessoryDTO->extId,
             'brawler_id' => $brawlerId,
         ];
 

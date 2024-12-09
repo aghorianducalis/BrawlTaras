@@ -21,6 +21,7 @@ use Tests\TestCase;
 
 #[Group('Repositories')]
 #[CoversClass(StarPowerRepository::class)]
+#[CoversMethod(StarPowerRepository::class, 'getInstance')]
 #[CoversMethod(StarPowerRepository::class, 'findStarPower')]
 #[CoversMethod(StarPowerRepository::class, 'createOrUpdateStarPower')]
 #[UsesClass(StarPower::class)]

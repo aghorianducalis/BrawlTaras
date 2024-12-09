@@ -11,7 +11,7 @@ use App\API\DTO\Response\BrawlerDTO as BrawlerResponseDTO;
 use App\API\Enums\APIEndpoints;
 use App\API\Exceptions\InvalidDTOException;
 use App\API\Exceptions\ResponseException;
-use GuzzleHttp\Client as GuzzleClient;
+use GuzzleHttp\Client as HttpClient;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
@@ -69,7 +69,7 @@ class APIClientTest extends TestCase
 
         Log::shouldReceive('error')->andReturn();
 
-        $this->httpClientMock = Mockery::mock(GuzzleClient::class);
+        $this->httpClientMock = Mockery::mock(HttpClient::class);
         $this->apiClient = new APIClient(
             httpClient: $this->httpClientMock,
             apiBaseURI: $this->apiBaseURI,
@@ -113,14 +113,14 @@ class APIClientTest extends TestCase
             )
             ->andReturn($mockResponse);
 
-        $brawlers = $this->apiClient->getBrawlers();
+        $brawlerDTOS = $this->apiClient->getBrawlers();
 
-        $this->assertIsArray($brawlers);
-        $this->assertCount(sizeof($brawlersExpected), $brawlers);
+        $this->assertIsArray($brawlerDTOS);
+        $this->assertCount(sizeof($brawlersExpected), $brawlerDTOS);
 
-        foreach ($brawlers as $i => $brawler) {
-            $this->assertInstanceOf(BrawlerResponseDTO::class, $brawler);
-            $this->assertBrawlerModelMatchesDTO($brawlersExpected[$i], $brawler);
+        foreach ($brawlerDTOS as $i => $brawlerDTO) {
+            $this->assertInstanceOf(BrawlerResponseDTO::class, $brawlerDTO);
+            $this->assertBrawlerModelMatchesDTO($brawlersExpected[$i], $brawlerDTO);
         }
     }
 

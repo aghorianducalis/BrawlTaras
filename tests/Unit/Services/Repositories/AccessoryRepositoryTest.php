@@ -21,6 +21,7 @@ use Tests\TestCase;
 
 #[Group('Repositories')]
 #[CoversClass(AccessoryRepository::class)]
+#[CoversMethod(AccessoryRepository::class, 'getInstance')]
 #[CoversMethod(AccessoryRepository::class, 'findAccessory')]
 #[CoversMethod(AccessoryRepository::class, 'createOrUpdateAccessory')]
 #[UsesClass(Accessory::class)]
