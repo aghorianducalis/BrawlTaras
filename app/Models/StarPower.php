@@ -39,7 +39,7 @@ class StarPower extends Model
     /**
      * Get the brawler of a star power.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function brawler(): BelongsTo
     {

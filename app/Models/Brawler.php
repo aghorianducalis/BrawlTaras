@@ -39,7 +39,7 @@ class Brawler extends Model
     /**
      * Get the accessories for the brawler.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return HasMany
      */
     public function accessories(): HasMany
     {
@@ -49,7 +49,7 @@ class Brawler extends Model
     /**
      * Get the star powers for the brawler.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return HasMany
      */
     public function starPowers(): HasMany
     {
@@ -59,7 +59,7 @@ class Brawler extends Model
     /**
      * Get the player brawlers.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return HasMany
      */
     public function playerBrawlers(): HasMany
     {

@@ -14,6 +14,17 @@ final readonly class StarPowerDTO
     ) {}
 
     /**
+     * @return array{ext_id: int, name: string}
+     */
+    public function toArray(): array
+    {
+        return [
+            'ext_id' => $this->extId,
+            'name' => $this->name,
+        ];
+    }
+
+    /**
      * Factory method to create StarPowerDTO.
      *
      * @param array $data

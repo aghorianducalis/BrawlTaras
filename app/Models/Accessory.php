@@ -39,7 +39,7 @@ class Accessory extends Model
     /**
      * Get the brawler of an accessory.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function brawler(): BelongsTo
     {

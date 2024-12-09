@@ -28,10 +28,7 @@ final readonly class BrawlerRepository
             $query->where('name', 'like', "%{$searchCriteria['name']}%");
         }
 
-        /** @var Brawler $brawler */
-        $brawler = $query->first();
-
-        return $brawler;
+        return $query->first();
     }
 
     public function createOrUpdateBrawler(BrawlerDTO $brawlerDTO): Brawler
@@ -40,19 +37,19 @@ final readonly class BrawlerRepository
             'ext_id' => $brawlerDTO->extId,
         ]);
         $newData = [
-            'name'       => $brawlerDTO->name,
-            'ext_id'     => $brawlerDTO->extId,
+            'name' => $brawlerDTO->name,
+            'ext_id' => $brawlerDTO->extId,
         ];
 
-        DB::transaction(function () use ($brawler, $brawlerDTO, $newData) {
+        DB::transaction(function () use (&$brawler, $brawlerDTO, $newData) {
             if ($brawler) {
                 $brawler->update($newData);
             } else {
                 $brawler = Brawler::query()->create($newData);
             }
 
-            $this->syncBrawlerAccessories($brawler, $brawlerDTO->getAccessories());
-            $this->syncBrawlerStarPowers($brawler, $brawlerDTO->getStarPowers());
+            $this->syncBrawlerAccessories($brawler, $brawlerDTO->accessories);
+            $this->syncBrawlerStarPowers($brawler, $brawlerDTO->starPowers);
             // todo gears?
         });
 
@@ -60,6 +57,9 @@ final readonly class BrawlerRepository
     }
 
     /**
+     * todo this method: 1) either must be removed; 2) or covered with tests
+     * @see self::createOrUpdateBrawler()
+     *
      * @param BrawlerDTO[] $brawlerDTOs
      * @return Brawler[]
      */
