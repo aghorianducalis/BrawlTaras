@@ -9,7 +9,7 @@ use App\Services\ParserService;
 use App\Services\Repositories\AccessoryRepository;
 use App\Services\Repositories\BrawlerRepository;
 use App\Services\Repositories\StarPowerRepository;
-use GuzzleHttp\Client as GuzzleClient;
+use GuzzleHttp\Client as HttpClient;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -20,20 +20,23 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         // repositories
-        $this->app->singleton(abstract: BrawlerRepository::class, concrete: function ($app) {
-            return new BrawlerRepository();
-        });
         $this->app->singleton(abstract: AccessoryRepository::class, concrete: function ($app) {
             return new AccessoryRepository();
         });
         $this->app->singleton(abstract: StarPowerRepository::class, concrete: function ($app) {
             return new StarPowerRepository();
         });
+        $this->app->singleton(abstract: BrawlerRepository::class, concrete: function ($app) {
+            return new BrawlerRepository(
+                accessoryRepository: $app->make(abstract: AccessoryRepository::class),
+                starPowerRepository: $app->make(abstract: StarPowerRepository::class),
+            );
+        });
 
         // API
         $this->app->singleton(abstract: APIClient::class, concrete: function ($app) {
             return new APIClient(
-                httpClient: new GuzzleClient(),
+                httpClient: new HttpClient(),
                 apiBaseURI: config('brawlstars_api.api_base_uri'),
                 apiKey: config('brawlstars_api.api_key')
             );

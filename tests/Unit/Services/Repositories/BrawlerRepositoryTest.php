@@ -37,7 +37,7 @@ class BrawlerRepositoryTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->repository = BrawlerRepository::getInstance();
+        $this->repository = app(BrawlerRepository::class);
     }
 
     #[Test]

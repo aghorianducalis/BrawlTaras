@@ -12,6 +12,17 @@ use Illuminate\Support\Facades\DB;
 
 final readonly class BrawlerRepository
 {
+    public function __construct(
+        private AccessoryRepository $accessoryRepository,
+        private StarPowerRepository $starPowerRepository
+    ) {}
+
+    /**
+     * Find a Brawler based on search criteria.
+     *
+     * @param array<string, mixed> $searchCriteria
+     * @return Brawler|null
+     */
     public function findBrawler(array $searchCriteria): ?Brawler
     {
         $query = Brawler::query();
@@ -31,89 +42,87 @@ final readonly class BrawlerRepository
         return $query->first();
     }
 
+    /**
+     * Create or update a Brawler and sync related entities.
+     *
+     * @param BrawlerDTO $brawlerDTO
+     * @return Brawler
+     */
     public function createOrUpdateBrawler(BrawlerDTO $brawlerDTO): Brawler
     {
         $brawler = $this->findBrawler([
             'ext_id' => $brawlerDTO->extId,
         ]);
-        $newData = [
+        $attributes = [
             'name' => $brawlerDTO->name,
             'ext_id' => $brawlerDTO->extId,
         ];
 
-        DB::transaction(function () use (&$brawler, $brawlerDTO, $newData) {
+        DB::transaction(function () use (&$brawler, $brawlerDTO, $attributes) {
             if ($brawler) {
-                $brawler->update($newData);
+                $brawler->update(attributes: $attributes);
             } else {
-                $brawler = Brawler::query()->create($newData);
+                $brawler = Brawler::query()->create(attributes: $attributes);
             }
 
-            $this->syncBrawlerAccessories($brawler, $brawlerDTO->accessories);
-            $this->syncBrawlerStarPowers($brawler, $brawlerDTO->starPowers);
-            // todo gears?
+            $this->syncRelations($brawler, $brawlerDTO);
         });
 
         return $brawler->refresh();
     }
 
     /**
-     * todo this method: 1) either must be removed; 2) or covered with tests
-     * @see self::createOrUpdateBrawler()
+     * Bulk create or update Brawler.
      *
      * @param BrawlerDTO[] $brawlerDTOs
      * @return Brawler[]
      */
     public function createOrUpdateBrawlers(array $brawlerDTOs): array
     {
-        $brawlers = [];
-
-        foreach ($brawlerDTOs as $brawlerDTO) {
-            $brawlers[] = $this->createOrUpdateBrawler($brawlerDTO);
-        }
-
-        return $brawlers;
+        return array_map(fn (BrawlerDTO $dto) => $this->createOrUpdateBrawler($dto), $brawlerDTOs);
     }
 
     /**
+     * Sync Brawler accessories and star powers.
+     *
      * @param Brawler $brawler
-     * @param AccessoryDTO[] $accessoryDTOs
+     * @param BrawlerDTO $brawlerDTO
      * @return void
      */
-    private function syncBrawlerAccessories(Brawler $brawler, array $accessoryDTOs): void
+    private function syncRelations(Brawler $brawler, BrawlerDTO $brawlerDTO): void
     {
-        $accessoryRepository = AccessoryRepository::getInstance();
+        $this->syncRelation(
+            $brawler,
+            'accessories',
+            $brawlerDTO->accessories,
+            fn (AccessoryDTO $dto) => $this->accessoryRepository->createOrUpdateAccessory($dto, $brawler->id)
+        );
 
-        $accessories = [];
-
-        foreach ($accessoryDTOs as $accessoryDTO) {
-            $accessories[] = $accessoryRepository->createOrUpdateAccessory($accessoryDTO, $brawler->id);
-        }
-
-        // delete old accessories
-        $brawler->accessories()->whereNotIn('id', collect($accessories)->pluck('id')->toArray())->delete();
+        $this->syncRelation(
+            $brawler,
+            'starPowers',
+            $brawlerDTO->starPowers,
+            fn (StarPowerDTO $dto) => $this->starPowerRepository->createOrUpdateStarPower($dto, $brawler->id)
+        );
     }
 
     /**
+     * Synchronize a Brawler's related entities.
+     *
+     * @template T
      * @param Brawler $brawler
-     * @param StarPowerDTO[] $starPowerDTOs
+     * @param string $relation
+     * @param T[] $items
+     * @param callable(T): mixed $createOrUpdateCallback
      * @return void
      */
-    private function syncBrawlerStarPowers(Brawler $brawler, array $starPowerDTOs): void
+    private function syncRelation(Brawler $brawler, string $relation, array $items, callable $createOrUpdateCallback): void
     {
-        $starPowerRepository = StarPowerRepository::getInstance();
+        $newEntities = collect($items)
+            ->map(fn ($dto) => $createOrUpdateCallback($dto))
+            ->pluck('id')
+            ->toArray();
 
-        $starPowers = [];
-
-        foreach ($starPowerDTOs as $starPowerDTO) {
-            $starPowers[] = $starPowerRepository->createOrUpdateStarPower($starPowerDTO, $brawler->id);
-        }
-
-        // delete old star powers
-        $brawler->starPowers()->whereNotIn('id', collect($starPowers)->pluck('id')->toArray())->delete();
-    }
-
-    public static function getInstance(): self
-    {
-        return app(BrawlerRepository::class);
+        $brawler->{$relation}()->whereNotIn('id', $newEntities)->delete();
     }
 }
