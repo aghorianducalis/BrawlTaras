@@ -8,6 +8,7 @@ use App\API\DTO\Response\AccessoryDTO;
 use App\Models\Accessory;
 use App\Models\Brawler;
 use App\Services\Repositories\AccessoryRepository;
+use App\Services\Repositories\Contracts\AccessoryRepositoryInterface;
 use Database\Factories\AccessoryFactory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -21,7 +22,6 @@ use Tests\TestCase;
 
 #[Group('Repositories')]
 #[CoversClass(AccessoryRepository::class)]
-#[CoversMethod(AccessoryRepository::class, 'getInstance')]
 #[CoversMethod(AccessoryRepository::class, 'findAccessory')]
 #[CoversMethod(AccessoryRepository::class, 'createOrUpdateAccessory')]
 #[UsesClass(Accessory::class)]
@@ -35,7 +35,7 @@ class AccessoryRepositoryTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->repository = AccessoryRepository::getInstance();
+        $this->repository = app(AccessoryRepositoryInterface::class);
     }
 
     #[Test]

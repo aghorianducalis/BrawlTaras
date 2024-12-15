@@ -6,9 +6,10 @@ namespace App\Services\Repositories;
 
 use App\API\DTO\Response\StarPowerDTO;
 use App\Models\StarPower;
+use App\Services\Repositories\Contracts\StarPowerRepositoryInterface;
 use Illuminate\Support\Facades\DB;
 
-final readonly class StarPowerRepository
+final readonly class StarPowerRepository implements StarPowerRepositoryInterface
 {
     public function findStarPower(array $searchCriteria): ?StarPower
     {
@@ -54,10 +55,5 @@ final readonly class StarPowerRepository
         });
 
         return $starPower;
-    }
-
-    public static function getInstance(): self
-    {
-        return app(StarPowerRepository::class);
     }
 }

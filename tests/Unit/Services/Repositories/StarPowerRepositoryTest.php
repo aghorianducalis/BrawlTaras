@@ -7,6 +7,7 @@ namespace Tests\Unit\Services\Repositories;
 use App\API\DTO\Response\StarPowerDTO;
 use App\Models\StarPower;
 use App\Models\Brawler;
+use App\Services\Repositories\Contracts\StarPowerRepositoryInterface;
 use App\Services\Repositories\StarPowerRepository;
 use Database\Factories\StarPowerFactory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -21,7 +22,6 @@ use Tests\TestCase;
 
 #[Group('Repositories')]
 #[CoversClass(StarPowerRepository::class)]
-#[CoversMethod(StarPowerRepository::class, 'getInstance')]
 #[CoversMethod(StarPowerRepository::class, 'findStarPower')]
 #[CoversMethod(StarPowerRepository::class, 'createOrUpdateStarPower')]
 #[UsesClass(StarPower::class)]
@@ -35,7 +35,7 @@ class StarPowerRepositoryTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->repository = StarPowerRepository::getInstance();
+        $this->repository = app(StarPowerRepositoryInterface::class);
     }
 
     #[Test]

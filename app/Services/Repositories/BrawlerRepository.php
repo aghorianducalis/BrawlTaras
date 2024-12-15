@@ -8,23 +8,21 @@ use App\API\DTO\Response\AccessoryDTO;
 use App\API\DTO\Response\BrawlerDTO;
 use App\API\DTO\Response\StarPowerDTO;
 use App\Models\Brawler;
+use App\Services\Repositories\Contracts\AccessoryRepositoryInterface;
+use App\Services\Repositories\Contracts\BrawlerRepositoryInterface;
+use App\Services\Repositories\Contracts\StarPowerRepositoryInterface;
 use Illuminate\Support\Facades\DB;
 
-final readonly class BrawlerRepository
+final readonly class BrawlerRepository implements BrawlerRepositoryInterface
 {
     public function __construct(
-        private AccessoryRepository $accessoryRepository,
-        private StarPowerRepository $starPowerRepository
+        private AccessoryRepositoryInterface $accessoryRepository,
+        private StarPowerRepositoryInterface $starPowerRepository
     ) {}
 
-    /**
-     * Find a Brawler based on search criteria.
-     *
-     * @param array<string, mixed> $searchCriteria
-     * @return Brawler|null
-     */
     public function findBrawler(array $searchCriteria): ?Brawler
     {
+        // nice todo Optimize the findBrawler query to minimize redundant DB calls when processing multiple Brawlers.
         $query = Brawler::query();
 
         if (isset($searchCriteria['id'])) {
@@ -42,12 +40,6 @@ final readonly class BrawlerRepository
         return $query->first();
     }
 
-    /**
-     * Create or update a Brawler and sync related entities.
-     *
-     * @param BrawlerDTO $brawlerDTO
-     * @return Brawler
-     */
     public function createOrUpdateBrawler(BrawlerDTO $brawlerDTO): Brawler
     {
         $brawler = $this->findBrawler([
@@ -71,18 +63,16 @@ final readonly class BrawlerRepository
         return $brawler->refresh();
     }
 
-    /**
-     * Bulk create or update Brawler.
-     *
-     * @param BrawlerDTO[] $brawlerDTOs
-     * @return Brawler[]
-     */
     public function createOrUpdateBrawlers(array $brawlerDTOs): array
     {
+        // todo calls can lead to N+1 query issues. Consider bulk inserts/updates if the data size is significant.
         return array_map(fn (BrawlerDTO $dto) => $this->createOrUpdateBrawler($dto), $brawlerDTOs);
     }
 
     /**
+     * todo Ensure syncRelations uses optimized queries, especially for many-to-many relationships.
+     * todo Lazy loading could cause performance bottlenecks here.
+     *
      * Sync Brawler accessories and star powers.
      *
      * @param Brawler $brawler

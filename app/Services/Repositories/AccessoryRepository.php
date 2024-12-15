@@ -6,9 +6,10 @@ namespace App\Services\Repositories;
 
 use App\API\DTO\Response\AccessoryDTO;
 use App\Models\Accessory;
+use App\Services\Repositories\Contracts\AccessoryRepositoryInterface;
 use Illuminate\Support\Facades\DB;
 
-final readonly class AccessoryRepository
+final readonly class AccessoryRepository implements AccessoryRepositoryInterface
 {
     public function findAccessory(array $searchCriteria): ?Accessory
     {
@@ -54,10 +55,5 @@ final readonly class AccessoryRepository
         });
 
         return $accessory;
-    }
-
-    public static function getInstance(): self
-    {
-        return app(AccessoryRepository::class);
     }
 }
