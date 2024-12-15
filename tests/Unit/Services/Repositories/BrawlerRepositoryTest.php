@@ -6,6 +6,7 @@ namespace Tests\Unit\Services\Repositories;
 
 use App\Models\Brawler;
 use App\Services\Repositories\BrawlerRepository;
+use App\Services\Repositories\Contracts\BrawlerRepositoryInterface;
 use Database\Factories\BrawlerFactory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -20,7 +21,6 @@ use Tests\Traits\CreatesBrawlers;
 
 #[Group('Repositories')]
 #[CoversClass(BrawlerRepository::class)]
-#[CoversMethod(BrawlerRepository::class, 'getInstance')]
 #[CoversMethod(BrawlerRepository::class, 'findBrawler')]
 #[CoversMethod(BrawlerRepository::class, 'createOrUpdateBrawler')]
 #[CoversMethod(BrawlerRepository::class, 'syncBrawlerAccessories')]
@@ -37,7 +37,7 @@ class BrawlerRepositoryTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->repository = app(BrawlerRepository::class);
+        $this->repository = app(BrawlerRepositoryInterface::class);
     }
 
     #[Test]
