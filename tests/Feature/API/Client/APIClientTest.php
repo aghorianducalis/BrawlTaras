@@ -55,13 +55,13 @@ class APIClientTest extends TestCase
     use CreatesBrawlers;
     use RefreshDatabase;
 
+    private APIClient $apiClient;
+
     private MockInterface $httpClientMock;
 
     private string $apiBaseURI = 'https://api.example.com';
 
     private string $apiKey = 'test-api-key';
-
-    private APIClient $apiClient;
 
     protected function setUp(): void
     {
@@ -98,7 +98,7 @@ class APIClientTest extends TestCase
     public function it_fetches_all_brawlers_successfully(): void
     {
         $apiEndpoint = APIEndpoints::Brawlers;
-        $brawlersExpected = array_map(fn () => $this->createBrawlerWithRelations(), range(2, 2));
+        $brawlersExpected = array_map(fn () => $this->createBrawlerWithRelations(), range(1, 2));
         $mockResponse = new Response(200, [], BrawlerListRequestDTO::fromListOfBrawlerModels($brawlersExpected)->toJson());
 
         $this->httpClientMock
