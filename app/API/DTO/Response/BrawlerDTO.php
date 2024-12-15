@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace App\API\DTO\Response;
 
 use App\API\Exceptions\InvalidDTOException;
+use App\Models\Accessory;
+use App\Models\Brawler;
+use App\Models\StarPower;
 
 final readonly class BrawlerDTO
 {
@@ -64,6 +67,26 @@ final readonly class BrawlerDTO
             throw InvalidDTOException::fromMessage("Invalid Brawler list data");
         }
 
-        return array_map(fn($item) => self::fromArray($item), $list['items']);
+        return array_map(fn(array $item) => self::fromArray($item), $list['items']);
+    }
+
+    /**
+     * @param Brawler $brawler
+     * @return self
+     */
+    public static function fromBrawlerModel(Brawler $brawler): self
+    {
+        return self::fromArray([
+            'id' => $brawler->ext_id,
+            'name' => $brawler->name,
+            'gadgets' => $brawler->accessories->transform(fn (Accessory $accessory) => [
+                'id' => $accessory->ext_id,
+                'name' => $accessory->name,
+            ])->toArray(),
+            'starPowers' => $brawler->starPowers->transform(fn (StarPower $starPower) => [
+                'id' => $starPower->ext_id,
+                'name' => $starPower->name,
+            ])->toArray(),
+        ]);
     }
 }
