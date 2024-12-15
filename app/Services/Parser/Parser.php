@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace App\Services\Parser;
 
 use App\API\Contracts\APIClientInterface;
+use App\API\Exceptions\InvalidDTOException;
+use App\API\Exceptions\ResponseException;
 use App\Models\Brawler;
 use App\Services\Parser\Contracts\ParserInterface;
 use App\Services\Parser\Exceptions\ParsingException;
 use App\Services\Repositories\Contracts\BrawlerRepositoryInterface;
-use Exception;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
@@ -26,7 +27,7 @@ readonly class Parser implements ParserInterface
             $brawlerDTO = $this->apiClient->getBrawler($externalId);
 
             return $this->brawlerRepository->createOrUpdateBrawler($brawlerDTO);
-        } catch (Exception $e) {
+        } catch (ResponseException|InvalidDTOException $e) {
             Log::error("Failed to parse Brawler with external ID $externalId: " . $e->getMessage(), [
                 'exception' => $e,
                 'extId' => $externalId
@@ -45,7 +46,7 @@ readonly class Parser implements ParserInterface
             }
 
             return $this->brawlerRepository->createOrUpdateBrawlers($brawlerDTOs);
-        } catch (Exception $e) {
+        } catch (ResponseException|InvalidDTOException|ValidationException $e) {
             Log::error('Failed to parse all Brawlers: ' . $e->getMessage(), [
                 'exception' => $e
             ]);
