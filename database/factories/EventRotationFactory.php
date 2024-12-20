@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
+use App\Models\Event;
 use App\Models\EventRotation;
+use App\Models\EventRotationSlot;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -27,9 +29,10 @@ class EventRotationFactory extends Factory
     public function definition(): array
     {
         return [
-            'ext_id' => $this->faker->unique()->randomNumber(),
-            'name' => "StarPower #" . $this->faker->numerify(),
-            'brawler_id' => Brawler::factory(),
+            'start_time' => $this->faker->dateTime(),
+            'end_time' => fn() => $this->faker->dateTime(),
+            'event_id' => Event::factory(),
+            'slot_id' => EventRotationSlot::factory(),
         ];
     }
 }

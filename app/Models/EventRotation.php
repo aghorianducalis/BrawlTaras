@@ -15,11 +15,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property Carbon $start_time
  * @property Carbon $end_time
  * @property int $event_id
- * @property int $slot_id
+ * @property int $slot_id unique identifier for position of the event rotation
  * @property Carbon $created_at
  * @property Carbon $updated_at
  * @property-read Event $event
- * @property-read EventSlot $slot
+ * @property-read EventRotationSlot $slot
  */
 class EventRotation extends Model
 {
@@ -53,12 +53,12 @@ class EventRotation extends Model
     }
 
     /**
-     * Get the slot.
+     * Get the slot (position).
      *
      * @return BelongsTo
      */
     public function slot(): BelongsTo
     {
-        return $this->belongsTo(EventSlot::class, 'slot_id', 'id');
+        return $this->belongsTo(EventRotationSlot::class, 'slot_id', 'id');
     }
 }
