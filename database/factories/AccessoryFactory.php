@@ -29,7 +29,7 @@ class AccessoryFactory extends Factory
     {
         return [
             'ext_id' => $this->faker->unique()->randomNumber(),
-            'name' => "Accessory #" . $this->faker->numerify(),
+            'name' => "Accessory #" . $this->faker->unique()->numerify(),
             'brawler_id' => Brawler::factory(),
         ];
     }

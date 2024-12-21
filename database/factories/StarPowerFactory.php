@@ -29,7 +29,7 @@ class StarPowerFactory extends Factory
     {
         return [
             'ext_id' => $this->faker->unique()->randomNumber(),
-            'name' => "StarPower #" . $this->faker->numerify(),
+            'name' => "Star power #" . $this->faker->unique()->numerify(),
             'brawler_id' => Brawler::factory(),
         ];
     }

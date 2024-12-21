@@ -11,6 +11,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
+ * a.k.a. ScheduledEvent.
+ *
  * @property int $id
  * @property Carbon $start_time
  * @property Carbon $end_time

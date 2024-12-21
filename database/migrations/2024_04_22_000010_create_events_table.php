@@ -13,13 +13,11 @@ return new class extends Migration
     {
         Schema::create('events', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('mode_id');
-            $table->foreign('mode_id')->references('id')->on('modes');
-            $table->string('map');
             $table->unsignedBigInteger('ext_id')->unique();
-            $table->unsignedBigInteger('slot_id');
-            $table->dateTime('start_time');
-            $table->dateTime('end_time');
+            $table->unsignedBigInteger('map_id');
+            $table->foreign('map_id')->references('id')->on('event_maps');
+            $table->unsignedBigInteger('mode_id');
+            $table->foreign('mode_id')->references('id')->on('event_modes');
             $table->timestamps();
         });
     }
