@@ -9,6 +9,7 @@ use Database\Factories\EventFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
 
@@ -21,8 +22,8 @@ use Illuminate\Support\Collection;
  * @property Carbon $updated_at
  * @property-read EventMap $map
  * @property-read EventMode $mode
- * @property-read Collection|EventRotation[]|array $eventRotations
- * @property-read Collection|EventModifier[]|array $modifiers todo
+ * @property-read Collection|EventModifier[]|array $modifiers
+ * @property-read Collection|EventRotation[]|array $rotations
  */
 class Event extends Model
 {
@@ -61,6 +62,21 @@ class Event extends Model
     public function mode(): BelongsTo
     {
         return $this->belongsTo(EventMode::class, 'mode_id', 'id');
+    }
+
+    /**
+     * The event's modifiers.
+     *
+     * @return BelongsToMany
+     */
+    public function modifiers(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            related: EventModifier::class,
+            table: 'event_modifier_event',
+            foreignPivotKey: 'event_id',
+            relatedPivotKey: 'modifier_id',
+        );
     }
 
     /**
