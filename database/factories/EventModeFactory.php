@@ -4,20 +4,20 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
-use App\Models\Brawler;
+use App\Models\EventMode;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<Brawler>
+ * @extends Factory<EventMode>
  */
-class BrawlerFactory extends Factory
+class EventModeFactory extends Factory
 {
     /**
      * The name of the factory's corresponding model.
      *
-     * @var class-string<Brawler>
+     * @var class-string<EventMode>
      */
-    protected $model = Brawler::class;
+    protected $model = EventMode::class;
 
     /**
      * Define the model's default state.
@@ -27,8 +27,7 @@ class BrawlerFactory extends Factory
     public function definition(): array
     {
         return [
-            'ext_id' => $this->faker->unique()->randomNumber(),
-            'name' => "Brawler #" . $this->faker->unique()->numerify(),
+            'name' => "Event mode #" . $this->faker->unique()->numerify(),
         ];
     }
 }

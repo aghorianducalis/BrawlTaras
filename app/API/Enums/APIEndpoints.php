@@ -10,10 +10,14 @@ enum APIEndpoints: string
 
     case BrawlerById = "/brawlers/{brawler_id}";
 
+    case EventRotation = "/events/rotation";
+
     public function method(): string
     {
         return match($this) {
-            APIEndpoints::Brawlers, APIEndpoints::BrawlerById => "GET",
+            APIEndpoints::Brawlers,
+            APIEndpoints::BrawlerById,
+            APIEndpoints::EventRotation, => "GET",
         };
     }
 

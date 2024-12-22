@@ -6,6 +6,7 @@ namespace App\API\Client;
 
 use App\API\Contracts\APIClientInterface;
 use App\API\DTO\Response\BrawlerDTO;
+use App\API\DTO\Response\EventRotationDTO;
 use App\API\Enums\APIEndpoints;
 use App\API\Exceptions\InvalidDTOException;
 use App\API\Exceptions\ResponseException;
@@ -54,6 +55,20 @@ final readonly class APIClient implements APIClientInterface
             return BrawlerDTO::fromList($responseData);
         } catch (ResponseException|InvalidDTOException $e) {
             Log::error("Error fetching brawlers: {$e->getMessage()}");
+            throw $e;
+        }
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getEventsRotation(): array
+    {
+        try {
+            $responseData = $this->makeRequest(APIEndpoints::EventRotation);
+            return EventRotationDTO::fromList($responseData);
+        } catch (ResponseException|InvalidDTOException $e) {
+            Log::error("Error fetching events rotation: {$e->getMessage()}");
             throw $e;
         }
     }
