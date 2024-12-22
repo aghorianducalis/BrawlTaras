@@ -7,6 +7,7 @@ namespace Database\Factories;
 use App\Models\Event;
 use App\Models\EventMap;
 use App\Models\EventMode;
+use App\Models\EventModifier;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -33,5 +34,20 @@ class EventFactory extends Factory
             'map_id' => EventMap::factory(),
             'mode_id' => EventMode::factory(),
         ];
+    }
+
+    /**
+     * Attach EventModifier to the Event.
+     *
+     * @param int $count
+     * @param array|callable $attributes
+     * @return EventFactory
+     */
+    public function withModifiers(int $count = 1, array|callable $attributes = []): self
+    {
+        return $this->afterCreating(fn(Event $event) => EventModifier::factory()
+            ->hasAttached($event)
+            ->count($count)
+            ->create($attributes));
     }
 }
