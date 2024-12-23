@@ -29,21 +29,21 @@ final readonly class EventRotationSlotRepository implements EventRotationSlotRep
 
     public function createOrUpdateEventRotationSlot(int|string $slotPosition): EventRotationSlot
     {
-        $event = $this->findEventRotationSlot([
+        $slot = $this->findEventRotationSlot([
             'position' => $slotPosition,
         ]);
         $attributes = [
             'position' => $slotPosition,
         ];
 
-        DB::transaction(function () use (&$event, $attributes) {
-            if ($event) {
-                $event->update(attributes: $attributes);
+        DB::transaction(function () use (&$slot, $attributes) {
+            if ($slot) {
+                $slot->update(attributes: $attributes);
             } else {
-                $event = EventRotationSlot::query()->create(attributes: $attributes);
+                $slot = EventRotationSlot::query()->create(attributes: $attributes);
             }
         });
 
-        return $event->refresh();
+        return $slot->refresh();
     }
 }
