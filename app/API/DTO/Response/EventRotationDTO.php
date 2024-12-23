@@ -9,17 +9,11 @@ use App\Models\EventRotation;
 
 final readonly class EventRotationDTO
 {
-    /**
-     * @param string $start_time
-     * @param string $end_time
-     * @param int $slotId
-     * @param EventDTO $event
-     */
     private function __construct(
-        public string $start_time,
-        public string $end_time,
-        public int $slotId,
+        public string   $start_time,
+        public string   $end_time,
         public EventDTO $event,
+        public int      $slot,
     ) {}
 
     /**
@@ -33,8 +27,11 @@ final readonly class EventRotationDTO
     {
         // Validate the structure of the data array
         if (!(
-            isset($data['startTime'], $data['endTime'], $data['slotId'], $data['event']) &&
-            is_array($data['event'])
+            isset($data['startTime'], $data['endTime'], $data['event'], $data['slotId']) &&
+            is_string($data['startTime']) &&
+            is_string($data['endTime']) &&
+            is_array($data['event']) &&
+            is_numeric($data['slotId'])
         )) {
             throw InvalidDTOException::fromMessage(
                 "Events rotation data array has an invalid structure: " . json_encode($data)
@@ -43,10 +40,10 @@ final readonly class EventRotationDTO
 
         // Create a new DTO instance
         return new self(
-            $data['startTime'],
-            $data['endTime'],
-            (int) $data['slotId'],
-            EventDTO::fromArray($data['event']),
+            start_time: $data['startTime'],
+            end_time: $data['endTime'],
+            event: EventDTO::fromArray($data['event']),
+            slot: (int) $data['slotId'],
         );
     }
 
@@ -69,10 +66,10 @@ final readonly class EventRotationDTO
     public static function fromEloquentModel(EventRotation $rotation): self
     {
         return self::fromArray([
-            'start_time' => $rotation->start_time->toDateTimeString(),
-            'end_time' => $rotation->end_time->toDateTimeString(),
-            'id' => $rotation->slot->position,
+            'start_time' => $rotation->start_time->format('Ymd\THis.u\Z'),
+            'end_time' => $rotation->start_time->format('Ymd\THis.u\Z'),
             'event' => EventDTO::fromEloquentModel($rotation->event),
+            'id' => $rotation->slot->position,
         ]);
     }
 }

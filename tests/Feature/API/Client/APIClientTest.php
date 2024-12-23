@@ -333,7 +333,7 @@ class APIClientTest extends TestCase
 
             $this->assertSame($rotationExpected->start_time->format('Ymd\THis.u\Z'), $rotationDTO->start_time);
             $this->assertSame($rotationExpected->end_time->format('Ymd\THis.u\Z'), $rotationDTO->end_time);
-            $this->assertSame($rotationExpected->slot->position, $rotationDTO->slotId);
+            $this->assertSame($rotationExpected->slot->position, $rotationDTO->slot);
             $this->assertSame($rotationExpected->event->ext_id, $rotationDTO->event->id);
             $this->assertSame($rotationExpected->event->map->name, $rotationDTO->event->map);
             $this->assertSame($rotationExpected->event->mode->name, $rotationDTO->event->mode);
