@@ -11,14 +11,16 @@ use App\Models\Brawler;
 use App\Services\Parser\Contracts\ParserInterface;
 use App\Services\Parser\Exceptions\ParsingException;
 use App\Services\Repositories\Contracts\BrawlerRepositoryInterface;
+use App\Services\Repositories\Contracts\Event\EventRotationRepositoryInterface;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 readonly class Parser implements ParserInterface
 {
     public function __construct(
-        private APIClientInterface         $apiClient,
-        private BrawlerRepositoryInterface $brawlerRepository
+        private APIClientInterface               $apiClient,
+        private BrawlerRepositoryInterface       $brawlerRepository,
+        private EventRotationRepositoryInterface $eventRotationRepository,
     ) {}
 
     public function parseBrawlerByExternalId(int $externalId): Brawler
@@ -48,6 +50,27 @@ readonly class Parser implements ParserInterface
             return $this->brawlerRepository->createOrUpdateBrawlers($brawlerDTOs);
         } catch (ResponseException|InvalidDTOException|ValidationException $e) {
             Log::error('Failed to parse all Brawlers: ' . $e->getMessage(), [
+                'exception' => $e
+            ]);
+            throw ParsingException::fromException($e);
+        }
+    }
+
+    /**
+     * @throws ParsingException
+     */
+    public function parseEventsRotation(): array
+    {
+        try {
+            $rotationDTOs = $this->apiClient->getEventsRotation();
+
+            if (empty($rotationDTOs)) {
+                throw ValidationException::withMessages(['No events rotation found in the API response.']);
+            }
+
+            return $this->eventRotationRepository->createOrUpdateEventRotations($rotationDTOs);
+        } catch (ResponseException|InvalidDTOException|ValidationException $e) {
+            Log::error('Failed to parse events rotation: ' . $e->getMessage(), [
                 'exception' => $e
             ]);
             throw ParsingException::fromException($e);

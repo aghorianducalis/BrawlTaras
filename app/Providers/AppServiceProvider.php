@@ -91,7 +91,7 @@ class AppServiceProvider extends ServiceProvider
             return new Parser(
                 apiClient: $app->make(APIClientInterface::class),
                 brawlerRepository: $app->make(BrawlerRepositoryInterface::class),
-                eventRepository: $app->make(EventRepositoryInterface::class),
+                eventRotationRepository: $app->make(EventRotationRepositoryInterface::class),
             );
         });
     }

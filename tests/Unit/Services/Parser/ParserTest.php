@@ -7,13 +7,16 @@ namespace Tests\Unit\Services\Parser;
 use App\API\Client\APIClient;
 use App\API\Contracts\APIClientInterface;
 use App\API\DTO\Response\BrawlerDTO;
+use App\API\DTO\Response\EventRotationDTO;
 use App\API\Exceptions\ResponseException;
 use App\Models\Brawler;
+use App\Models\EventRotation;
 use App\Services\Parser\Contracts\ParserInterface;
 use App\Services\Parser\Exceptions\ParsingException;
 use App\Services\Parser\Parser;
 use App\Services\Repositories\BrawlerRepository;
 use App\Services\Repositories\Contracts\BrawlerRepositoryInterface;
+use App\Services\Repositories\Contracts\Event\EventRotationRepositoryInterface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Log;
 use Mockery;
@@ -26,31 +29,37 @@ use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\Attributes\UsesClass;
 use Tests\TestCase;
 use Tests\Traits\CreatesBrawlers;
+use Tests\Traits\CreatesEventRotations;
 
 #[Group('Parser')]
 #[CoversClass(Parser::class)]
 #[CoversMethod(Parser::class, 'parseBrawlerByExternalId')]
 #[CoversMethod(Parser::class, 'parseAllBrawlers')]
+#[CoversMethod(Parser::class, 'parseEventsRotation')]
 #[UsesClass(APIClient::class)]
 #[UsesClass(BrawlerRepository::class)]
 #[UsesClass(ParsingException::class)]
 class ParserTest extends TestCase
 {
     use CreatesBrawlers;
+    use CreatesEventRotations;
     use RefreshDatabase;
 
     private ParserInterface $parser;
     private MockInterface|APIClientInterface $apiClient;
     private MockInterface|BrawlerRepositoryInterface $brawlerRepository;
+    private MockInterface|EventRotationRepositoryInterface $eventRotationRepository;
 
     protected function setUp(): void
     {
         parent::setUp();
         $this->apiClient = Mockery::mock(APIClientInterface::class);
         $this->brawlerRepository = Mockery::mock(BrawlerRepositoryInterface::class);
+        $this->eventRotationRepository = Mockery::mock(EventRotationRepositoryInterface::class);
         $this->parser = new Parser(
             apiClient: $this->apiClient,
-            brawlerRepository: $this->brawlerRepository
+            brawlerRepository: $this->brawlerRepository,
+            eventRotationRepository: $this->eventRotationRepository,
         );
     }
 
@@ -154,5 +163,26 @@ class ParserTest extends TestCase
 
         $this->expectException(ParsingException::class);
         $this->parser->parseAllBrawlers();
+    }
+
+    #[Test]
+    #[TestDox('Parses events rotation successfully.')]
+    public function test_parses_events_rotation_successfully(): void
+    {
+        $rotations = array_map(fn () => $this->createEventRotationWithRelations(), range(1, 2));
+        $rotationDTOs = array_map(fn(EventRotation $rotation) => EventRotationDTO::fromEloquentModel($rotation), $rotations);
+
+        $this->apiClient->shouldReceive('getEventsRotation')
+            ->once()
+            ->andReturn($rotationDTOs);
+
+        $this->eventRotationRepository->shouldReceive('createOrUpdateEventRotations')
+            ->once()
+            ->with($rotationDTOs)
+            ->andReturn($rotations);
+
+        $result = $this->parser->parseEventsRotation();
+
+        $this->assertEquals($rotations, $result);
     }
 }
