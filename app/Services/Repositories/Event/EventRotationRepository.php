@@ -28,18 +28,6 @@ final readonly class EventRotationRepository implements EventRotationRepositoryI
             $query->where('id', '=', $searchCriteria['id']);
         }
 
-        if (isset($searchCriteria['ext_id'])) {
-            $query->where('ext_id', '=', $searchCriteria['ext_id']);
-        }
-
-        if (isset($searchCriteria['map_id'])) {
-            $query->where('map_id', '=', $searchCriteria['map_id']);
-        }
-
-        if (isset($searchCriteria['mode_id'])) {
-            $query->where('mode_id', '=', $searchCriteria['mode_id']);
-        }
-
         // nice todo more flexible search by datetime
         if (isset($searchCriteria['start_time'])) {
             $query->where('start_time', '=', $searchCriteria['start_time']);
@@ -48,6 +36,8 @@ final readonly class EventRotationRepository implements EventRotationRepositoryI
         if (isset($searchCriteria['end_time'])) {
             $query->where('end_time', '=', $searchCriteria['end_time']);
         }
+
+        // nice todo search by related event and/or slot position
 
         return $query->first();
     }
@@ -60,8 +50,8 @@ final readonly class EventRotationRepository implements EventRotationRepositoryI
         $rotation = null;
 
         DB::transaction(function () use (&$rotation, $rotationDTO) {
-            $startTime = Carbon::createFromFormat($rotationDTO->start_time, 'Ymd\THis.u\Z')->toDateTimeString();
-            $endTime = Carbon::createFromFormat($rotationDTO->end_time, 'Ymd\THis.u\Z')->toDateTimeString();
+            $startTime = Carbon::createFromFormat('Ymd\THis.u\Z', $rotationDTO->start_time)->toDateTimeString();
+            $endTime = Carbon::createFromFormat('Ymd\THis.u\Z', $rotationDTO->end_time)->toDateTimeString();
             $event = $this->eventRepository->createOrUpdateEvent($rotationDTO->event);
             $slot = $this->slotRepository->createOrUpdateEventRotationSlot($rotationDTO->slot);
 

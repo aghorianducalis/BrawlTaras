@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\API\DTO\Response;
 
 use App\API\Exceptions\InvalidDTOException;
+use App\Models\EventModifier as Modifier;
 use App\Models\EventRotation;
 
 final readonly class EventRotationDTO
@@ -66,10 +67,17 @@ final readonly class EventRotationDTO
     public static function fromEloquentModel(EventRotation $rotation): self
     {
         return self::fromArray([
-            'start_time' => $rotation->start_time->format('Ymd\THis.u\Z'),
-            'end_time' => $rotation->start_time->format('Ymd\THis.u\Z'),
-            'event' => EventDTO::fromEloquentModel($rotation->event),
-            'id' => $rotation->slot->position,
+            'startTime' => $rotation->start_time->format('Ymd\THis.u\Z'),
+            'endTime' => $rotation->end_time->format('Ymd\THis.u\Z'),
+            'event' => [
+                'id' => $rotation->event->ext_id,
+                'map' => $rotation->event->map->name,
+                'mode' => $rotation->event->mode->name,
+                'modifiers' => $rotation->event->modifiers->transform(fn (Modifier $modifier) => [
+                    'name' => $modifier->name,
+                ])->toArray(),
+            ],
+            'slotId' => $rotation->slot->position,
         ]);
     }
 }
