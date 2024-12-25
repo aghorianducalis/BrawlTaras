@@ -48,45 +48,38 @@ final readonly class EventRepository implements EventRepositoryInterface
         $event = $this->findEvent([
             'ext_id' => $eventDTO->id,
         ]);
-        $attributes = [
-            'ext_id' => $eventDTO->id,
-        ];
 
-        DB::transaction(function () use (&$event, $eventDTO, $attributes) {
+        DB::transaction(function () use (&$event, $eventDTO) {
+            // Create an Event's related entities: map, mode and modifiers.
+            $map = $this->mapRepository->createOrUpdateEventMap($eventDTO->map);
+            $mode = $this->modeRepository->createOrUpdateEventMode($eventDTO->mode);
+
+            $modifierIds = [];
+
+            foreach ($eventDTO->modifiers as $modifier) {
+                $modifier = $this->modifierRepository->createOrUpdateEventModifier($modifier);
+                $modifierIds[] = $modifier->id;
+            }
+
+            // Create or update Event
+            $attributes = [
+                'ext_id' => $eventDTO->id,
+                'map_id' => $map->id,
+                'mode_id' => $mode->id,
+            ];
+
             if ($event) {
                 $event->update(attributes: $attributes);
             } else {
                 $event = Event::query()->create(attributes: $attributes);
             }
 
-            $this->syncRelations($event, $eventDTO);
+            // Synchronize an Event's related entities: map, mode and modifiers.
+            $event->map()->associate($map);
+            $event->mode()->associate($mode);
+            $event->modifiers()->sync($modifierIds);
         });
 
         return $event->refresh();
-    }
-
-    /**
-     * Synchronize an Event's related entities: map, mode and modifiers.
-     *
-     * @param Event $event
-     * @param EventDTO $eventDTO
-     * @return void
-     */
-    private function syncRelations(Event $event, EventDTO $eventDTO): void
-    {
-        $map = $this->mapRepository->createOrUpdateEventMap($eventDTO->map);
-        $event->map()->associate($map);
-
-        $mode = $this->modeRepository->createOrUpdateEventMode($eventDTO->mode);
-        $event->mode()->associate($mode);
-
-        $modifierIds = [];
-
-        foreach ($eventDTO->modifiers as $modifier) {
-            $modifier = $this->modifierRepository->createOrUpdateEventModifier($modifier);
-            $modifierIds[] = $modifier->id;
-        }
-
-        $event->modifiers()->sync($modifierIds);
     }
 }
