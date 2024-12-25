@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use Carbon\Carbon;
+use Database\Factories\EventMapFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -17,23 +18,24 @@ use Illuminate\Support\Collection;
  * @property Carbon $updated_at
  * @property-read Collection|Event[]|array $events
  */
-class Mode extends Model
+class EventMap extends Model
 {
+    /** @use HasFactory<EventMapFactory> */
     use HasFactory;
 
-    protected $table = 'modes';
+    protected $table = 'event_maps';
 
     protected $fillable = [
         'name',
     ];
 
     /**
-     * Get the events for the mode.
+     * Get the events of current map.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return HasMany
      */
     public function events(): HasMany
     {
-        return $this->hasMany(Event::class, 'mode_id', 'id');
+        return $this->hasMany(Event::class, 'map_id', 'id');
     }
 }

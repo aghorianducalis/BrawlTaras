@@ -11,15 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('events', function (Blueprint $table) {
+        Schema::create('event_rotations', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('mode_id');
-            $table->foreign('mode_id')->references('id')->on('modes');
-            $table->string('map');
-            $table->unsignedBigInteger('ext_id')->unique();
-            $table->unsignedBigInteger('slot_id');
             $table->dateTime('start_time');
             $table->dateTime('end_time');
+            $table->unsignedBigInteger('event_id');
+            $table->foreign('event_id')->references('id')->on('events');
+            $table->unsignedBigInteger('slot_id');
+            $table->foreign('slot_id')->references('id')->on('event_rotation_slots');
             $table->timestamps();
         });
     }
@@ -29,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('events');
+        Schema::dropIfExists('event_rotations');
     }
 };

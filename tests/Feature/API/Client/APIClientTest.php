@@ -7,10 +7,14 @@ namespace Tests\Feature\API\Client;
 use App\API\Client\APIClient;
 use App\API\DTO\Request\BrawlerDTO as BrawlerRequestDTO;
 use App\API\DTO\Request\BrawlerListDTO as BrawlerListRequestDTO;
+use App\API\DTO\Request\EventRotationListDTO;
 use App\API\DTO\Response\BrawlerDTO as BrawlerResponseDTO;
+use App\API\DTO\Response\EventRotationDTO;
 use App\API\Enums\APIEndpoints;
 use App\API\Exceptions\InvalidDTOException;
 use App\API\Exceptions\ResponseException;
+use App\Models\Event;
+use App\Models\EventRotation;
 use GuzzleHttp\Client as HttpClient;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Request;
@@ -50,6 +54,7 @@ use Tests\Traits\CreatesBrawlers;
 #[CoversMethod(APIClient::class, 'makeRequest')]
 #[CoversMethod(APIClient::class, 'getBrawler')]
 #[CoversMethod(APIClient::class, 'getBrawlers')]
+#[CoversMethod(APIClient::class, 'getEventsRotation')]
 class APIClientTest extends TestCase
 {
     use CreatesBrawlers;
@@ -57,7 +62,7 @@ class APIClientTest extends TestCase
 
     private APIClient $apiClient;
 
-    private MockInterface $httpClientMock;
+    private MockInterface|HttpClient $httpClientMock;
 
     private string $apiBaseURI = 'https://api.example.com';
 
@@ -90,41 +95,6 @@ class APIClientTest extends TestCase
 
 
     /**
-     * @throws ResponseException
-     * @throws JsonException
-     */
-    #[Test]
-    #[TestDox('Fetch the list of all brawlers with related accessories and star powers successfully')]
-    public function it_fetches_all_brawlers_successfully(): void
-    {
-        $apiEndpoint = APIEndpoints::Brawlers;
-        $brawlersExpected = array_map(fn () => $this->createBrawlerWithRelations(), range(1, 2));
-        $mockResponse = new Response(200, [], BrawlerListRequestDTO::fromListOfBrawlerModels($brawlersExpected)->toJson());
-
-        $this->httpClientMock
-            ->shouldReceive('request')
-            ->once()
-            ->with(
-                $apiEndpoint->method(),
-                $apiEndpoint->constructRequestURI($this->apiBaseURI),
-                Mockery::on(function ($options) {
-                    return $options['headers']['Authorization'] === "Bearer $this->apiKey";
-                })
-            )
-            ->andReturn($mockResponse);
-
-        $brawlerDTOS = $this->apiClient->getBrawlers();
-
-        $this->assertIsArray($brawlerDTOS);
-        $this->assertCount(sizeof($brawlersExpected), $brawlerDTOS);
-
-        foreach ($brawlerDTOS as $i => $brawlerDTO) {
-            $this->assertInstanceOf(BrawlerResponseDTO::class, $brawlerDTO);
-            $this->assertBrawlerModelMatchesDTO($brawlersExpected[$i], $brawlerDTO);
-        }
-    }
-
-    /**
      * @return void
      * @throws JsonException|ResponseException
      */
@@ -150,6 +120,41 @@ class APIClientTest extends TestCase
 
         $this->assertInstanceOf(BrawlerResponseDTO::class, $brawlerDTOFetched);
         $this->assertBrawlerModelMatchesDTO($brawlerExpected, $brawlerDTOFetched);
+    }
+
+    /**
+     * @throws ResponseException
+     * @throws JsonException
+     */
+    #[Test]
+    #[TestDox('Fetch the list of all brawlers with related accessories and star powers successfully')]
+    public function it_fetches_all_brawlers_successfully(): void
+    {
+        $apiEndpoint = APIEndpoints::Brawlers;
+        $brawlersExpected = array_map(fn () => $this->createBrawlerWithRelations(), range(1, 2));
+        $mockResponse = new Response(200, [], BrawlerListRequestDTO::fromListOfBrawlerModels($brawlersExpected)->toJson());
+
+        $this->httpClientMock
+            ->shouldReceive('request')
+            ->once()
+            ->with(
+                $apiEndpoint->method(),
+                $apiEndpoint->constructRequestURI($this->apiBaseURI),
+                Mockery::on(function ($options) {
+                    return $options['headers']['Authorization'] === "Bearer $this->apiKey";
+                })
+            )
+            ->andReturn($mockResponse);
+
+        $brawlerDTOs = $this->apiClient->getBrawlers();
+
+        $this->assertIsArray($brawlerDTOs);
+        $this->assertCount(sizeof($brawlersExpected), $brawlerDTOs);
+
+        foreach ($brawlerDTOs as $i => $brawlerDTO) {
+            $this->assertInstanceOf(BrawlerResponseDTO::class, $brawlerDTO);
+            $this->assertBrawlerModelMatchesDTO($brawlersExpected[$i], $brawlerDTO);
+        }
     }
 
     #[Test]
@@ -283,8 +288,135 @@ class APIClientTest extends TestCase
         $this->apiClient->getBrawlers();
     }
 
-
     /*
      * End of API endpoints for brawlers.
+     */
+
+
+    /*
+     * API endpoints for events.
+     */
+
+    /**
+     * @throws ResponseException
+     * @throws JsonException
+     */
+    #[Test]
+    #[TestDox('Fetch the list of all brawlers with related accessories and star powers successfully')]
+    public function it_fetches_events_rotation_successfully(): void
+    {
+        $rotations = collect(range(1, 2))->map(fn () => $this->createEventsRotation());
+        $apiEndpoint = APIEndpoints::EventRotation;
+        $mockResponse = new Response(200, [], EventRotationListDTO::fromListOfEloquentModels($rotations->all())->toJson());
+
+        $this->httpClientMock
+            ->shouldReceive('request')
+            ->once()
+            ->with(
+                $apiEndpoint->method(),
+                $apiEndpoint->constructRequestURI($this->apiBaseURI),
+                Mockery::on(function ($options) {
+                    return $options['headers']['Authorization'] === "Bearer $this->apiKey";
+                })
+            )
+            ->andReturn($mockResponse);
+
+        $rotationDTOs = $this->apiClient->getEventsRotation();
+
+        $this->assertIsArray($rotationDTOs);
+        $this->assertCount(sizeof($rotations), $rotationDTOs);
+
+        foreach ($rotationDTOs as $i => $rotationDTO) {
+            $this->assertInstanceOf(EventRotationDTO::class, $rotationDTO);
+            /** @var EventRotation $rotationExpected */
+            $rotationExpected = $rotations->get($i);
+
+            $this->assertSame($rotationExpected->start_time->format('Ymd\THis.u\Z'), $rotationDTO->start_time);
+            $this->assertSame($rotationExpected->end_time->format('Ymd\THis.u\Z'), $rotationDTO->end_time);
+            $this->assertSame($rotationExpected->slot->position, $rotationDTO->slot);
+            $this->assertSame($rotationExpected->event->ext_id, $rotationDTO->event->id);
+            $this->assertSame($rotationExpected->event->map->name, $rotationDTO->event->map);
+            $this->assertSame($rotationExpected->event->mode->name, $rotationDTO->event->mode);
+            $this->assertIsArray($rotationDTO->event->modifiers);
+            $this->assertCount($rotationExpected->event->modifiers->count(), $rotationDTO->event->modifiers);
+            $this->assertSame($rotationExpected->event->modifiers->all(), $rotationDTO->event->modifiers);
+        }
+    }
+
+    #[Test]
+    public function get_events_rotation_throws_response_exception_on_request_failure(): void
+    {
+        $apiEndpoint = APIEndpoints::EventRotation;
+        $this->httpClientMock
+            ->shouldReceive('request')
+            ->once()
+            ->with(
+                $apiEndpoint->method(),
+                $apiEndpoint->constructRequestURI($this->apiBaseURI),
+                Mockery::any()
+            )
+            ->andThrow(new RequestException('Request failed', new Request($apiEndpoint->method(), '')));
+
+        $this->expectException(ResponseException::class);
+
+        $this->apiClient->getEventsRotation();
+    }
+
+    #[Test]
+    public function get_events_rotation_throws_response_exception_on_invalid_json(): void
+    {
+        $apiEndpoint = APIEndpoints::EventRotation;
+        $mockResponse = new Response(200, [], 'invalid-json');
+
+        $this->httpClientMock
+            ->shouldReceive('request')
+            ->once()
+            ->with(
+                $apiEndpoint->method(),
+                $apiEndpoint->constructRequestURI($this->apiBaseURI),
+                Mockery::any()
+            )
+            ->andReturn($mockResponse);
+
+        $this->expectException(ResponseException::class);
+
+        $this->apiClient->getEventsRotation();
+    }
+
+    /**
+     * @throws ResponseException
+     */
+    #[Test]
+    public function get_events_rotation_throws_invalid_dto_exception(): void
+    {
+        $apiEndpoint = APIEndpoints::EventRotation;
+        $mockResponse = new Response(200, [], json_encode([['invalid' => 'data']]));
+
+        $this->httpClientMock
+            ->shouldReceive('request')
+            ->once()
+            ->with(
+                $apiEndpoint->method(),
+                $apiEndpoint->constructRequestURI($this->apiBaseURI),
+                Mockery::any()
+            )
+            ->andReturn($mockResponse);
+
+        $this->expectException(InvalidDTOException::class);
+
+        $this->apiClient->getEventsRotation();
+    }
+
+    private function createEventsRotation(
+        array|callable $attributes = [],
+    ) : EventRotation {
+        return EventRotation::factory()
+            ->for(Event::factory()->withModifiers(count: 3))
+            ->create($attributes);
+    }
+
+
+    /*
+     * End of API endpoints for events.
      */
 }

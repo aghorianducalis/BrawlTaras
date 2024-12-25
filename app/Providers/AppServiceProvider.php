@@ -12,7 +12,19 @@ use App\Services\Repositories\AccessoryRepository;
 use App\Services\Repositories\BrawlerRepository;
 use App\Services\Repositories\Contracts\AccessoryRepositoryInterface;
 use App\Services\Repositories\Contracts\BrawlerRepositoryInterface;
+use App\Services\Repositories\Contracts\Event\EventMapRepositoryInterface;
+use App\Services\Repositories\Contracts\Event\EventModeRepositoryInterface;
+use App\Services\Repositories\Contracts\Event\EventModifierRepositoryInterface;
+use App\Services\Repositories\Contracts\Event\EventRepositoryInterface;
+use App\Services\Repositories\Contracts\Event\EventRotationRepositoryInterface;
+use App\Services\Repositories\Contracts\Event\EventRotationSlotRepositoryInterface;
 use App\Services\Repositories\Contracts\StarPowerRepositoryInterface;
+use App\Services\Repositories\Event\EventMapRepository;
+use App\Services\Repositories\Event\EventModeRepository;
+use App\Services\Repositories\Event\EventModifierRepository;
+use App\Services\Repositories\Event\EventRepository;
+use App\Services\Repositories\Event\EventRotationRepository;
+use App\Services\Repositories\Event\EventRotationSlotRepository;
 use App\Services\Repositories\StarPowerRepository;
 use GuzzleHttp\Client as HttpClient;
 use Illuminate\Support\ServiceProvider;
@@ -47,11 +59,39 @@ class AppServiceProvider extends ServiceProvider
             );
         });
 
+        // events rotation
+        $this->app->singleton(abstract: EventMapRepositoryInterface::class, concrete: function ($app) {
+            return new EventMapRepository();
+        });
+        $this->app->singleton(abstract: EventModeRepositoryInterface::class, concrete: function ($app) {
+            return new EventModeRepository();
+        });
+        $this->app->singleton(abstract: EventModifierRepositoryInterface::class, concrete: function ($app) {
+            return new EventModifierRepository();
+        });
+        $this->app->singleton(abstract: EventRepositoryInterface::class, concrete: function ($app) {
+            return new EventRepository(
+                mapRepository: $app->make(abstract: EventMapRepositoryInterface::class),
+                modeRepository: $app->make(abstract: EventModeRepositoryInterface::class),
+                modifierRepository: $app->make(abstract: EventModifierRepositoryInterface::class),
+            );
+        });
+        $this->app->singleton(abstract: EventRotationSlotRepositoryInterface::class, concrete: function ($app) {
+            return new EventRotationSlotRepository();
+        });
+        $this->app->singleton(abstract: EventRotationRepositoryInterface::class, concrete: function ($app) {
+            return new EventRotationRepository(
+                eventRepository: $app->make(abstract: EventRepositoryInterface::class),
+                slotRepository: $app->make(abstract: EventRotationSlotRepositoryInterface::class),
+            );
+        });
+
         // Register Parser
         $this->app->singleton(abstract: ParserInterface::class, concrete: function ($app) {
             return new Parser(
                 apiClient: $app->make(APIClientInterface::class),
-                brawlerRepository: $app->make(BrawlerRepositoryInterface::class)
+                brawlerRepository: $app->make(BrawlerRepositoryInterface::class),
+                eventRotationRepository: $app->make(EventRotationRepositoryInterface::class),
             );
         });
     }
