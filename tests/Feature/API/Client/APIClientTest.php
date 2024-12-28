@@ -9,12 +9,16 @@ use App\API\DTO\Request\BrawlerDTO as BrawlerRequestDTO;
 use App\API\DTO\Request\BrawlerListDTO as BrawlerListRequestDTO;
 use App\API\DTO\Request\EventRotationListDTO;
 use App\API\DTO\Response\BrawlerDTO as BrawlerResponseDTO;
+use App\API\DTO\Response\ClubDTO;
 use App\API\DTO\Response\EventRotationDTO;
+use App\API\DTO\Response\PlayerDTO;
 use App\API\Enums\APIEndpoints;
 use App\API\Exceptions\InvalidDTOException;
 use App\API\Exceptions\ResponseException;
+use App\Models\Club;
 use App\Models\Event;
 use App\Models\EventRotation;
+use App\Models\Player;
 use GuzzleHttp\Client as HttpClient;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Request;
@@ -54,6 +58,8 @@ use Tests\Traits\CreatesBrawlers;
 #[CoversMethod(APIClient::class, 'makeRequest')]
 #[CoversMethod(APIClient::class, 'getBrawler')]
 #[CoversMethod(APIClient::class, 'getBrawlers')]
+#[CoversMethod(APIClient::class, 'getClubByTag')]
+#[CoversMethod(APIClient::class, 'getClubMembers')]
 #[CoversMethod(APIClient::class, 'getEventsRotation')]
 class APIClientTest extends TestCase
 {
@@ -419,4 +425,257 @@ class APIClientTest extends TestCase
     /*
      * End of API endpoints for events.
      */
+
+
+    /*
+     * End of API endpoints for clubs.
+     */
+
+
+    /**
+     * @return void
+     * @throws ResponseException
+     * @throws JsonException
+     */
+    #[Test]
+    #[TestDox('Fetch a single club with its members successfully')]
+    public function it_fetches_club_by_tag_successfully(): void
+    {
+        $club = $this->createClubWithMembers();
+        $apiEndpoint = APIEndpoints::ClubByTag;
+        $mockResponse = new Response(200, [], json_encode(ClubDTO::fromEloquentModel($club), JSON_THROW_ON_ERROR));
+
+        $this->httpClientMock
+            ->shouldReceive('request')
+            ->once()
+            ->with(
+                $apiEndpoint->method(),
+                $apiEndpoint->constructRequestURI($this->apiBaseURI, ['club_tag' => $club->tag]),
+                Mockery::on(function ($options) {
+                    return $options['headers']['Authorization'] === "Bearer $this->apiKey";
+                })
+            )
+            ->andReturn($mockResponse);
+
+        $clubDTO = $this->apiClient->getClubByTag($club->tag);
+
+        $this->assertInstanceOf(ClubDTO::class, $clubDTO);
+        $this->assertSame($club->tag, $clubDTO->tag);
+        $this->assertSame($club->name, $clubDTO->name);
+        $this->assertSame($club->description, $clubDTO->description);
+        $this->assertSame($club->type, $clubDTO->type);
+        $this->assertSame($club->badge_id, $clubDTO->badgeId);
+        $this->assertSame($club->required_trophies, $clubDTO->requiredTrophies);
+        $this->assertSame($club->trophies, $clubDTO->trophies);
+        $this->assertIsArray($clubDTO->members);
+        $this->assertCount($club->members->count(), $clubDTO->members);
+
+        foreach ($clubDTO->members as $i => $memberDTO) {
+            $this->assertInstanceOf(PlayerDTO::class, $memberDTO);
+            /** @var Player $member */
+            $member = $club->members->get($i);
+
+            $this->assertSame($member->tag, $memberDTO->tag);
+            $this->assertSame($member->name, $memberDTO->name);
+            $this->assertSame($member->name_color, $memberDTO->nameColor);
+            $this->assertSame($member->role ?? '', $memberDTO->role); // todo
+            $this->assertSame($member->trophies, $memberDTO->trophies);
+            $this->assertSame($member->icon_id, $memberDTO->icon['id']);
+        }
+    }
+
+    #[Test]
+    public function get_club_by_tag_throws_response_exception_on_request_failure(): void
+    {
+        $clubTag = 'abc';
+        $apiEndpoint = APIEndpoints::ClubByTag;
+        $this->httpClientMock
+            ->shouldReceive('request')
+            ->once()
+            ->with(
+                $apiEndpoint->method(),
+                $apiEndpoint->constructRequestURI($this->apiBaseURI, ['club_tag' => $clubTag]),
+                Mockery::any()
+            )
+            ->andThrow(new RequestException('Request failed', new Request($apiEndpoint->method(), '')));
+
+        $this->expectException(ResponseException::class);
+
+        $this->apiClient->getClubByTag($clubTag);
+    }
+
+    #[Test]
+    public function get_club_by_tag_throws_response_exception_on_invalid_json(): void
+    {
+        $clubTag = 'abc';
+        $apiEndpoint = APIEndpoints::ClubByTag;
+        $mockResponse = new Response(200, [], 'invalid-json');
+
+        $this->httpClientMock
+            ->shouldReceive('request')
+            ->once()
+            ->with(
+                $apiEndpoint->method(),
+                $apiEndpoint->constructRequestURI($this->apiBaseURI, ['club_tag' => $clubTag]),
+                Mockery::any()
+            )
+            ->andReturn($mockResponse);
+
+        $this->expectException(ResponseException::class);
+
+        $this->apiClient->getClubByTag($clubTag);
+    }
+
+    /**
+     * @throws ResponseException
+     */
+    #[Test]
+    public function get_club_by_tag_throws_invalid_dto_exception(): void
+    {
+        $clubTag = 'abc';
+        $apiEndpoint = APIEndpoints::ClubByTag;
+        $mockResponse = new Response(200, [], json_encode([['invalid' => 'data']]));
+
+        $this->httpClientMock
+            ->shouldReceive('request')
+            ->once()
+            ->with(
+                $apiEndpoint->method(),
+                $apiEndpoint->constructRequestURI($this->apiBaseURI, ['club_tag' => $clubTag]),
+                Mockery::any()
+            )
+            ->andReturn($mockResponse);
+
+        $this->expectException(InvalidDTOException::class);
+
+        $this->apiClient->getClubByTag($clubTag);
+    }
+
+    /**
+     * @throws ResponseException
+     * @throws JsonException
+     */
+    #[Test]
+    #[TestDox('Fetch a list of club members successfully.')]
+    public function it_fetches_club_members_successfully(): void
+    {
+        $club = $this->createClubWithMembers();
+        $apiEndpoint = APIEndpoints::ClubMembers;
+        $mockResponse = new Response(
+            200,
+            [],
+            json_encode(['items' => PlayerDTO::fromEloquentModels($club->members->all())], JSON_THROW_ON_ERROR),
+        );
+
+        $this->httpClientMock
+            ->shouldReceive('request')
+            ->once()
+            ->with(
+                $apiEndpoint->method(),
+                $apiEndpoint->constructRequestURI($this->apiBaseURI, ['club_tag' => $club->tag]),
+                Mockery::on(function ($options) {
+                    return $options['headers']['Authorization'] === "Bearer $this->apiKey";
+                })
+            )
+            ->andReturn($mockResponse);
+
+        $memberDTOs = $this->apiClient->getClubMembers($club->tag);
+
+        $this->assertIsArray($memberDTOs);
+        $this->assertCount($club->members->count(), $memberDTOs);
+
+        foreach ($memberDTOs as $i => $memberDTO) {
+            $this->assertInstanceOf(PlayerDTO::class, $memberDTO);
+            /** @var Player $member */
+            $member = $club->members->get($i);
+
+            $this->assertSame($member->tag, $memberDTO->tag);
+            $this->assertSame($member->name, $memberDTO->name);
+            $this->assertSame($member->name_color, $memberDTO->nameColor);
+            $this->assertSame($member->role ?? '', $memberDTO->role); // todo
+            $this->assertSame($member->trophies, $memberDTO->trophies);
+            $this->assertSame($member->icon_id, $memberDTO->icon['id']);
+        }
+    }
+
+    #[Test]
+    public function get_club_members_throws_response_exception_on_request_failure(): void
+    {
+        $clubTag = 'abc';
+        $apiEndpoint = APIEndpoints::ClubMembers;
+        $this->httpClientMock
+            ->shouldReceive('request')
+            ->once()
+            ->with(
+                $apiEndpoint->method(),
+                $apiEndpoint->constructRequestURI($this->apiBaseURI, ['club_tag' => $clubTag]),
+                Mockery::any()
+            )
+            ->andThrow(new RequestException('Request failed', new Request($apiEndpoint->method(), '')));
+
+        $this->expectException(ResponseException::class);
+
+        $this->apiClient->getClubMembers($clubTag);
+    }
+
+    #[Test]
+    public function get_club_members_throws_response_exception_on_invalid_json(): void
+    {
+        $clubTag = 'abc';
+        $apiEndpoint = APIEndpoints::ClubMembers;
+        $mockResponse = new Response(200, [], 'invalid-json');
+
+        $this->httpClientMock
+            ->shouldReceive('request')
+            ->once()
+            ->with(
+                $apiEndpoint->method(),
+                $apiEndpoint->constructRequestURI($this->apiBaseURI, ['club_tag' => $clubTag]),
+                Mockery::any()
+            )
+            ->andReturn($mockResponse);
+
+        $this->expectException(ResponseException::class);
+
+        $this->apiClient->getClubMembers($clubTag);
+    }
+
+    /**
+     * @throws ResponseException
+     */
+    #[Test]
+    public function get_club_members_throws_invalid_dto_exception(): void
+    {
+        $clubTag = 'abc';
+        $apiEndpoint = APIEndpoints::ClubMembers;
+        $mockResponse = new Response(200, [], json_encode([['invalid' => 'data']]));
+
+        $this->httpClientMock
+            ->shouldReceive('request')
+            ->once()
+            ->with(
+                $apiEndpoint->method(),
+                $apiEndpoint->constructRequestURI($this->apiBaseURI, ['club_tag' => $clubTag]),
+                Mockery::any()
+            )
+            ->andReturn($mockResponse);
+
+        $this->expectException(InvalidDTOException::class);
+
+        $this->apiClient->getClubMembers($clubTag);
+    }
+
+    private function createClubWithMembers(
+        array|callable $attributes = [],
+        int $memberCount = 10,
+    ) : Club {
+        return Club::factory()
+            ->withMembers($memberCount)
+            ->create($attributes);
+    }
+
+    /*
+     * API endpoints for clubs.
+     */
+
 }

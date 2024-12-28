@@ -12,11 +12,17 @@ enum APIEndpoints: string
 
     case EventRotation = "/events/rotation";
 
+    case ClubByTag = "/clubs/{club_tag}";
+
+    case ClubMembers = "/clubs/{club_tag}/members";
+
     public function method(): string
     {
         return match($this) {
             APIEndpoints::Brawlers,
             APIEndpoints::BrawlerById,
+            APIEndpoints::ClubByTag,
+            APIEndpoints::ClubMembers,
             APIEndpoints::EventRotation, => "GET",
         };
     }
