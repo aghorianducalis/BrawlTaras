@@ -61,7 +61,7 @@ final readonly class APIClient implements APIClientInterface
         }
     }
 
-    public function getClubByTag(string $clubTag = "%23QQYQ0V2J"): ClubDTO
+    public function getClubByTag(string $clubTag): ClubDTO
     {
         try {
             $responseData = $this->makeRequest(APIEndpoints::ClubByTag, ['club_tag' => $clubTag]);
@@ -72,7 +72,7 @@ final readonly class APIClient implements APIClientInterface
         }
     }
 
-    public function getClubMembers(string $clubTag = "%23QQYQ0V2J"): array
+    public function getClubMembers(string $clubTag): array
     {
         try {
             $responseData = $this->makeRequest(APIEndpoints::ClubMembers, ['club_tag' => $clubTag]);

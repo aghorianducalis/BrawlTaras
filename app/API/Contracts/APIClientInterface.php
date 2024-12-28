@@ -41,11 +41,12 @@ interface APIClientInterface
     /**
      * List club members.
      *
-     * @throws ResponseException
-     * @throws InvalidDTOException
+     * @param string $clubTag
      * @return array<PlayerDTO>
+     * @throws InvalidDTOException
+     * @throws ResponseException
      */
-    public function getClubMembers(): array;
+    public function getClubMembers(string $clubTag): array;
 
     /**
      * Fetch events rotation.
