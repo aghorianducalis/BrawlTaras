@@ -81,15 +81,29 @@ final readonly class PlayerDTO
      */
     public static function fromEloquentModel(Player $player): self
     {
-        return self::fromArray([
+        return self::fromArray(self::eloquentModelToArray(player: $player));
+    }
+
+    /**
+     * @param array<Player> $players
+     * @return array<PlayerDTO>
+     */
+    public static function fromEloquentModels(array $players): array
+    {
+        return array_map(fn(Player $player) => self::fromEloquentModel($player), $players);
+    }
+
+    public static function eloquentModelToArray(Player $player): array
+    {
+        return [
             'tag' => $player->tag,
             'name' => $player->name,
             'nameColor' => $player->name_color,
-            'role' => $player->role,// todo enum, column of players table or intermediate (club_player.role) if many-to-many
+            'role' => $player->role ?? '',// todo enum, column of players table or intermediate (club_player.role) if many-to-many
             'trophies' => $player->trophies,
             'icon' => [
                 'id' => $player->icon_id,
             ],
-        ]);
+        ];
     }
 }

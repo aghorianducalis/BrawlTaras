@@ -6,6 +6,7 @@ namespace App\API\DTO\Response;
 
 use App\API\Exceptions\InvalidDTOException;
 use App\Models\Club;
+use App\Models\Player;
 
 final readonly class ClubDTO
 {
@@ -80,7 +81,12 @@ final readonly class ClubDTO
      */
     public static function fromEloquentModel(Club $club): self
     {
-        return self::fromArray([
+        return self::fromArray(self::eloquentModelToArray(club: $club));
+    }
+
+    public static function eloquentModelToArray(Club $club): array
+    {
+        return [
             'tag' => $club->tag,
             'name' => $club->name,
             'description' => $club->description,
@@ -88,7 +94,10 @@ final readonly class ClubDTO
             'badgeId' => $club->badge_id,
             'requiredTrophies' => $club->required_trophies,
             'trophies' => $club->trophies,
-            'members' => $club->members->toArray(), // todo
-        ]);
+            'members' => array_map(
+                fn(Player $player) => PlayerDTO::eloquentModelToArray(player: $player),
+                $club->members->all()
+            ),
+        ];
     }
 }
