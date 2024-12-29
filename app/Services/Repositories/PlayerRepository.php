@@ -54,7 +54,7 @@ final readonly class PlayerRepository implements PlayerRepositoryInterface
                 'name_color' => $playerDTO->nameColor,
                 'role' => $playerDTO->role, // todo
                 'trophies' => $playerDTO->trophies,
-                'icon_id' => $playerDTO->icon,
+                'icon_id' => $playerDTO->icon['id'], // todo
             ];
 
             if ($player) {

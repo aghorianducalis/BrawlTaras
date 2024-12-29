@@ -14,7 +14,7 @@ use Illuminate\Support\Collection;
 
 /**
  * @property int $id
- * @property int $ext_id
+ * @property int|null $ext_id
  * @property string $tag
  * @property string $name
  * @property string $name_color
