@@ -30,10 +30,10 @@ use Illuminate\Support\Collection;
  * @property int $trio_victories
  * @property int $best_time_robo_rumble
  * @property int $best_time_as_big_brawler
- * @property int $club_id
+ * @property int|null $club_id
  * @property Carbon $created_at
  * @property Carbon $updated_at
- * @property-read Club $club
+ * @property-read Club|null $club
  * @property-read Collection|PlayerBrawler[]|array $playerBrawlers
  */
 class Player extends Model
