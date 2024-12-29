@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace Tests\Unit\Services\Repositories;
 
 use App\API\DTO\Response\PlayerDTO;
+use App\Models\Club;
 use App\Models\Player;
 use App\Services\Repositories\Contracts\PlayerRepositoryInterface;
 use App\Services\Repositories\PlayerRepository;
+use Database\Factories\ClubFactory;
 use Database\Factories\PlayerFactory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -18,6 +20,7 @@ use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\Attributes\UsesClass;
 use Tests\TestCase;
+use Tests\Traits\CreatesPlayers;
 
 #[Group('Repositories')]
 #[CoversClass(PlayerRepository::class)]
@@ -25,8 +28,11 @@ use Tests\TestCase;
 #[CoversMethod(PlayerRepository::class, 'createOrUpdatePlayer')]
 #[UsesClass(Player::class)]
 #[UsesClass(PlayerFactory::class)]
+#[UsesClass(Club::class)]
+#[UsesClass(ClubFactory::class)]
 class PlayerRepositoryTest extends TestCase
 {
+    use CreatesPlayers;
     use RefreshDatabase;
 
     private PlayerRepository $repository;
@@ -38,7 +44,7 @@ class PlayerRepositoryTest extends TestCase
     }
 
     #[Test]
-    #[TestDox('Create and fetch the player with relations successfully.')]
+    #[TestDox('Fetch the player with relations successfully.')]
     #[TestWith(['ext_id', 20251212])]
     #[TestWith(['tag', '#abcd1234'])]
     #[TestWith(['name', 'Taras Shevchenko'])]
@@ -84,8 +90,10 @@ class PlayerRepositoryTest extends TestCase
     public function test_update_existing_player(): void
     {
         $player = Player::factory()->create();
-        // create DTO to store the new data for player with the same ext ID
-        $playerDTO = PlayerDTO::fromEloquentModel(Player::factory()->make());
+        // create DTO to store the new data for player with the same tag
+        $playerDTO = PlayerDTO::fromEloquentModel(Player::factory()->make(attributes: [
+            'tag' => $player->tag,
+        ]));
 
         $playerUpdated = $this->repository->createOrUpdatePlayer($playerDTO);
 
@@ -95,40 +103,5 @@ class PlayerRepositoryTest extends TestCase
         ]);
 
         $this->assertPlayerModelMatchesDTO($playerUpdated, $playerDTO);
-    }
-
-    private function assertEqualPlayerModels(Player $playerExpected, ?Player $playerActual): void
-    {
-        $this->assertNotNull($playerActual);
-        $this->assertInstanceOf(Player::class, $playerActual);
-        $this->assertSame($playerExpected->id, $playerActual->id);
-        $this->assertSame($playerExpected->ext_id, $playerActual->ext_id);
-        $this->assertSame($playerExpected->tag, $playerActual->tag);
-        $this->assertSame($playerExpected->name, $playerActual->name);
-        $this->assertSame($playerExpected->club_id, $playerActual->club_id);
-        $this->assertTrue($playerExpected->created_at->equalTo($playerActual->created_at));
-
-        // compare the player's relations
-        $playerExpected->load([
-            'club',
-        ]);
-        $playerActual->load([
-            'club',
-        ]);
-
-        $this->assertEquals(
-            $playerExpected->club->toArray(),
-            $playerActual->club->toArray()
-        );
-    }
-
-    private function assertPlayerModelMatchesDTO(Player $player, PlayerDTO $playerDTO): void
-    {
-        $this->assertSame($player->tag, $playerDTO->tag);
-        $this->assertSame($player->name, $playerDTO->name);
-        $this->assertSame($player->name_color, $playerDTO->nameColor);
-//        $this->assertSame($player->role, $playerDTO->role);//todo
-        $this->assertSame($player->trophies, $playerDTO->trophies);
-        $this->assertSame($player->icon_id, $playerDTO->icon['id']);//todo
     }
 }
