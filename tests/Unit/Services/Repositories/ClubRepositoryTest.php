@@ -131,7 +131,6 @@ class ClubRepositoryTest extends TestCase
 
         $this->assertClubModelMatchesDTO($clubUpdated, $clubDTO);
 
-
         $club->load(['members']);
 
         // assert that all new members belong to club (DB relation check)

@@ -8,10 +8,13 @@ use App\API\Contracts\APIClientInterface;
 use App\API\Exceptions\InvalidDTOException;
 use App\API\Exceptions\ResponseException;
 use App\Models\Brawler;
+use App\Models\Club;
 use App\Services\Parser\Contracts\ParserInterface;
 use App\Services\Parser\Exceptions\ParsingException;
 use App\Services\Repositories\Contracts\BrawlerRepositoryInterface;
+use App\Services\Repositories\Contracts\ClubRepositoryInterface;
 use App\Services\Repositories\Contracts\Event\EventRotationRepositoryInterface;
+use App\Services\Repositories\Contracts\PlayerRepositoryInterface;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
@@ -20,6 +23,8 @@ readonly class Parser implements ParserInterface
     public function __construct(
         private APIClientInterface               $apiClient,
         private BrawlerRepositoryInterface       $brawlerRepository,
+        private ClubRepositoryInterface          $clubRepository,
+        private PlayerRepositoryInterface        $playerRepository,
         private EventRotationRepositoryInterface $eventRotationRepository,
     ) {}
 
@@ -56,9 +61,34 @@ readonly class Parser implements ParserInterface
         }
     }
 
-    /**
-     * @throws ParsingException
-     */
+    public function parseClubByTag(string $clubTag): Club
+    {
+        try {
+            $clubDTO = $this->apiClient->getClubByTag($clubTag);
+
+            return $this->clubRepository->createOrUpdateClub($clubDTO);
+        } catch (ResponseException|InvalidDTOException $e) {
+            Log::error('Failed to parse club: ' . $e->getMessage(), [
+                'exception' => $e
+            ]);
+            throw ParsingException::fromException($e);
+        }
+    }
+
+    public function parseClubMembers(string $clubTag): array
+    {
+        try {
+            $playerDTOs = $this->apiClient->getClubMembers($clubTag);
+
+            return $this->playerRepository->createOrUpdatePlayers($playerDTOs);
+        } catch (ResponseException|InvalidDTOException $e) {
+            Log::error('Failed to parse club members: ' . $e->getMessage(), [
+                'exception' => $e
+            ]);
+            throw ParsingException::fromException($e);
+        }
+    }
+
     public function parseEventsRotation(): array
     {
         try {

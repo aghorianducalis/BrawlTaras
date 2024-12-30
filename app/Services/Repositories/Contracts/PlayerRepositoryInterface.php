@@ -24,4 +24,12 @@ interface PlayerRepositoryInterface
      * @return Player
      */
     public function createOrUpdatePlayer(PlayerDTO $playerDTO): Player;
+
+    /**
+     * Bulk create or update players in the database.
+     *
+     * @param array<PlayerDTO> $playerDTOs
+     * @return array<Player>
+     */
+    public function createOrUpdatePlayers(array $playerDTOs): array;
 }
