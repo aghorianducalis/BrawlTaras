@@ -66,4 +66,9 @@ final readonly class PlayerRepository implements PlayerRepositoryInterface
 
         return $player->refresh();
     }
+
+    public function createOrUpdatePlayers(array $playerDTOs): array
+    {
+        return array_map(fn (PlayerDTO $dto) => $this->createOrUpdatePlayer($dto), $playerDTOs);
+    }
 }

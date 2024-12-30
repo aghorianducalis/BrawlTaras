@@ -83,6 +83,7 @@ final readonly class EventRotationRepository implements EventRotationRepositoryI
 
     /**
      * @inheritdoc
+     * @throws Exception
      */
     public function createOrUpdateEventRotations(array $rotationDTOs): array
     {
