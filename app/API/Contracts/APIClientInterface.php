@@ -8,6 +8,8 @@ use App\API\DTO\Response\BrawlerDTO;
 use App\API\DTO\Response\ClubDTO;
 use App\API\DTO\Response\EventRotationDTO;
 use App\API\DTO\Response\ClubPlayerDTO;
+use App\API\DTO\Response\PlayerBattleLogDTO;
+use App\API\DTO\Response\PlayerDTO;
 use App\API\Exceptions\InvalidDTOException;
 use App\API\Exceptions\ResponseException;
 
@@ -56,4 +58,24 @@ interface APIClientInterface
      * @return array<EventRotationDTO>
      */
     public function getEventsRotation(): array;
+
+    /**
+     * Get information about a single player by player tag.
+     *
+     * @param string $playerTag
+     * @return PlayerDTO
+     * @throws ResponseException
+     * @throws InvalidDTOException
+     */
+    public function getPlayerByTag(string $playerTag): PlayerDTO;
+
+    /**
+     * Get list of recent battle results for a player.
+     *
+     * @param string $playerTag
+     * @return array<PlayerBattleLogDTO>
+     * @throws InvalidDTOException
+     * @throws ResponseException
+     */
+    public function getPlayerBattleLog(string $playerTag): array;
 }

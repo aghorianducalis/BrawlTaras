@@ -12,9 +12,12 @@ use App\API\DTO\Response\BrawlerDTO as BrawlerResponseDTO;
 use App\API\DTO\Response\ClubDTO;
 use App\API\DTO\Response\EventRotationDTO;
 use App\API\DTO\Response\ClubPlayerDTO;
+use App\API\DTO\Response\PlayerBrawlerDTO;
+use App\API\DTO\Response\PlayerDTO;
 use App\API\Enums\APIEndpoints;
 use App\API\Exceptions\InvalidDTOException;
 use App\API\Exceptions\ResponseException;
+use App\Models\Brawler;
 use App\Models\Club;
 use App\Models\Event;
 use App\Models\EventRotation;
@@ -663,5 +666,159 @@ class APIClientTest extends TestCase
 
     /*
      * End of API endpoints for clubs.
+     */
+
+    /*
+     * API endpoints for players.
+     */
+
+    /**
+     * @throws ResponseException
+     * @throws JsonException
+     */
+    #[Test]
+    #[TestDox('Fetch a single player with its brawlers successfully')]
+    public function it_fetches_player_by_tag_successfully(): void
+    {
+        $player = $this->createPlayerWithBrawlers();
+//        dd(
+////            $player,
+//            $player->toArray(),
+////            PlayerDTO::fromEloquentModel($player),
+//            PlayerDTO::eloquentModelToArray($player),
+//            json_encode(PlayerDTO::eloquentModelToArray($player), JSON_THROW_ON_ERROR),
+//        );
+        $apiEndpoint = APIEndpoints::PlayerByTag;
+        $mockResponse = new Response(200, [], json_encode(PlayerDTO::eloquentModelToArray($player), JSON_THROW_ON_ERROR));
+
+        $this->httpClientMock
+            ->shouldReceive('request')
+            ->once()
+            ->with(
+                $apiEndpoint->method(),
+                $apiEndpoint->constructRequestURI($this->apiBaseURI, ['player_tag' => $player->tag]),
+                Mockery::on(function ($options) {
+                    return $options['headers']['Authorization'] === "Bearer $this->apiKey";
+                })
+            )
+            ->andReturn($mockResponse);
+
+        $playerDTO = $this->apiClient->getPlayerByTag($player->tag);
+//        dd(
+//            111,
+//            $player->toArray(),
+//            $playerDTO,
+//        );
+
+        $this->assertInstanceOf(PlayerDTO::class, $playerDTO);
+        $this->assertSame($player->tag, $playerDTO->tag);
+        $this->assertSame($player->name, $playerDTO->name);
+        $this->assertSame($player->name_color, $playerDTO->nameColor);
+        $this->assertSame($player->icon_id, $playerDTO->icon['id']);
+        $this->assertSame($player->trophies, $playerDTO->trophies);
+        $this->assertSame($player->highest_trophies, $playerDTO->highestTrophies);
+        $this->assertSame($player->exp_level, $playerDTO->expLevel);
+        $this->assertSame($player->exp_points, $playerDTO->expPoints);
+        $this->assertSame($player->is_qualified_from_championship_league, $playerDTO->isQualifiedFromChampionshipChallenge);
+        $this->assertSame($player->solo_victories, $playerDTO->victoriesSolo);
+        $this->assertSame($player->duo_victories, $playerDTO->victoriesDuo);
+        $this->assertSame($player->trio_victories, $playerDTO->victories3vs3);
+        $this->assertSame($player->best_time_robo_rumble, $playerDTO->bestRoboRumbleTime);
+        $this->assertSame($player->best_time_as_big_brawler, $playerDTO->bestTimeAsBigBrawler);
+
+        $this->assertIsArray($playerDTO->club);
+        $this->assertSame($player->club->tag, $playerDTO->club['tag']);
+        $this->assertSame($player->club->name, $playerDTO->club['name']);
+
+        $this->assertIsArray($playerDTO->brawlers);
+        $this->assertCount($player->playerBrawlers()->count(), $playerDTO->brawlers);
+
+        foreach ($playerDTO->brawlers as $i => $playerBrawlerDTO) {
+            $this->assertInstanceOf(PlayerBrawlerDTO::class, $playerBrawlerDTO);
+            /** @var Brawler $playerBrawler */
+            $playerBrawler = $player->playerBrawlers->get($i);
+
+//            $this->assertPlayerModelMatchesDTO(player: $member, playerDTO: $playerBrawlerDTO);
+        }
+    }
+
+    #[Test]
+    #[TestWith(['player_tag_123'])]
+    public function get_player_by_tag_throws_response_exception_on_request_failure(string $playerTag): void
+    {
+        $apiEndpoint = APIEndpoints::PlayerByTag;
+        $this->httpClientMock
+            ->shouldReceive('request')
+            ->once()
+            ->with(
+                $apiEndpoint->method(),
+                $apiEndpoint->constructRequestURI($this->apiBaseURI, ['player_tag' => $playerTag]),
+                Mockery::any()
+            )
+            ->andThrow(new RequestException('Request failed', new Request($apiEndpoint->method(), '')));
+
+        $this->expectException(ResponseException::class);
+
+        $this->apiClient->getPlayerByTag($playerTag);
+    }
+
+    #[Test]
+    #[TestWith(['player_tag_123'])]
+    public function get_player_by_tag_throws_response_exception_on_invalid_json(string $playerTag): void
+    {
+        $apiEndpoint = APIEndpoints::PlayerByTag;
+        $mockResponse = new Response(200, [], 'invalid-json');
+
+        $this->httpClientMock
+            ->shouldReceive('request')
+            ->once()
+            ->with(
+                $apiEndpoint->method(),
+                $apiEndpoint->constructRequestURI($this->apiBaseURI, ['player_tag' => $playerTag]),
+                Mockery::any()
+            )
+            ->andReturn($mockResponse);
+
+        $this->expectException(ResponseException::class);
+
+        $this->apiClient->getPlayerByTag($playerTag);
+    }
+
+    /**
+     * @throws ResponseException
+     */
+    #[Test]
+    #[TestWith(['player_tag_123'])]
+    public function get_player_by_tag_throws_invalid_dto_exception(string $playerTag): void
+    {
+        $apiEndpoint = APIEndpoints::PlayerByTag;
+        $mockResponse = new Response(200, [], json_encode([['invalid' => 'data']]));
+
+        $this->httpClientMock
+            ->shouldReceive('request')
+            ->once()
+            ->with(
+                $apiEndpoint->method(),
+                $apiEndpoint->constructRequestURI($this->apiBaseURI, ['player_tag' => $playerTag]),
+                Mockery::any()
+            )
+            ->andReturn($mockResponse);
+
+        $this->expectException(InvalidDTOException::class);
+
+        $this->apiClient->getPlayerByTag($playerTag);
+    }
+
+    private function createPlayerWithBrawlers(
+        array|callable $attributes = [],
+        int            $brawlerCount = 10,
+    ) : Player {
+        return Player::factory()
+//            ->withBrawlers($brawlerCount)
+            ->create($attributes);
+    }
+
+    /*
+     * End of API endpoints for players.
      */
 }
