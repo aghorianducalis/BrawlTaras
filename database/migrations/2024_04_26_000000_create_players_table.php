@@ -13,7 +13,6 @@ return new class extends Migration
     {
         Schema::create('players', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('ext_id')->unique()->nullable();
             $table->string('tag', 20)->unique();
             $table->string('name');
             $table->string('name_color', 20);

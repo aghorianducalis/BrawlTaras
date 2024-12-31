@@ -21,10 +21,6 @@ final readonly class PlayerRepository implements PlayerRepositoryInterface
             $query->where('id', '=', $searchCriteria['id']);
         }
 
-        if (isset($searchCriteria['ext_id'])) {
-            $query->where('ext_id', '=', $searchCriteria['ext_id']);
-        }
-
         if (isset($searchCriteria['tag'])) {
             $query->where('tag', '=', $searchCriteria['tag']);
         }

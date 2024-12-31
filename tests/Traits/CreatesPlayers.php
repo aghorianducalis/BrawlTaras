@@ -14,7 +14,6 @@ trait CreatesPlayers
         $this->assertNotNull($playerActual);
         $this->assertInstanceOf(Player::class, $playerActual);
         $this->assertSame($playerExpected->id, $playerActual->id);
-        $this->assertSame($playerExpected->ext_id, $playerActual->ext_id);
         $this->assertSame($playerExpected->tag, $playerActual->tag);
         $this->assertSame($playerExpected->name, $playerActual->name);
         $this->assertSame($playerExpected->club_id, $playerActual->club_id);

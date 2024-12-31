@@ -45,7 +45,6 @@ class PlayerRepositoryTest extends TestCase
 
     #[Test]
     #[TestDox('Fetch the player with relations successfully.')]
-    #[TestWith(['ext_id', 20251212])]
     #[TestWith(['tag', '#abcd1234'])]
     #[TestWith(['name', 'Taras Shevchenko'])]
     public function test_find_player_by_criteria(string $property, int|string $value): void
