@@ -56,4 +56,24 @@ interface APIClientInterface
      * @return array<EventRotationDTO>
      */
     public function getEventsRotation(): array;
+
+    /**
+     * Get information about a single player by player tag.
+     *
+     * @param string $playerTag
+     * @return PlayerDTO
+     * @throws ResponseException
+     * @throws InvalidDTOException
+     */
+    public function getPlayerByTag(string $playerTag): PlayerDTO;
+
+    /**
+     * Get list of recent battle results for a player.
+     *
+     * @param string $playerTag
+     * @return array<PlayerDTO>
+     * @throws InvalidDTOException
+     * @throws ResponseException
+     */
+    public function getPlayerBattleLog(string $playerTag): array;
 }

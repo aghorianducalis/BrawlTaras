@@ -10,11 +10,15 @@ enum APIEndpoints: string
 
     case BrawlerById = "/brawlers/{brawler_id}";
 
-    case EventRotation = "/events/rotation";
-
     case ClubByTag = "/clubs/{club_tag}";
 
     case ClubMembers = "/clubs/{club_tag}/members";
+
+    case EventRotation = "/events/rotation";
+
+    case PlayerByTag = "/players/{player_tag}";
+
+    case PlayerBattleLog = "/players/{player_tag}/battlelog";
 
     public function method(): string
     {
@@ -23,7 +27,9 @@ enum APIEndpoints: string
             APIEndpoints::BrawlerById,
             APIEndpoints::ClubByTag,
             APIEndpoints::ClubMembers,
-            APIEndpoints::EventRotation, => "GET",
+            APIEndpoints::EventRotation,
+            APIEndpoints::PlayerByTag,
+            APIEndpoints::PlayerBattleLog, => "GET",
         };
     }
 

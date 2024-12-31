@@ -102,6 +102,35 @@ final readonly class APIClient implements APIClientInterface
         }
     }
 
+    public function getPlayerByTag(string $playerTag): PlayerDTO
+    {
+        try {
+            $responseData = $this->makeRequest(APIEndpoints::PlayerByTag, ['player_tag' => $playerTag]);
+
+            return PlayerDTO::fromArray($responseData);
+        } catch (ResponseException|InvalidDTOException $e) {
+            Log::error("Error fetching info of player with tag $playerTag: {$e->getMessage()}");
+            throw $e;
+        }
+    }
+
+    public function getPlayerBattleLog(string $playerTag): array
+    {
+        try {
+            $responseData = $this->makeRequest(APIEndpoints::PlayerBattleLog, ['player_tag' => $playerTag]);
+
+            if (!(isset($responseData['items']) && is_array($responseData['items']))) {
+                throw InvalidDTOException::fromMessage('invalid structure of player battle log.');
+            }
+
+            // todo BattleResult or Battle DTO
+            return PlayerDTO::fromList($responseData['items']);
+        } catch (ResponseException|InvalidDTOException $e) {
+            Log::error("Error fetching battle log of player with tag $playerTag: {$e->getMessage()}");
+            throw $e;
+        }
+    }
+
     /**
      * Make a request to the API.
      *
