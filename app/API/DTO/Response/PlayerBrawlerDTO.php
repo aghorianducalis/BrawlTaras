@@ -7,43 +7,31 @@ namespace App\API\DTO\Response;
 use App\API\Exceptions\InvalidDTOException;
 use App\Models\Player;
 
-final readonly class PlayerDTO
+final readonly class PlayerBrawlerDTO
 {
     /**
-     * @param string $tag
+     * @param int $extId
      * @param string $name
-     * @param string $nameColor
-     * @param array{id: int} $icon
+     * @param int $power
+     * @param int $rank
      * @param int $trophies
      * @param int $highestTrophies
-     * @param int $expLevel
-     * @param int $expPoints
-     * @param bool $isQualifiedFromChampionshipChallenge
-     * @param int $victoriesSolo
-     * @param int $victoriesDuo
-     * @param int $victories3vs3
-     * @param int $bestRoboRumbleTime
-     * @param int $bestTimeAsBigBrawler
-     * @param array{tag: string, name: string} $club
-     * @param array<PlayerBrawlerDTO> $brawlers
+     * @param array<array{ext_id: int, name: string, level: int}> $gears
+//     * @param array<array{ext_id: int, name: string}> $starPowers
+//     * @param array<array{ext_id: int, name: string}> $gadgets
+     * @param array<StarPowerDTO> $starPowers
+     * @param array<AccessoryDTO> $gadgets
      */
     private function __construct(
-        public string $tag,
+        public int $extId,
         public string $name,
-        public string $nameColor,
-        public array $icon,
+        public int $power,
+        public int $rank,
         public int $trophies,
         public int $highestTrophies,
-        public int $expLevel,
-        public int $expPoints,
-        public bool $isQualifiedFromChampionshipChallenge,
-        public int $victoriesSolo,
-        public int $victoriesDuo,
-        public int $victories3vs3,
-        public int $bestRoboRumbleTime,
-        public int $bestTimeAsBigBrawler,
-        public array $club,
-        public array $brawlers,
+        public array $gears,
+        public array $starPowers,
+        public array $gadgets,
     ) {}
 
     /**
@@ -106,7 +94,7 @@ final readonly class PlayerDTO
 
     /**
      * @param array<Player> $players
-     * @return array<ClubPlayerDTO>
+     * @return array<self>
      */
     public static function fromEloquentModels(array $players): array
     {

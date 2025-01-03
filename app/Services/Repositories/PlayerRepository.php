@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Repositories;
 
-use App\API\DTO\Response\PlayerDTO;
+use App\API\DTO\Response\ClubPlayerDTO;
 use App\Models\Player;
 use App\Services\Repositories\Contracts\PlayerRepositoryInterface;
 use Illuminate\Support\Facades\DB;
@@ -36,7 +36,7 @@ final readonly class PlayerRepository implements PlayerRepositoryInterface
         return $query->first();
     }
 
-    public function createOrUpdatePlayer(PlayerDTO $playerDTO): Player
+    public function createOrUpdatePlayer(ClubPlayerDTO $playerDTO): Player
     {
         $player = $this->findPlayer([
             'tag' => $playerDTO->tag,
@@ -65,6 +65,6 @@ final readonly class PlayerRepository implements PlayerRepositoryInterface
 
     public function createOrUpdatePlayers(array $playerDTOs): array
     {
-        return array_map(fn (PlayerDTO $dto) => $this->createOrUpdatePlayer($dto), $playerDTOs);
+        return array_map(fn (ClubPlayerDTO $dto) => $this->createOrUpdatePlayer($dto), $playerDTOs);
     }
 }

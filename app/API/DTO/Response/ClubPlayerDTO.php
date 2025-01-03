@@ -7,43 +7,23 @@ namespace App\API\DTO\Response;
 use App\API\Exceptions\InvalidDTOException;
 use App\Models\Player;
 
-final readonly class PlayerDTO
+final readonly class ClubPlayerDTO
 {
     /**
      * @param string $tag
      * @param string $name
      * @param string $nameColor
-     * @param array{id: int} $icon
+     * @param string $role
      * @param int $trophies
-     * @param int $highestTrophies
-     * @param int $expLevel
-     * @param int $expPoints
-     * @param bool $isQualifiedFromChampionshipChallenge
-     * @param int $victoriesSolo
-     * @param int $victoriesDuo
-     * @param int $victories3vs3
-     * @param int $bestRoboRumbleTime
-     * @param int $bestTimeAsBigBrawler
-     * @param array{tag: string, name: string} $club
-     * @param array<PlayerBrawlerDTO> $brawlers
+     * @param array{id: int} $icon
      */
     private function __construct(
         public string $tag,
         public string $name,
         public string $nameColor,
-        public array $icon,
+        public string $role,
         public int $trophies,
-        public int $highestTrophies,
-        public int $expLevel,
-        public int $expPoints,
-        public bool $isQualifiedFromChampionshipChallenge,
-        public int $victoriesSolo,
-        public int $victoriesDuo,
-        public int $victories3vs3,
-        public int $bestRoboRumbleTime,
-        public int $bestTimeAsBigBrawler,
-        public array $club,
-        public array $brawlers,
+        public array $icon,
     ) {}
 
     /**
@@ -106,7 +86,7 @@ final readonly class PlayerDTO
 
     /**
      * @param array<Player> $players
-     * @return array<ClubPlayerDTO>
+     * @return array<self>
      */
     public static function fromEloquentModels(array $players): array
     {

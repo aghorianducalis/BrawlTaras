@@ -18,7 +18,7 @@ final readonly class ClubDTO
      * @param int $badgeId
      * @param int $requiredTrophies
      * @param int $trophies
-     * @param PlayerDTO[] $members
+     * @param ClubPlayerDTO[] $members
      */
     private function __construct(
         public string $tag,
@@ -71,7 +71,7 @@ final readonly class ClubDTO
             (int) $data['badgeId'],
             (int) $data['requiredTrophies'],
             (int) $data['trophies'],
-            PlayerDTO::fromList($data['members']),
+            ClubPlayerDTO::fromList($data['members']),
         );
     }
 
@@ -95,7 +95,7 @@ final readonly class ClubDTO
             'requiredTrophies' => $club->required_trophies,
             'trophies' => $club->trophies,
             'members' => array_map(
-                fn(Player $player) => PlayerDTO::eloquentModelToArray(player: $player),
+                fn(Player $player) => ClubPlayerDTO::eloquentModelToArray(player: $player),
                 $club->members->all()
             ),
         ];

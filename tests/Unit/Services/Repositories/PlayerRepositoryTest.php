@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services\Repositories;
 
-use App\API\DTO\Response\PlayerDTO;
+use App\API\DTO\Response\ClubPlayerDTO;
 use App\Models\Club;
 use App\Models\Player;
 use App\Services\Repositories\Contracts\PlayerRepositoryInterface;
@@ -68,7 +68,7 @@ class PlayerRepositoryTest extends TestCase
     #[TestDox('Create successfully the player with related entities.')]
     public function test_create_player_with_relations(): void
     {
-        $playerDTO = PlayerDTO::fromEloquentModel(Player::factory()->make());
+        $playerDTO = ClubPlayerDTO::fromEloquentModel(Player::factory()->make());
 
         $this->assertDatabaseMissing((new Player())->getTable(), [
             'tag' => $playerDTO->tag,
@@ -90,7 +90,7 @@ class PlayerRepositoryTest extends TestCase
     {
         $player = Player::factory()->create();
         // create DTO to store the new data for player with the same tag
-        $playerDTO = PlayerDTO::fromEloquentModel(Player::factory()->make(attributes: [
+        $playerDTO = ClubPlayerDTO::fromEloquentModel(Player::factory()->make(attributes: [
             'tag' => $player->tag,
         ]));
 

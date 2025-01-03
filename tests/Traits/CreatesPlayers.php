@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Traits;
 
-use App\API\DTO\Response\PlayerDTO;
+use App\API\DTO\Response\ClubPlayerDTO;
 use App\Models\Player;
 
 trait CreatesPlayers
@@ -33,7 +33,7 @@ trait CreatesPlayers
         );
     }
 
-    private function assertPlayerModelMatchesDTO(Player $player, PlayerDTO $playerDTO): void
+    private function assertPlayerModelMatchesDTO(Player $player, ClubPlayerDTO $playerDTO): void
     {
         $this->assertSame($player->tag, $playerDTO->tag);
         $this->assertSame($player->name, $playerDTO->name);

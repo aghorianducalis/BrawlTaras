@@ -8,7 +8,7 @@ use App\API\Contracts\APIClientInterface;
 use App\API\DTO\Response\BrawlerDTO;
 use App\API\DTO\Response\ClubDTO;
 use App\API\DTO\Response\EventRotationDTO;
-use App\API\DTO\Response\PlayerDTO;
+use App\API\DTO\Response\ClubPlayerDTO;
 use App\API\Enums\APIEndpoints;
 use App\API\Exceptions\InvalidDTOException;
 use App\API\Exceptions\ResponseException;
@@ -81,7 +81,7 @@ final readonly class APIClient implements APIClientInterface
                 throw InvalidDTOException::fromMessage('invalid structure of club members.');
             }
 
-            return PlayerDTO::fromList($responseData['items']);
+            return ClubPlayerDTO::fromList($responseData['items']);
         } catch (ResponseException|InvalidDTOException $e) {
             Log::error("Error fetching members of club with tag $clubTag: {$e->getMessage()}");
             throw $e;
@@ -102,12 +102,12 @@ final readonly class APIClient implements APIClientInterface
         }
     }
 
-    public function getPlayerByTag(string $playerTag): PlayerDTO
+    public function getPlayerByTag(string $playerTag): ClubPlayerDTO
     {
         try {
             $responseData = $this->makeRequest(APIEndpoints::PlayerByTag, ['player_tag' => $playerTag]);
 
-            return PlayerDTO::fromArray($responseData);
+            return ClubPlayerDTO::fromArray($responseData);
         } catch (ResponseException|InvalidDTOException $e) {
             Log::error("Error fetching info of player with tag $playerTag: {$e->getMessage()}");
             throw $e;
@@ -124,7 +124,7 @@ final readonly class APIClient implements APIClientInterface
             }
 
             // todo BattleResult or Battle DTO
-            return PlayerDTO::fromList($responseData['items']);
+            return ClubPlayerDTO::fromList($responseData['items']);
         } catch (ResponseException|InvalidDTOException $e) {
             Log::error("Error fetching battle log of player with tag $playerTag: {$e->getMessage()}");
             throw $e;

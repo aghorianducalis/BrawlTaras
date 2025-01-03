@@ -11,7 +11,7 @@ use App\API\DTO\Request\EventRotationListDTO;
 use App\API\DTO\Response\BrawlerDTO as BrawlerResponseDTO;
 use App\API\DTO\Response\ClubDTO;
 use App\API\DTO\Response\EventRotationDTO;
-use App\API\DTO\Response\PlayerDTO;
+use App\API\DTO\Response\ClubPlayerDTO;
 use App\API\Enums\APIEndpoints;
 use App\API\Exceptions\InvalidDTOException;
 use App\API\Exceptions\ResponseException;
@@ -471,7 +471,7 @@ class APIClientTest extends TestCase
         $this->assertCount($club->members->count(), $clubDTO->members);
 
         foreach ($clubDTO->members as $i => $memberDTO) {
-            $this->assertInstanceOf(PlayerDTO::class, $memberDTO);
+            $this->assertInstanceOf(ClubPlayerDTO::class, $memberDTO);
             /** @var Player $member */
             $member = $club->members->get($i);
 
@@ -564,7 +564,7 @@ class APIClientTest extends TestCase
         $mockResponse = new Response(
             200,
             [],
-            json_encode(['items' => PlayerDTO::fromEloquentModels($club->members->all())], JSON_THROW_ON_ERROR),
+            json_encode(['items' => ClubPlayerDTO::fromEloquentModels($club->members->all())], JSON_THROW_ON_ERROR),
         );
 
         $this->httpClientMock
@@ -585,7 +585,7 @@ class APIClientTest extends TestCase
         $this->assertCount($club->members->count(), $memberDTOs);
 
         foreach ($memberDTOs as $i => $memberDTO) {
-            $this->assertInstanceOf(PlayerDTO::class, $memberDTO);
+            $this->assertInstanceOf(ClubPlayerDTO::class, $memberDTO);
             /** @var Player $member */
             $member = $club->members->get($i);
 

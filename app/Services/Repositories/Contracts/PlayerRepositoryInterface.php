@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Repositories\Contracts;
 
-use App\API\DTO\Response\PlayerDTO;
+use App\API\DTO\Response\ClubPlayerDTO;
 use App\Models\Player;
 
 interface PlayerRepositoryInterface
@@ -20,15 +20,15 @@ interface PlayerRepositoryInterface
     /**
      * Create or update a single player in the database.
      *
-     * @param PlayerDTO $playerDTO
+     * @param ClubPlayerDTO $playerDTO
      * @return Player
      */
-    public function createOrUpdatePlayer(PlayerDTO $playerDTO): Player;
+    public function createOrUpdatePlayer(ClubPlayerDTO $playerDTO): Player;
 
     /**
      * Bulk create or update players in the database.
      *
-     * @param array<PlayerDTO> $playerDTOs
+     * @param array<ClubPlayerDTO> $playerDTOs
      * @return array<Player>
      */
     public function createOrUpdatePlayers(array $playerDTOs): array;
