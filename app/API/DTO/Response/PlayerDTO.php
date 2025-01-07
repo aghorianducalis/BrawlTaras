@@ -13,17 +13,37 @@ final readonly class PlayerDTO
      * @param string $tag
      * @param string $name
      * @param string $nameColor
-     * @param string $role
-     * @param int $trophies
      * @param array{id: int} $icon
+     * @param int $trophies
+     * @param int $highestTrophies
+     * @param int $expLevel
+     * @param int $expPoints
+     * @param bool $isQualifiedFromChampionshipChallenge
+     * @param int $victoriesSolo
+     * @param int $victoriesDuo
+     * @param int $victories3vs3
+     * @param int $bestRoboRumbleTime
+     * @param int $bestTimeAsBigBrawler
+     * @param array{tag: string, name: string} $club
+     * @param array<PlayerBrawlerDTO> $brawlers
      */
     private function __construct(
         public string $tag,
         public string $name,
         public string $nameColor,
-        public string $role,
-        public int $trophies,
         public array $icon,
+        public int $trophies,
+        public int $highestTrophies,
+        public int $expLevel,
+        public int $expPoints,
+        public bool $isQualifiedFromChampionshipChallenge,
+        public int $victoriesSolo,
+        public int $victoriesDuo,
+        public int $victories3vs3,
+        public int $bestRoboRumbleTime,
+        public int $bestTimeAsBigBrawler,
+        public array $club,
+        public array $brawlers,
     ) {}
 
     /**
@@ -41,11 +61,32 @@ final readonly class PlayerDTO
                 $data['tag'],
                 $data['name'],
                 $data['nameColor'],
-                $data['role'],// todo enum or model
+                $data['icon'],
                 $data['trophies'],
-                $data['icon']['id'],
+                $data['highestTrophies'],
+                $data['expLevel'],
+                $data['expPoints'],
+                $data['isQualifiedFromChampionshipChallenge'],
+                $data['3vs3Victories'],
+                $data['soloVictories'],
+                $data['duoVictories'],
+                $data['bestRoboRumbleTime'],
+                $data['bestTimeAsBigBrawler'],
+                $data['club'],
+                $data['brawlers'],
             ) &&
-            is_numeric($data['trophies'])
+            (is_array($data['icon']) && isset($data['icon']['id']) && is_numeric($data['icon']['id'])) &&
+            is_numeric($data['trophies']) &&
+            is_numeric($data['highestTrophies']) &&
+            is_numeric($data['expLevel']) &&
+            is_numeric($data['expPoints']) &&
+            is_bool($data['isQualifiedFromChampionshipChallenge']) &&
+            is_numeric($data['3vs3Victories']) &&
+            is_numeric($data['soloVictories']) &&
+            is_numeric($data['duoVictories']) &&
+            is_numeric($data['bestTimeAsBigBrawler']) &&
+            (is_array($data['club']) && isset($data['club']['tag'], $data['club']['name'])) &&
+            (is_array($data['brawlers']))
         )) {
             throw InvalidDTOException::fromMessage(
                 "Player data array has an invalid structure: " . json_encode($data)
@@ -54,25 +95,26 @@ final readonly class PlayerDTO
 
         // Create a new DTO instance
         return new self(
-            $data['tag'],
-            $data['name'],
-            $data['nameColor'],
-            $data['role'],
-            (int) $data['trophies'],
-            $data['icon'],
+            tag: $data['tag'],
+            name: $data['name'],
+            nameColor: $data['nameColor'],
+            icon: $data['icon'],
+            trophies: (int) $data['trophies'],
+            highestTrophies: (int) $data['highestTrophies'],
+            expLevel: (int) $data['expLevel'],
+            expPoints: (int) $data['expPoints'],
+            isQualifiedFromChampionshipChallenge: (bool) $data['isQualifiedFromChampionshipChallenge'],
+            victoriesSolo: (int) $data['soloVictories'],
+            victoriesDuo: (int) $data['duoVictories'],
+            victories3vs3: (int) $data['3vs3Victories'],
+            bestRoboRumbleTime: (int) $data['bestRoboRumbleTime'],
+            bestTimeAsBigBrawler: (int) $data['bestTimeAsBigBrawler'],
+            club: [
+                'tag' => $data['club']['tag'],
+                'name' => $data['club']['name'],
+            ],
+            brawlers: PlayerBrawlerDTO::fromList($data['brawlers']),
         );
-    }
-
-    /**
-     * Factory method to create an array of DTO.
-     *
-     * @param array $list
-     * @return array<int, self>
-     * @throws InvalidDTOException if required fields are missing or invalid.
-     */
-    public static function fromList(array $list): array
-    {
-        return array_map(fn($item) => self::fromArray($item), $list);
     }
 
     /**
@@ -84,26 +126,30 @@ final readonly class PlayerDTO
         return self::fromArray(self::eloquentModelToArray(player: $player));
     }
 
-    /**
-     * @param array<Player> $players
-     * @return array<PlayerDTO>
-     */
-    public static function fromEloquentModels(array $players): array
-    {
-        return array_map(fn(Player $player) => self::fromEloquentModel($player), $players);
-    }
-
     public static function eloquentModelToArray(Player $player): array
     {
         return [
             'tag' => $player->tag,
             'name' => $player->name,
             'nameColor' => $player->name_color,
-            'role' => $player->role ?? '',// todo enum, column of players table or intermediate (club_player.role) if many-to-many
-            'trophies' => $player->trophies,
             'icon' => [
                 'id' => $player->icon_id,
             ],
+            'trophies' => $player->trophies,
+            'highestTrophies' => $player->highest_trophies,
+            'expLevel' => $player->exp_level,
+            'expPoints' => $player->exp_points,
+            'isQualifiedFromChampionshipChallenge' => $player->is_qualified_from_championship_league,
+            'soloVictories' => $player->solo_victories,
+            'duoVictories' => $player->duo_victories,
+            '3vs3Victories' => $player->trio_victories,
+            'bestRoboRumbleTime' => $player->best_time_robo_rumble,
+            'bestTimeAsBigBrawler' => $player->best_time_as_big_brawler,
+            'club' => $player->club ? [
+                'tag' => $player->club->tag,
+                'name' => $player->club->name,
+            ] : [],
+            'brawlers' => $player->playerBrawlers ? $player->playerBrawlers->toArray() : [],
         ];
     }
 }
