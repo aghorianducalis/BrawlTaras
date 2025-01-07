@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
+use App\Models\Brawler;
 use App\Models\Club;
 use App\Models\Player;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -30,7 +31,6 @@ class PlayerFactory extends Factory
         $tag = '#' . strtoupper($this->faker->unique()->bothify('#########?'));
 
         return [
-            'ext_id' => $this->faker->unique()->randomNumber(),
             'tag' => $tag,
             'name' => "Player $tag",
             'name_color' => $this->faker->colorName(),
@@ -48,5 +48,21 @@ class PlayerFactory extends Factory
             'best_time_as_big_brawler' => $this->faker->randomNumber(5),
             'club_id' => Club::factory(),
         ];
+    }
+
+    /**
+     * Attach Brawlers to the Player.
+     *
+     * @param int $count
+     * @param array|callable $attributes
+     * @return self
+     */
+    public function withBrawlers(int $count = 10, array|callable $attributes = []): self
+    {
+        return $this->afterCreating(fn(Player $player) => Brawler::factory()
+            ->hasAttached($player)
+            ->count($count)
+            ->create($attributes)
+        );
     }
 }

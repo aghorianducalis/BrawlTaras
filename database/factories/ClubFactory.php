@@ -45,7 +45,7 @@ class ClubFactory extends Factory
      *
      * @param int $count
      * @param array|callable $attributes
-     * @return ClubFactory
+     * @return self
      */
     public function withMembers(int $count = 10, array|callable $attributes = []): self
     {
