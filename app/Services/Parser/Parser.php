@@ -80,7 +80,7 @@ readonly class Parser implements ParserInterface
         try {
             $playerDTOs = $this->apiClient->getClubMembers($clubTag);
 
-            return $this->playerRepository->createOrUpdatePlayers($playerDTOs);
+            return $this->playerRepository->createOrUpdateClubMembers($playerDTOs);
         } catch (ResponseException|InvalidDTOException $e) {
             Log::error('Failed to parse club members: ' . $e->getMessage(), [
                 'exception' => $e

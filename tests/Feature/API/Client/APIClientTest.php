@@ -11,7 +11,7 @@ use App\API\DTO\Request\EventRotationListDTO;
 use App\API\DTO\Response\BrawlerDTO as BrawlerResponseDTO;
 use App\API\DTO\Response\ClubDTO;
 use App\API\DTO\Response\EventRotationDTO;
-use App\API\DTO\Response\PlayerDTO;
+use App\API\DTO\Response\ClubPlayerDTO;
 use App\API\Enums\APIEndpoints;
 use App\API\Exceptions\InvalidDTOException;
 use App\API\Exceptions\ResponseException;
@@ -33,8 +33,10 @@ use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\TestDox;
+use PHPUnit\Framework\Attributes\TestWith;
 use Tests\TestCase;
 use Tests\Traits\CreatesBrawlers;
+use Tests\Traits\CreatesPlayers;
 
 /**
  * Run these tests with PHPUnit to verify the behavior of APIClient.
@@ -64,6 +66,7 @@ use Tests\Traits\CreatesBrawlers;
 class APIClientTest extends TestCase
 {
     use CreatesBrawlers;
+    use CreatesPlayers;
     use RefreshDatabase;
 
     private APIClient $apiClient;
@@ -94,11 +97,9 @@ class APIClientTest extends TestCase
         parent::tearDown();
     }
 
-
     /*
      * API endpoints for brawlers.
      */
-
 
     /**
      * @return void
@@ -126,6 +127,73 @@ class APIClientTest extends TestCase
 
         $this->assertInstanceOf(BrawlerResponseDTO::class, $brawlerDTOFetched);
         $this->assertBrawlerModelMatchesDTO($brawlerExpected, $brawlerDTOFetched);
+    }
+
+    #[Test]
+    #[TestWith([123])]
+    public function get_brawler_by_id_throws_response_exception_on_request_failure(int $brawlerExternalId): void
+    {
+        $apiEndpoint = APIEndpoints::BrawlerById;
+        $this->httpClientMock
+            ->shouldReceive('request')
+            ->once()
+            ->with(
+                $apiEndpoint->method(),
+                $apiEndpoint->constructRequestURI($this->apiBaseURI, ['brawler_id' => $brawlerExternalId]),
+                Mockery::any()
+            )
+            ->andThrow(new RequestException('Request failed', new Request($apiEndpoint->method(), '')));
+
+        $this->expectException(ResponseException::class);
+
+        $this->apiClient->getBrawler($brawlerExternalId);
+    }
+
+    #[Test]
+    #[TestWith([123])]
+    public function get_brawler_by_id_throws_response_exception_on_invalid_json(int $brawlerExternalId): void
+    {
+        $apiEndpoint = APIEndpoints::BrawlerById;
+        $mockResponse = new Response(200, [], 'invalid-json');
+
+        $this->httpClientMock
+            ->shouldReceive('request')
+            ->once()
+            ->with(
+                $apiEndpoint->method(),
+                $apiEndpoint->constructRequestURI($this->apiBaseURI, ['brawler_id' => $brawlerExternalId]),
+                Mockery::any()
+            )
+            ->andReturn($mockResponse);
+
+        $this->expectException(ResponseException::class);
+
+        $this->apiClient->getBrawler($brawlerExternalId);
+    }
+
+    /**
+     * @throws ResponseException
+     */
+    #[Test]
+    #[TestWith([123])]
+    public function get_brawler_by_id_throws_invalid_dto_exception(int $brawlerExternalId): void
+    {
+        $apiEndpoint = APIEndpoints::BrawlerById;
+        $mockResponse = new Response(200, [], json_encode(['invalid' => 'data']));
+
+        $this->httpClientMock
+            ->shouldReceive('request')
+            ->once()
+            ->with(
+                $apiEndpoint->method(),
+                $apiEndpoint->constructRequestURI($this->apiBaseURI, ['brawler_id' => $brawlerExternalId]),
+                Mockery::any()
+            )
+            ->andReturn($mockResponse);
+
+        $this->expectException(InvalidDTOException::class);
+
+        $this->apiClient->getBrawler($brawlerExternalId);
     }
 
     /**
@@ -164,26 +232,6 @@ class APIClientTest extends TestCase
     }
 
     #[Test]
-    public function get_brawler_by_id_throws_response_exception_on_request_failure(): void
-    {
-        $apiEndpoint = APIEndpoints::BrawlerById;
-        $brawlerId = 123;
-        $this->httpClientMock
-            ->shouldReceive('request')
-            ->once()
-            ->with(
-                $apiEndpoint->method(),
-                $apiEndpoint->constructRequestURI($this->apiBaseURI, ['brawler_id' => $brawlerId]),
-                Mockery::any()
-            )
-            ->andThrow(new RequestException('Request failed', new Request($apiEndpoint->method(), '')));
-
-        $this->expectException(ResponseException::class);
-
-        $this->apiClient->getBrawler($brawlerId);
-    }
-
-    #[Test]
     public function get_all_brawlers_throws_response_exception_on_request_failure(): void
     {
         $apiEndpoint = APIEndpoints::Brawlers;
@@ -200,28 +248,6 @@ class APIClientTest extends TestCase
         $this->expectException(ResponseException::class);
 
         $this->apiClient->getBrawlers();
-    }
-
-    #[Test]
-    public function get_brawler_by_id_throws_response_exception_on_invalid_json(): void
-    {
-        $apiEndpoint = APIEndpoints::BrawlerById;
-        $brawlerId = 123;
-        $mockResponse = new Response(200, [], 'invalid-json');
-
-        $this->httpClientMock
-            ->shouldReceive('request')
-            ->once()
-            ->with(
-                $apiEndpoint->method(),
-                $apiEndpoint->constructRequestURI($this->apiBaseURI, ['brawler_id' => $brawlerId]),
-                Mockery::any()
-            )
-            ->andReturn($mockResponse);
-
-        $this->expectException(ResponseException::class);
-
-        $this->apiClient->getBrawler($brawlerId);
     }
 
     #[Test]
@@ -243,31 +269,6 @@ class APIClientTest extends TestCase
         $this->expectException(ResponseException::class);
 
         $this->apiClient->getBrawlers();
-    }
-
-    /**
-     * @throws ResponseException
-     */
-    #[Test]
-    public function get_brawler_by_id_throws_invalid_dto_exception(): void
-    {
-        $apiEndpoint = APIEndpoints::BrawlerById;
-        $brawlerId = 123;
-        $mockResponse = new Response(200, [], json_encode(['invalid' => 'data']));
-
-        $this->httpClientMock
-            ->shouldReceive('request')
-            ->once()
-            ->with(
-                $apiEndpoint->method(),
-                $apiEndpoint->constructRequestURI($this->apiBaseURI, ['brawler_id' => $brawlerId]),
-                Mockery::any()
-            )
-            ->andReturn($mockResponse);
-
-        $this->expectException(InvalidDTOException::class);
-
-        $this->apiClient->getBrawler($brawlerId);
     }
 
     /**
@@ -297,7 +298,6 @@ class APIClientTest extends TestCase
     /*
      * End of API endpoints for brawlers.
      */
-
 
     /*
      * API endpoints for events.
@@ -421,16 +421,13 @@ class APIClientTest extends TestCase
             ->create($attributes);
     }
 
-
     /*
      * End of API endpoints for events.
      */
 
-
     /*
-     * End of API endpoints for clubs.
+     * API endpoints for clubs.
      */
-
 
     /**
      * @return void
@@ -471,23 +468,18 @@ class APIClientTest extends TestCase
         $this->assertCount($club->members->count(), $clubDTO->members);
 
         foreach ($clubDTO->members as $i => $memberDTO) {
-            $this->assertInstanceOf(PlayerDTO::class, $memberDTO);
+            $this->assertInstanceOf(ClubPlayerDTO::class, $memberDTO);
             /** @var Player $member */
             $member = $club->members->get($i);
 
-            $this->assertSame($member->tag, $memberDTO->tag);
-            $this->assertSame($member->name, $memberDTO->name);
-            $this->assertSame($member->name_color, $memberDTO->nameColor);
-            $this->assertSame($member->role ?? '', $memberDTO->role); // todo
-            $this->assertSame($member->trophies, $memberDTO->trophies);
-            $this->assertSame($member->icon_id, $memberDTO->icon['id']);
+            $this->assertPlayerModelMatchesDTO(player: $member, playerDTO: $memberDTO);
         }
     }
 
     #[Test]
-    public function get_club_by_tag_throws_response_exception_on_request_failure(): void
+    #[TestWith(['club_tag_123'])]
+    public function get_club_by_tag_throws_response_exception_on_request_failure(string $clubTag): void
     {
-        $clubTag = 'abc';
         $apiEndpoint = APIEndpoints::ClubByTag;
         $this->httpClientMock
             ->shouldReceive('request')
@@ -505,9 +497,9 @@ class APIClientTest extends TestCase
     }
 
     #[Test]
-    public function get_club_by_tag_throws_response_exception_on_invalid_json(): void
+    #[TestWith(['club_tag_123'])]
+    public function get_club_by_tag_throws_response_exception_on_invalid_json(string $clubTag): void
     {
-        $clubTag = 'abc';
         $apiEndpoint = APIEndpoints::ClubByTag;
         $mockResponse = new Response(200, [], 'invalid-json');
 
@@ -530,9 +522,9 @@ class APIClientTest extends TestCase
      * @throws ResponseException
      */
     #[Test]
-    public function get_club_by_tag_throws_invalid_dto_exception(): void
+    #[TestWith(['club_tag_123'])]
+    public function get_club_by_tag_throws_invalid_dto_exception(string $clubTag): void
     {
-        $clubTag = 'abc';
         $apiEndpoint = APIEndpoints::ClubByTag;
         $mockResponse = new Response(200, [], json_encode([['invalid' => 'data']]));
 
@@ -564,7 +556,7 @@ class APIClientTest extends TestCase
         $mockResponse = new Response(
             200,
             [],
-            json_encode(['items' => PlayerDTO::fromEloquentModels($club->members->all())], JSON_THROW_ON_ERROR),
+            json_encode(['items' => ClubPlayerDTO::fromEloquentModels($club->members->all())], JSON_THROW_ON_ERROR),
         );
 
         $this->httpClientMock
@@ -585,23 +577,18 @@ class APIClientTest extends TestCase
         $this->assertCount($club->members->count(), $memberDTOs);
 
         foreach ($memberDTOs as $i => $memberDTO) {
-            $this->assertInstanceOf(PlayerDTO::class, $memberDTO);
+            $this->assertInstanceOf(ClubPlayerDTO::class, $memberDTO);
             /** @var Player $member */
             $member = $club->members->get($i);
 
-            $this->assertSame($member->tag, $memberDTO->tag);
-            $this->assertSame($member->name, $memberDTO->name);
-            $this->assertSame($member->name_color, $memberDTO->nameColor);
-            $this->assertSame($member->role ?? '', $memberDTO->role); // todo
-            $this->assertSame($member->trophies, $memberDTO->trophies);
-            $this->assertSame($member->icon_id, $memberDTO->icon['id']);
+            $this->assertPlayerModelMatchesDTO(player: $member, playerDTO: $memberDTO);
         }
     }
 
     #[Test]
-    public function get_club_members_throws_response_exception_on_request_failure(): void
+    #[TestWith(['club_tag_123'])]
+    public function get_club_members_throws_response_exception_on_request_failure(string $clubTag): void
     {
-        $clubTag = 'abc';
         $apiEndpoint = APIEndpoints::ClubMembers;
         $this->httpClientMock
             ->shouldReceive('request')
@@ -619,9 +606,9 @@ class APIClientTest extends TestCase
     }
 
     #[Test]
-    public function get_club_members_throws_response_exception_on_invalid_json(): void
+    #[TestWith(['club_tag_123'])]
+    public function get_club_members_throws_response_exception_on_invalid_json(string $clubTag): void
     {
-        $clubTag = 'abc';
         $apiEndpoint = APIEndpoints::ClubMembers;
         $mockResponse = new Response(200, [], 'invalid-json');
 
@@ -644,9 +631,9 @@ class APIClientTest extends TestCase
      * @throws ResponseException
      */
     #[Test]
-    public function get_club_members_throws_invalid_dto_exception(): void
+    #[TestWith(['club_tag_123'])]
+    public function get_club_members_throws_invalid_dto_exception(string $clubTag): void
     {
-        $clubTag = 'abc';
         $apiEndpoint = APIEndpoints::ClubMembers;
         $mockResponse = new Response(200, [], json_encode([['invalid' => 'data']]));
 
@@ -675,7 +662,6 @@ class APIClientTest extends TestCase
     }
 
     /*
-     * API endpoints for clubs.
+     * End of API endpoints for clubs.
      */
-
 }
