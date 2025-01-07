@@ -247,7 +247,7 @@ class ParserTest extends TestCase
             ->with($club->tag)
             ->andReturn($clubDTO->members);
 
-        $this->playerRepository->shouldReceive('createOrUpdatePlayers')
+        $this->playerRepository->shouldReceive('createOrUpdateClubMembers')
             ->once()
             ->with($clubDTO->members)
             ->andReturn($club->members->all());

@@ -7,7 +7,7 @@ namespace App\API\Contracts;
 use App\API\DTO\Response\BrawlerDTO;
 use App\API\DTO\Response\ClubDTO;
 use App\API\DTO\Response\EventRotationDTO;
-use App\API\DTO\Response\PlayerDTO;
+use App\API\DTO\Response\ClubPlayerDTO;
 use App\API\Exceptions\InvalidDTOException;
 use App\API\Exceptions\ResponseException;
 
@@ -42,7 +42,7 @@ interface APIClientInterface
      * List club members.
      *
      * @param string $clubTag
-     * @return array<PlayerDTO>
+     * @return array<ClubPlayerDTO>
      * @throws InvalidDTOException
      * @throws ResponseException
      */

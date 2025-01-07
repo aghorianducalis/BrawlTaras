@@ -63,8 +63,8 @@ final readonly class ClubRepository implements ClubRepositoryInterface
             // Synchronize a Club's related members.
             $memberIds = [];
 
-            foreach ($clubDTO->members as $playerDTO) {
-                $player = $this->playerRepository->createOrUpdatePlayer(playerDTO: $playerDTO);
+            foreach ($clubDTO->members as $memberDTO) {
+                $player = $this->playerRepository->createOrUpdateClubMember(memberDTO: $memberDTO);
                 $memberIds[] = $player->id;
             }
 

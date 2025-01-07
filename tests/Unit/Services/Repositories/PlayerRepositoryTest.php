@@ -25,7 +25,7 @@ use Tests\Traits\CreatesPlayers;
 #[Group('Repositories')]
 #[CoversClass(PlayerRepository::class)]
 #[CoversMethod(PlayerRepository::class, 'findPlayer')]
-#[CoversMethod(PlayerRepository::class, 'createOrUpdatePlayer')]
+#[CoversMethod(PlayerRepository::class, 'createOrUpdateClubMember')]
 #[UsesClass(Player::class)]
 #[UsesClass(PlayerFactory::class)]
 #[UsesClass(Club::class)]
@@ -44,63 +44,63 @@ class PlayerRepositoryTest extends TestCase
     }
 
     #[Test]
-    #[TestDox('Fetch the player with relations successfully.')]
+    #[TestDox('Fetch the club member with relations successfully.')]
     #[TestWith(['tag', '#abcd1234'])]
     #[TestWith(['name', 'Taras Shevchenko'])]
-    public function test_find_player_by_criteria(string $property, int|string $value): void
+    public function test_find_club_member_by_criteria(string $property, int|string $value): void
     {
         $this->assertDatabaseMissing((new Player())->getTable(), [$property => $value]);
 
-        /** @var Player $playerCreated */
-        $playerCreated = Player::factory()->create(attributes: [$property => $value]);
+        /** @var Player $memberCreated */
+        $memberCreated = Player::factory()->create(attributes: [$property => $value]);
 
-        $this->assertDatabaseHas($playerCreated->getTable(), [
-            'id' => $playerCreated->id,
+        $this->assertDatabaseHas($memberCreated->getTable(), [
+            'id' => $memberCreated->id,
             $property => $value,
         ]);
 
-        $playerFound = $this->repository->findPlayer([$property => $value]);
+        $memberFound = $this->repository->findPlayer([$property => $value]);
 
-        $this->assertEqualPlayerModels($playerCreated, $playerFound);
+        $this->assertEqualPlayerModels($memberCreated, $memberFound);
     }
 
     #[Test]
-    #[TestDox('Create successfully the player with related entities.')]
-    public function test_create_player_with_relations(): void
+    #[TestDox('Create successfully the club member with related entities.')]
+    public function test_create_club_member_with_relations(): void
     {
-        $playerDTO = ClubPlayerDTO::fromEloquentModel(Player::factory()->make());
+        $memberDTO = ClubPlayerDTO::fromEloquentModel(Player::factory()->make());
 
         $this->assertDatabaseMissing((new Player())->getTable(), [
-            'tag' => $playerDTO->tag,
+            'tag' => $memberDTO->tag,
         ]);
 
-        $player = $this->repository->createOrUpdatePlayer($playerDTO);
+        $member = $this->repository->createOrUpdateClubMember($memberDTO);
 
-        $this->assertDatabaseHas($player->getTable(), [
-            'id' => $player->id,
-            'tag' => $playerDTO->tag,
+        $this->assertDatabaseHas($member->getTable(), [
+            'id' => $member->id,
+            'tag' => $memberDTO->tag,
         ]);
 
-        $this->assertPlayerModelMatchesDTO($player, $playerDTO);
+        $this->assertPlayerModelMatchesDTO($member, $memberDTO);
     }
 
     #[Test]
-    #[TestDox('Update successfully the player with related entities.')]
-    public function test_update_existing_player(): void
+    #[TestDox('Update successfully the member of the club with related entities.')]
+    public function test_update_existing_member_of_club(): void
     {
-        $player = Player::factory()->create();
-        // create DTO to store the new data for player with the same tag
-        $playerDTO = ClubPlayerDTO::fromEloquentModel(Player::factory()->make(attributes: [
-            'tag' => $player->tag,
+        $member = Player::factory()->create();
+        // create DTO to store the new data for club member with the same tag
+        $memberDTO = ClubPlayerDTO::fromEloquentModel(Player::factory()->make(attributes: [
+            'tag' => $member->tag,
         ]));
 
-        $playerUpdated = $this->repository->createOrUpdatePlayer($playerDTO);
+        $memberUpdated = $this->repository->createOrUpdateClubMember($memberDTO);
 
-        $this->assertDatabaseHas($playerUpdated->getTable(), [
-            'id' => $playerUpdated->id,
-            'tag' => $playerDTO->tag,
+        $this->assertDatabaseHas($memberUpdated->getTable(), [
+            'id' => $memberUpdated->id,
+            'tag' => $memberDTO->tag,
         ]);
 
-        $this->assertPlayerModelMatchesDTO($playerUpdated, $playerDTO);
+        $this->assertPlayerModelMatchesDTO($memberUpdated, $memberDTO);
     }
 }
