@@ -8,19 +8,20 @@ use Carbon\Carbon;
 use Database\Factories\AccessoryFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Support\Collection;
 
 /**
  * @property int $id
  * @property int $ext_id
  * @property string $name
- * @property int $brawler_id
  * @property Carbon $created_at
  * @property Carbon $updated_at
- * @property-read Brawler $brawler
+ * @property-read Collection|Brawler[]|array $brawlers all brawlers who may have the current accessory.
  */
 class Accessory extends Model
 {
+    /** @use HasFactory<AccessoryFactory> */
     use HasFactory;
 
     protected $table = 'accessories';
@@ -28,31 +29,24 @@ class Accessory extends Model
     protected $fillable = [
         'ext_id',
         'name',
-        'brawler_id',
     ];
 
     protected $casts = [
-        'ext_id'     => 'integer',
-        'brawler_id' => 'integer',
+        'ext_id' => 'integer',
     ];
 
     /**
-     * Get the brawler of an accessory.
+     * Get all brawlers who may have the current accessory.
      *
-     * @return BelongsTo
+     * @return BelongsToMany
      */
-    public function brawler(): BelongsTo
+    public function brawlers(): BelongsToMany
     {
-        return $this->belongsTo(Brawler::class, 'brawler_id', 'id');
-    }
-
-    /**
-     * Create a new factory instance for the model.
-     *
-     * @return AccessoryFactory
-     */
-    protected static function newFactory(): AccessoryFactory
-    {
-        return AccessoryFactory::new();
+        return $this->belongsToMany(
+            related: Brawler::class,
+            table: 'brawler_accessory',
+            foreignPivotKey: 'accessory_id',
+            relatedPivotKey: 'brawler_id',
+        );
     }
 }

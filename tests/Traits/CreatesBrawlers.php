@@ -14,21 +14,24 @@ use App\Models\StarPower;
 trait CreatesBrawlers
 {
     /**
-     * Create a brawler with associated accessories and star powers.
+     * Create a brawler with associated accessories, gears and star powers.
      *
      * @param (callable(array<string, mixed>): array<string, mixed>)|array<string, mixed> $attributes
      * @param int $accessoryCount
+     * @param int $gearCount
      * @param int $starPowerCount
      * @return Brawler
      */
     public function createBrawlerWithRelations(
         array|callable $attributes = [],
         int            $accessoryCount = 2,
-        int            $starPowerCount = 2
+        int            $gearCount = 2,
+        int            $starPowerCount = 2,
     ) : Brawler {
         return Brawler::factory()
-            ->has(Accessory::factory()->count($accessoryCount))
-            ->has(StarPower::factory()->count($starPowerCount))
+            ->withAccessories($accessoryCount)
+            ->withGears($gearCount)
+            ->withStarPowers($starPowerCount)
             ->create($attributes);
     }
 
