@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\API\DTO\Response;
 
 use App\API\Exceptions\InvalidDTOException;
+use App\Models\Accessory;
 
 final readonly class AccessoryDTO
 {
@@ -25,7 +26,7 @@ final readonly class AccessoryDTO
     }
 
     /**
-     * Factory method to create an AccessoryDTO.
+     * Factory method to create DTO.
      *
      * @param array $data
      * @return self
@@ -41,18 +42,35 @@ final readonly class AccessoryDTO
             throw InvalidDTOException::fromMessage("Invalid or missing 'name' field in Accessory data");
         }
 
-        return new self((int)$data['id'], $data['name']);
+        return new self(
+            extId: (int)$data['id'],
+            name: $data['name'],
+        );
     }
 
     /**
      * Factory method to create an array of AccessoryDTO.
      *
      * @param array $list
-     * @return array<int, AccessoryDTO>
+     * @return array<self>
      * @throws InvalidDTOException if required fields are missing or invalid.
      */
     public static function fromList(array $list): array
     {
         return array_map(fn($item) => self::fromArray($item), $list);
+    }
+
+    /**
+     * Factory method to create DTO from Eloquent model.
+     *
+     * @param Accessory $accessory
+     * @return self
+     */
+    public static function fromEloquentModel(Accessory $accessory): self
+    {
+        return new self(
+            extId: $accessory->ext_id,
+            name: $accessory->name,
+        );
     }
 }

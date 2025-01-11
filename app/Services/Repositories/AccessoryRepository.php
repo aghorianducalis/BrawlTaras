@@ -23,10 +23,6 @@ final readonly class AccessoryRepository implements AccessoryRepositoryInterface
             $query->where('ext_id', '=', $searchCriteria['ext_id']);
         }
 
-        if (isset($searchCriteria['brawler_id'])) {
-            $query->where('brawler_id', '=', $searchCriteria['brawler_id']);
-        }
-
         if (isset($searchCriteria['name'])) {
             $query->where('name', 'like', "%{$searchCriteria['name']}%");
         }
@@ -34,16 +30,14 @@ final readonly class AccessoryRepository implements AccessoryRepositoryInterface
         return $query->first();
     }
 
-    public function createOrUpdateAccessory(AccessoryDTO $accessoryDTO, int $brawlerId): Accessory
+    public function createOrUpdateAccessory(AccessoryDTO $accessoryDTO): Accessory
     {
         $accessory = $this->findAccessory([
             'ext_id' => $accessoryDTO->extId,
-            'brawler_id' => $brawlerId,
         ]);
         $newData = [
+            'ext_id' => $accessoryDTO->extId, // unnecessary since 'ext_id' remains unchanged
             'name' => $accessoryDTO->name,
-            'ext_id' => $accessoryDTO->extId,
-            'brawler_id' => $brawlerId,
         ];
 
         DB::transaction(function () use (&$accessory, $newData) {

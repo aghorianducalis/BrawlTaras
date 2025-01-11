@@ -21,8 +21,7 @@ interface AccessoryRepositoryInterface
      * Create or update a single accessory in the database.
      *
      * @param AccessoryDTO $accessoryDTO
-     * @param int $brawlerId
      * @return Accessory
      */
-    public function createOrUpdateAccessory(AccessoryDTO $accessoryDTO, int $brawlerId): Accessory;
+    public function createOrUpdateAccessory(AccessoryDTO $accessoryDTO): Accessory;
 }
