@@ -53,11 +53,7 @@ class BrawlerFactoryTest extends TestCase
             starPowerCount: $starPowerCount,
         );
 
-        $brawler->load([
-            'accessories',
-            'gears',
-            'starPowers',
-        ]);
+        $brawler->load(self::BRAWLER_RELATIONS);
 
         // Assertions for the Brawler model existence
         $this->assertTrue($brawler->exists, 'Brawler should exist in the database');
