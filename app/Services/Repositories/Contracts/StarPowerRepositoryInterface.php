@@ -21,8 +21,7 @@ interface StarPowerRepositoryInterface
      * Create or update a single star power in the database.
      *
      * @param StarPowerDTO $starPowerDTO
-     * @param int $brawlerId
      * @return StarPower
      */
-    public function createOrUpdateStarPower(StarPowerDTO $starPowerDTO, int $brawlerId): StarPower;
+    public function createOrUpdateStarPower(StarPowerDTO $starPowerDTO): StarPower;
 }
