@@ -15,17 +15,6 @@ final readonly class AccessoryDTO
     ) {}
 
     /**
-     * @return array{ext_id: int, name: string}
-     */
-    public function toArray(): array
-    {
-        return [
-            'ext_id' => $this->extId,
-            'name' => $this->name,
-        ];
-    }
-
-    /**
      * Factory method to create DTO.
      *
      * @param array $data
