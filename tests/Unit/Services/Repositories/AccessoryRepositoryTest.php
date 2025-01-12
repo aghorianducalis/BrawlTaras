@@ -65,7 +65,7 @@ class AccessoryRepositoryTest extends TestCase
     }
 
     #[Test]
-    #[TestDox('Create successfully an accessory for related brawler.')]
+    #[TestDox('Create successfully an accessory.')]
     public function test_create_accessory(): void
     {
         /** @var Accessory $accessoryToCreate */
@@ -91,7 +91,7 @@ class AccessoryRepositoryTest extends TestCase
     }
 
     #[Test]
-    #[TestDox('Update successfully an accessory for related brawler.')]
+    #[TestDox('Update successfully an accessory.')]
     public function test_update_existing_accessory(): void
     {
         /** @var Accessory $accessory */
