@@ -20,6 +20,7 @@ use App\Services\Repositories\Contracts\Event\EventModifierRepositoryInterface;
 use App\Services\Repositories\Contracts\Event\EventRepositoryInterface;
 use App\Services\Repositories\Contracts\Event\EventRotationRepositoryInterface;
 use App\Services\Repositories\Contracts\Event\EventRotationSlotRepositoryInterface;
+use App\Services\Repositories\Contracts\GearRepositoryInterface;
 use App\Services\Repositories\Contracts\PlayerRepositoryInterface;
 use App\Services\Repositories\Contracts\StarPowerRepositoryInterface;
 use App\Services\Repositories\Event\EventMapRepository;
@@ -28,6 +29,7 @@ use App\Services\Repositories\Event\EventModifierRepository;
 use App\Services\Repositories\Event\EventRepository;
 use App\Services\Repositories\Event\EventRotationRepository;
 use App\Services\Repositories\Event\EventRotationSlotRepository;
+use App\Services\Repositories\GearRepository;
 use App\Services\Repositories\PlayerRepository;
 use App\Services\Repositories\StarPowerRepository;
 use GuzzleHttp\Client as HttpClient;
@@ -52,6 +54,9 @@ class AppServiceProvider extends ServiceProvider
         // Register repositories
         $this->app->singleton(abstract: AccessoryRepositoryInterface::class, concrete: function ($app) {
             return new AccessoryRepository();
+        });
+        $this->app->singleton(abstract: GearRepositoryInterface::class, concrete: function ($app) {
+            return new GearRepository();
         });
         $this->app->singleton(abstract: StarPowerRepositoryInterface::class, concrete: function ($app) {
             return new StarPowerRepository();
