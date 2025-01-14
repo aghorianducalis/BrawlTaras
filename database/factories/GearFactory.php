@@ -4,20 +4,20 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
-use App\Models\StarPower;
+use App\Models\Gear;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<StarPower>
+ * @extends Factory<Gear>
  */
-class StarPowerFactory extends Factory
+class GearFactory extends Factory
 {
     /**
      * The name of the factory's corresponding model.
      *
-     * @var class-string<StarPower>
+     * @var class-string<Gear>
      */
-    protected $model = StarPower::class;
+    protected $model = Gear::class;
 
     /**
      * Define the model's default state.
@@ -28,7 +28,8 @@ class StarPowerFactory extends Factory
     {
         return [
             'ext_id' => $this->faker->unique()->randomNumber(),
-            'name' => "Star power #" . $this->faker->unique()->numerify(),
+            'name' => "Gear #" . $this->faker->unique()->numerify(),
+            'level' => $this->faker->numberBetween(0, 11),
         ];
     }
 }

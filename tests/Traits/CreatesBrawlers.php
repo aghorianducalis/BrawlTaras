@@ -10,30 +10,43 @@ use App\API\DTO\Response\StarPowerDTO;
 use App\Models\Accessory;
 use App\Models\Brawler;
 use App\Models\StarPower;
+use Database\Factories\BrawlerFactory;
+use PHPUnit\Framework\Attributes\UsesClass;
 
+#[UsesClass(Brawler::class)]
+#[UsesClass(BrawlerFactory::class)]
 trait CreatesBrawlers
 {
+    public const BRAWLER_RELATIONS = [
+        'accessories',
+        'gears',
+        'starPowers',
+    ];
+
     /**
-     * Create a brawler with associated accessories and star powers.
+     * Create a brawler with associated accessories, gears and star powers.
      *
      * @param (callable(array<string, mixed>): array<string, mixed>)|array<string, mixed> $attributes
      * @param int $accessoryCount
+     * @param int $gearCount
      * @param int $starPowerCount
      * @return Brawler
      */
     public function createBrawlerWithRelations(
         array|callable $attributes = [],
         int            $accessoryCount = 2,
-        int            $starPowerCount = 2
+        int            $gearCount = 2,
+        int            $starPowerCount = 2,
     ) : Brawler {
         return Brawler::factory()
-            ->has(Accessory::factory()->count($accessoryCount))
-            ->has(StarPower::factory()->count($starPowerCount))
+            ->withAccessories($accessoryCount)
+            ->withGears($gearCount)
+            ->withStarPowers($starPowerCount)
             ->create($attributes);
     }
 
     /**
-     * Create a brawler DTO with accessories and star powers.
+     * Make a DTO for brawler with related entities: accessories, gears and star powers.
      *
      * @param (callable(array<string, mixed>): array<string, mixed>)|array<string, mixed> $attributes
      * @param int $accessoryCount
@@ -74,27 +87,34 @@ trait CreatesBrawlers
         ]);
     }
 
-    public function assertEqualBrawlerModels(Brawler $brawlerExpected, ?Brawler $brawlerActual): void
+    public function assertEqualBrawlerModels(Brawler $brawlerExpected, Brawler $brawlerActual): void
     {
-        $this->assertNotNull($brawlerActual);
-        $this->assertInstanceOf(Brawler::class, $brawlerActual);
-        $this->assertSame($brawlerExpected->id, $brawlerActual->id);
         $this->assertSame($brawlerExpected->ext_id, $brawlerActual->ext_id);
         $this->assertSame($brawlerExpected->name, $brawlerActual->name);
-        $this->assertTrue($brawlerExpected->created_at->equalTo($brawlerActual->created_at));
 
-        // compare the brawler's relations
-        $brawlerExpected->load(['accessories', 'starPowers']);
-        $brawlerActual->load(['accessories', 'starPowers']);
+        if ($brawlerExpected->exists && $brawlerActual->exists) {
+            $this->assertSame($brawlerExpected->id, $brawlerActual->id);
+            $this->assertTrue($brawlerExpected->created_at->equalTo($brawlerActual->created_at));
 
-        $this->assertEquals(
-            $brawlerExpected->accessories->toArray(),
-            $brawlerActual->accessories->toArray()
-        );
-        $this->assertEquals(
-            $brawlerExpected->starPowers->toArray(),
-            $brawlerActual->starPowers->toArray()
-        );
+            // compare the brawler's relations
+            $brawlerExpected->load(self::BRAWLER_RELATIONS);
+            $brawlerActual->load(self::BRAWLER_RELATIONS);
+
+            $this->assertEquals(
+                $brawlerExpected->accessories->pluck('name', 'ext_id')->all(),
+                $brawlerActual->accessories->pluck('name', 'ext_id')->all()
+            );
+
+            $this->assertEquals(
+                $brawlerExpected->gears->pluck('name', 'ext_id')->all(),
+                $brawlerActual->gears->pluck('name', 'ext_id')->all()
+            );
+
+            $this->assertEquals(
+                $brawlerExpected->starPowers->pluck('name', 'ext_id')->all(),
+                $brawlerActual->starPowers->pluck('name', 'ext_id')->all()
+            );
+        }
     }
 
     public function assertBrawlerModelMatchesDTO(Brawler $brawler, BrawlerDTO $brawlerDTO): void
@@ -102,15 +122,23 @@ trait CreatesBrawlers
         $this->assertSame($brawler->ext_id, $brawlerDTO->extId);
         $this->assertSame($brawler->name, $brawlerDTO->name);
 
-        $brawler->load(['accessories', 'starPowers']);
+        if ($brawler->exists) {
+            $brawler->load(self::BRAWLER_RELATIONS);
 
-        $this->assertEquals(
-            $brawler->accessories->transform(fn(Accessory $accessory) => $accessory->only(['ext_id', 'name']))->toArray(),
-            collect($brawlerDTO->accessories)->transform(fn(AccessoryDTO $accessory) => $accessory->toArray())->toArray()
-        );
-        $this->assertEquals(
-            $brawler->starPowers->transform(fn(StarPower $starPower) => $starPower->only(['ext_id', 'name']))->toArray(),
-            collect($brawlerDTO->starPowers)->transform(fn(StarPowerDTO $starPower) => $starPower->toArray())->toArray()
-        );
+            $this->assertEquals(
+                $brawler->accessories->transform(fn(Accessory $accessory) => $accessory->only(['ext_id', 'name']))->toArray(),
+                collect($brawlerDTO->accessories)->transform(fn(AccessoryDTO $accessory) => [
+                    'ext_id' => $accessory->extId,
+                    'name' => $accessory->name,
+                ])->toArray()
+            );
+            $this->assertEquals(
+                $brawler->starPowers->transform(fn(StarPower $starPower) => $starPower->only(['ext_id', 'name']))->toArray(),
+                collect($brawlerDTO->starPowers)->transform(fn(StarPowerDTO $starPower) => [
+                    'ext_id' => $starPower->extId,
+                    'name' => $starPower->name,
+                ])->toArray()
+            );
+        }
     }
 }

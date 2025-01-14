@@ -11,11 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('star_powers', function (Blueprint $table) {
+        Schema::create('brawler_gear', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('ext_id')->unique();
-            $table->string('name');
-            $table->timestamps();
+            $table->unsignedBigInteger('brawler_id');
+            $table->foreign('brawler_id')->references('id')->on('brawlers');
+            $table->unsignedBigInteger('gear_id');
+            $table->foreign('gear_id')->references('id')->on('gears');
         });
     }
 
@@ -24,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('star_powers');
+        Schema::dropIfExists('brawler_gear');
     }
 };

@@ -23,8 +23,7 @@ use Tests\Traits\CreatesBrawlers;
 #[CoversClass(BrawlerRepository::class)]
 #[CoversMethod(BrawlerRepository::class, 'findBrawler')]
 #[CoversMethod(BrawlerRepository::class, 'createOrUpdateBrawler')]
-#[CoversMethod(BrawlerRepository::class, 'syncBrawlerAccessories')]
-#[CoversMethod(BrawlerRepository::class, 'syncBrawlerStarPowers')]
+#[CoversMethod(BrawlerRepository::class, 'syncRelations')]
 #[UsesClass(Brawler::class)]
 #[UsesClass(BrawlerFactory::class)]
 class BrawlerRepositoryTest extends TestCase
@@ -42,21 +41,24 @@ class BrawlerRepositoryTest extends TestCase
 
     #[Test]
     #[TestDox('Create and fetch the brawler with relations successfully.')]
-    #[TestWith(['name', 'Shelly'])]
     #[TestWith(['ext_id', 123])]
+    #[TestWith(['name', 'Shelly'])]
     public function test_find_brawler_by_criteria(string $property, int|string $value): void
     {
-        $this->assertDatabaseMissing((new Brawler())->getTable(), [$property => $value]);
+        $table = (new Brawler())->getTable();
+        $this->assertDatabaseMissing($table, [$property => $value]);
 
         $brawlerCreated = $this->createBrawlerWithRelations(attributes: [$property => $value]);
 
-        $this->assertDatabaseHas($brawlerCreated->getTable(), [
+        $this->assertDatabaseHas($table, [
             'id' => $brawlerCreated->id,
             $property => $value,
         ]);
 
         $brawlerFound = $this->repository->findBrawler([$property => $value]);
 
+        $this->assertNotNull($brawlerFound);
+        $this->assertInstanceOf(Brawler::class, $brawlerFound);
         $this->assertEqualBrawlerModels($brawlerCreated, $brawlerFound);
     }
 
@@ -64,16 +66,17 @@ class BrawlerRepositoryTest extends TestCase
     #[TestDox('Create successfully the brawler with related entities.')]
     public function test_create_brawler(): void
     {
+        $table = (new Brawler())->getTable();
         $brawlerDTO = $this->makeBrawlerDTOWithRelations();
 
-        $this->assertDatabaseMissing((new Brawler())->getTable(), [
+        $this->assertDatabaseMissing($table, [
             'ext_id' => $brawlerDTO->extId,
             'name' => $brawlerDTO->name,
         ]);
 
         $brawler = $this->repository->createOrUpdateBrawler($brawlerDTO);
 
-        $this->assertDatabaseHas($brawler->getTable(), [
+        $this->assertDatabaseHas($table, [
             'id' => $brawler->id,
             'ext_id' => $brawlerDTO->extId,
             'name' => $brawlerDTO->name,
@@ -94,8 +97,8 @@ class BrawlerRepositoryTest extends TestCase
 
         $brawlerUpdated = $this->repository->createOrUpdateBrawler($brawlerDTO);
 
-        $this->assertDatabaseHas($brawlerUpdated->getTable(), [
-            'id' => $brawlerUpdated->id,
+        $this->assertDatabaseHas($brawler->getTable(), [
+            'id' => $brawler->id,
             'ext_id' => $brawlerDTO->extId,
             'name' => $brawlerDTO->name,
         ]);

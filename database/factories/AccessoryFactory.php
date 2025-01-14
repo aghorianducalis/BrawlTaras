@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Database\Factories;
 
 use App\Models\Accessory;
-use App\Models\Brawler;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -30,7 +29,6 @@ class AccessoryFactory extends Factory
         return [
             'ext_id' => $this->faker->unique()->randomNumber(),
             'name' => "Accessory #" . $this->faker->unique()->numerify(),
-            'brawler_id' => Brawler::factory(),
         ];
     }
 }

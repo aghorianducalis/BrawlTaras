@@ -6,7 +6,6 @@ namespace Tests\Unit\Services\Repositories;
 
 use App\API\DTO\Response\StarPowerDTO;
 use App\Models\StarPower;
-use App\Models\Brawler;
 use App\Services\Repositories\Contracts\StarPowerRepositoryInterface;
 use App\Services\Repositories\StarPowerRepository;
 use Database\Factories\StarPowerFactory;
@@ -40,16 +39,17 @@ class StarPowerRepositoryTest extends TestCase
 
     #[Test]
     #[TestDox('Fetch the star power successfully.')]
-    #[TestWith(['name', 'Magic wings'])]
     #[TestWith(['ext_id', 123])]
+    #[TestWith(['name', 'Magic wings'])]
     public function test_find_star_power_by_criteria(string $property, int|string $value): void
     {
-        $this->assertDatabaseMissing((new StarPower())->getTable(), [$property => $value]);
+        $table = (new StarPower())->getTable();
+        $this->assertDatabaseMissing($table, [$property => $value]);
 
         /** @var StarPower $starPowerCreated */
         $starPowerCreated = StarPower::factory()->create([$property => $value]);
 
-        $this->assertDatabaseHas($starPowerCreated->getTable(), [
+        $this->assertDatabaseHas($table, [
             'id' => $starPowerCreated->id,
             $property => $value,
         ]);
@@ -61,71 +61,61 @@ class StarPowerRepositoryTest extends TestCase
         $this->assertEquals($starPowerCreated->id, $starPowerFound->id);
         $this->assertEquals($starPowerCreated->ext_id, $starPowerFound->ext_id);
         $this->assertEquals($starPowerCreated->name, $starPowerFound->name);
-        $this->assertEquals($starPowerCreated->brawler_id, $starPowerFound->brawler_id);
     }
 
     #[Test]
-    #[TestDox('Create successfully a star power for related brawler.')]
+    #[TestDox('Create successfully a star power.')]
     public function test_create_star_power(): void
     {
-        /** @var Brawler $brawler */
-        $brawler = Brawler::factory()->create();
-        /** @var StarPower $starPower */
-        $starPower = StarPower::factory()->for($brawler)->make();
+        /** @var StarPower $starPowerToCreate */
+        $starPowerToCreate = StarPower::factory()->make();
+        $table = $starPowerToCreate->getTable();
 
-        $this->assertDatabaseMissing($starPower->getTable(), $starPower->only([
+        $this->assertDatabaseMissing($table, $starPowerToCreate->only([
             'ext_id',
             'name',
-            'brawler_id',
         ]));
 
-        $dto = StarPowerDTO::fromArray([
-            'id' => $starPower->ext_id,
-            'name' => $starPower->name,
-        ]);
+        $dto = StarPowerDTO::fromEloquentModel($starPowerToCreate);
 
-        $starPowerCreated = $this->repository->createOrUpdateStarPower($dto, $starPower->brawler_id);
-        $this->assertDatabaseHas($starPower->getTable(), $starPower->only([
+        $starPowerCreated = $this->repository->createOrUpdateStarPower($dto);
+
+        $this->assertEquals($starPowerToCreate->ext_id, $starPowerCreated->ext_id);
+        $this->assertEquals($starPowerToCreate->name, $starPowerCreated->name);
+
+        $this->assertDatabaseHas($table, $starPowerToCreate->only([
             'ext_id',
             'name',
-            'brawler_id',
         ]));
-        $this->assertEquals($starPower->ext_id, $starPowerCreated->ext_id);
-        $this->assertEquals($starPower->name, $starPowerCreated->name);
-        $this->assertEquals($starPower->brawler_id, $starPowerCreated->brawler_id);
     }
 
     #[Test]
-    #[TestDox('Update successfully a star power for related brawler.')]
+    #[TestDox('Update successfully a star power.')]
     public function test_update_existing_star_power(): void
     {
-        /** @var Brawler $brawler */
-        $brawler = Brawler::factory()->create();
         /** @var StarPower $starPower */
-        $starPower = StarPower::factory()->for($brawler)->create();
+        $starPower = StarPower::factory()->create();
+        $table = $starPower->getTable();
 
-        $this->assertDatabaseHas($starPower->getTable(), $starPower->only([
+        $this->assertDatabaseHas($table, $starPower->only([
             'id',
             'ext_id',
             'name',
-            'brawler_id',
         ]));
 
-        $dto = StarPowerDTO::fromArray([
-            'id' => $starPower->ext_id,
-            'name' => 'new name of star power',
-        ]);
+        $starPowerToUpdate = StarPower::factory()->make($starPower->only(['id', 'ext_id']));
+        $dto = StarPowerDTO::fromEloquentModel($starPowerToUpdate);
 
-        $starPowerUpdated = $this->repository->createOrUpdateStarPower($dto, $starPower->brawler_id);
-        $this->assertDatabaseHas($starPower->getTable(), [
-            'id' => $starPower->id,
-            'ext_id' => $dto->extId,
-            'name' => $dto->name,
-            'brawler_id' => $starPower->brawler_id,
-        ]);
-        $this->assertEquals($starPower->id, $starPowerUpdated->id);
-        $this->assertEquals($starPower->ext_id, $starPowerUpdated->ext_id);
-        $this->assertEquals($dto->name, $starPowerUpdated->name);
-        $this->assertEquals($starPower->brawler_id, $starPowerUpdated->brawler_id);
+        $starPowerUpdated = $this->repository->createOrUpdateStarPower($dto);
+
+        $this->assertEquals($starPowerToUpdate->id, $starPowerUpdated->id);
+        $this->assertEquals($starPowerToUpdate->ext_id, $starPowerUpdated->ext_id);
+        $this->assertEquals($starPowerToUpdate->name, $starPowerUpdated->name);
+
+        $this->assertDatabaseHas($table, $starPowerToUpdate->only([
+            'id',
+            'ext_id',
+            'name',
+        ]));
     }
 }

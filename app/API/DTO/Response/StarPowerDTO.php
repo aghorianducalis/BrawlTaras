@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\API\DTO\Response;
 
 use App\API\Exceptions\InvalidDTOException;
+use App\Models\StarPower;
 
 final readonly class StarPowerDTO
 {
@@ -14,18 +15,7 @@ final readonly class StarPowerDTO
     ) {}
 
     /**
-     * @return array{ext_id: int, name: string}
-     */
-    public function toArray(): array
-    {
-        return [
-            'ext_id' => $this->extId,
-            'name' => $this->name,
-        ];
-    }
-
-    /**
-     * Factory method to create StarPowerDTO.
+     * Factory method to create DTO.
      *
      * @param array $data
      * @return self
@@ -41,18 +31,35 @@ final readonly class StarPowerDTO
             throw InvalidDTOException::fromMessage("Invalid or missing 'name' field in StarPower data");
         }
 
-        return new self((int)$data['id'], $data['name']);
+        return new self(
+            extId: (int)$data['id'],
+            name: $data['name'],
+        );
     }
 
     /**
      * Factory method to create an array of StarPowerDTO.
      *
      * @param array $list
-     * @return array<int, StarPowerDTO>
+     * @return array<self>
      * @throws InvalidDTOException if required fields are missing or invalid.
      */
     public static function fromList(array $list): array
     {
         return array_map(fn($item) => self::fromArray($item), $list);
+    }
+
+    /**
+     * Factory method to create DTO from Eloquent model.
+     *
+     * @param StarPower $starPower
+     * @return self
+     */
+    public static function fromEloquentModel(StarPower $starPower): self
+    {
+        return new self(
+            extId: $starPower->ext_id,
+            name: $starPower->name,
+        );
     }
 }
