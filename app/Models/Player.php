@@ -14,7 +14,6 @@ use Illuminate\Support\Collection;
 
 /**
  * @property int $id
- * @property int|null $ext_id
  * @property string $tag
  * @property string $name
  * @property string $name_color
@@ -44,7 +43,6 @@ class Player extends Model
     protected $table = 'players';
 
     protected $fillable = [
-        'ext_id',
         'tag',
         'name',
         'name_color',
@@ -64,7 +62,6 @@ class Player extends Model
     ];
 
     protected $casts = [
-        'ext_id'                                => 'integer',
         'icon_id'                               => 'integer',
         'trophies'                              => 'integer',
         'highest_trophies'                      => 'integer',

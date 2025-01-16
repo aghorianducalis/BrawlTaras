@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Repositories;
 
-use App\API\DTO\Response\PlayerDTO;
+use App\API\DTO\Response\ClubPlayerDTO;
 use App\Models\Player;
 use App\Services\Repositories\Contracts\PlayerRepositoryInterface;
 use Illuminate\Support\Facades\DB;
@@ -19,10 +19,6 @@ final readonly class PlayerRepository implements PlayerRepositoryInterface
 
         if (isset($searchCriteria['id'])) {
             $query->where('id', '=', $searchCriteria['id']);
-        }
-
-        if (isset($searchCriteria['ext_id'])) {
-            $query->where('ext_id', '=', $searchCriteria['ext_id']);
         }
 
         if (isset($searchCriteria['tag'])) {
@@ -40,21 +36,21 @@ final readonly class PlayerRepository implements PlayerRepositoryInterface
         return $query->first();
     }
 
-    public function createOrUpdatePlayer(PlayerDTO $playerDTO): Player
+    public function createOrUpdateClubMember(ClubPlayerDTO $memberDTO): Player
     {
         $player = $this->findPlayer([
-            'tag' => $playerDTO->tag,
+            'tag' => $memberDTO->tag,
         ]);
 
-        DB::transaction(function () use (&$player, $playerDTO) {
+        DB::transaction(function () use (&$player, $memberDTO) {
             // Create or update Player
             $attributes = [
-                'tag' => $playerDTO->tag,
-                'name' => $playerDTO->name,
-                'name_color' => $playerDTO->nameColor,
-                'role' => $playerDTO->role, // todo
-                'trophies' => $playerDTO->trophies,
-                'icon_id' => $playerDTO->icon['id'], // todo
+                'tag' => $memberDTO->tag,
+                'name' => $memberDTO->name,
+                'name_color' => $memberDTO->nameColor,
+                'role' => $memberDTO->role, // todo
+                'trophies' => $memberDTO->trophies,
+                'icon_id' => $memberDTO->icon['id'], // todo
             ];
 
             if ($player) {
@@ -67,8 +63,8 @@ final readonly class PlayerRepository implements PlayerRepositoryInterface
         return $player->refresh();
     }
 
-    public function createOrUpdatePlayers(array $playerDTOs): array
+    public function createOrUpdateClubMembers(array $memberDTOs): array
     {
-        return array_map(fn (PlayerDTO $dto) => $this->createOrUpdatePlayer($dto), $playerDTOs);
+        return array_map(fn (ClubPlayerDTO $dto) => $this->createOrUpdateClubMember($dto), $memberDTOs);
     }
 }
