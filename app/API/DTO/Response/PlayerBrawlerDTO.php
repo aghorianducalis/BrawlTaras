@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\API\DTO\Response;
 
 use App\API\Exceptions\InvalidDTOException;
+use App\Models\Player;
 
 final readonly class PlayerBrawlerDTO
 {
@@ -103,35 +104,35 @@ final readonly class PlayerBrawlerDTO
         return array_map(fn($item) => self::fromArray($item), $list);
     }
 
-//    /**
-//     * @param Player $player
-//     * @return self
-//     */
-//    public static function fromEloquentModel(Player $player): self
-//    {
-//        return self::fromArray(self::eloquentModelToArray(player: $player));
-//    }
-//
-//    /**
-//     * @param array<Player> $players
-//     * @return array<self>
-//     */
-//    public static function fromEloquentModels(array $players): array
-//    {
-//        return array_map(fn(Player $player) => self::fromEloquentModel($player), $players);
-//    }
-//
-//    public static function eloquentModelToArray(Player $player): array
-//    {
-//        return [
-//            'tag' => $player->tag,
-//            'name' => $player->name,
-//            'nameColor' => $player->name_color,
-//            'role' => $player->role ?? '',// todo enum, column of players table or intermediate (club_player.role) if many-to-many
-//            'trophies' => $player->trophies,
-//            'icon' => [
-//                'id' => $player->icon_id,
-//            ],
-//        ];
-//    }
+    /**
+     * @param Player $player
+     * @return self
+     */
+    public static function fromEloquentModel(Player $player): self
+    {
+        return self::fromArray(self::eloquentModelToArray(player: $player));
+    }
+
+    /**
+     * @param array<Player> $players
+     * @return array<self>
+     */
+    public static function fromEloquentModels(array $players): array
+    {
+        return array_map(fn(Player $player) => self::fromEloquentModel($player), $players);
+    }
+
+    public static function eloquentModelToArray(Player $player): array
+    {
+        return [
+            'tag' => $player->tag,
+            'name' => $player->name,
+            'nameColor' => $player->name_color,
+            'role' => $player->role ?? '',// todo enum, column of players table or intermediate (club_player.role) if many-to-many
+            'trophies' => $player->trophies,
+            'icon' => [
+                'id' => $player->icon_id,
+            ],
+        ];
+    }
 }
