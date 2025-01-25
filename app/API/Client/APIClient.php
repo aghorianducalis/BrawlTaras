@@ -31,8 +31,6 @@ final readonly class APIClient implements APIClientInterface
      * app(\App\API\Client\APIClient::class)->getBrawler(16000000)
      *
      * @inheritdoc
-     * @throws ResponseException
-     * @throws InvalidDTOException
      */
     public function getBrawler(int $externalId): BrawlerDTO
     {
@@ -49,8 +47,6 @@ final readonly class APIClient implements APIClientInterface
      * app(\App\API\Client\APIClient::class)->getBrawlers();
      *
      * @inheritdoc
-     * @throws ResponseException
-     * @throws InvalidDTOException
      */
     public function getBrawlers(): array
     {

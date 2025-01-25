@@ -20,6 +20,8 @@ interface APIClientInterface
      *
      * @param int $externalId
      * @return BrawlerDTO
+     * @throws InvalidDTOException
+     * @throws ResponseException
      */
     public function getBrawler(int $externalId): BrawlerDTO;
 
@@ -27,6 +29,8 @@ interface APIClientInterface
      * Fetch all brawlers.
      *
      * @return array<BrawlerDTO>
+     * @throws InvalidDTOException
+     * @throws ResponseException
      */
     public function getBrawlers(): array;
 
@@ -35,8 +39,8 @@ interface APIClientInterface
      *
      * @param string $clubTag
      * @return ClubDTO
-     * @throws ResponseException
      * @throws InvalidDTOException
+     * @throws ResponseException
      */
     public function getClubByTag(string $clubTag): ClubDTO;
 
@@ -53,9 +57,9 @@ interface APIClientInterface
     /**
      * Fetch events rotation.
      *
+     * @return array<EventRotationDTO>
      * @throws ResponseException
      * @throws InvalidDTOException
-     * @return array<EventRotationDTO>
      */
     public function getEventsRotation(): array;
 
@@ -64,8 +68,8 @@ interface APIClientInterface
      *
      * @param string $playerTag
      * @return PlayerDTO
-     * @throws ResponseException
      * @throws InvalidDTOException
+     * @throws ResponseException
      */
     public function getPlayerByTag(string $playerTag): PlayerDTO;
 
