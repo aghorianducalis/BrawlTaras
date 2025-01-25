@@ -67,7 +67,7 @@ final readonly class ClubPlayerDTO
      * Factory method to create an array of DTO.
      *
      * @param array $list
-     * @return array<int, self>
+     * @return array<self>
      * @throws InvalidDTOException if required fields are missing or invalid.
      */
     public static function fromList(array $list): array
@@ -75,22 +75,9 @@ final readonly class ClubPlayerDTO
         return array_map(fn($item) => self::fromArray($item), $list);
     }
 
-    /**
-     * @param Player $player
-     * @return self
-     */
     public static function fromEloquentModel(Player $player): self
     {
         return self::fromArray(self::eloquentModelToArray(player: $player));
-    }
-
-    /**
-     * @param array<Player> $players
-     * @return array<self>
-     */
-    public static function fromEloquentModels(array $players): array
-    {
-        return array_map(fn(Player $player) => self::fromEloquentModel($player), $players);
     }
 
     public static function eloquentModelToArray(Player $player): array

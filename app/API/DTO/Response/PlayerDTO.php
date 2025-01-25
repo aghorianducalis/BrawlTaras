@@ -117,10 +117,6 @@ final readonly class PlayerDTO
         );
     }
 
-    /**
-     * @param Player $player
-     * @return self
-     */
     public static function fromEloquentModel(Player $player): self
     {
         return self::fromArray(self::eloquentModelToArray(player: $player));

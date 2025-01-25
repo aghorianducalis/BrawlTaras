@@ -66,6 +66,7 @@ use Tests\Traits\CreatesPlayers;
 #[CoversMethod(APIClient::class, 'getClubByTag')]
 #[CoversMethod(APIClient::class, 'getClubMembers')]
 #[CoversMethod(APIClient::class, 'getEventsRotation')]
+#[CoversMethod(APIClient::class, 'getPlayerByTag')]
 class APIClientTest extends TestCase
 {
     use CreatesBrawlers;
@@ -559,7 +560,7 @@ class APIClientTest extends TestCase
         $mockResponse = new Response(
             200,
             [],
-            json_encode(['items' => ClubPlayerDTO::fromEloquentModels($club->members->all())], JSON_THROW_ON_ERROR),
+            json_encode(['items' => array_map(fn(Player $player) => ClubPlayerDTO::fromEloquentModel($player), $club->members->all())], JSON_THROW_ON_ERROR),
         );
 
         $this->httpClientMock

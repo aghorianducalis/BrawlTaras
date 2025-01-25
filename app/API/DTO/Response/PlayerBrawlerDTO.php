@@ -16,9 +16,9 @@ final readonly class PlayerBrawlerDTO
      * @param int $rank
      * @param int $trophies
      * @param int $highestTrophies
+     * @param array<AccessoryDTO> $accessories
      * @param array<GearDTO> $gears
      * @param array<StarPowerDTO> $starPowers
-     * @param array<AccessoryDTO> $accessories
      */
     private function __construct(
         public int    $extId,
@@ -27,9 +27,9 @@ final readonly class PlayerBrawlerDTO
         public int    $rank,
         public int    $trophies,
         public int    $highestTrophies,
+        public array  $accessories,
         public array  $gears,
         public array  $starPowers,
-        public array  $accessories,
     ) {}
 
     /**
@@ -66,16 +66,16 @@ final readonly class PlayerBrawlerDTO
             throw InvalidDTOException::fromMessage("Invalid or missing 'highestTrophies' field in player's brawler data");
         }
 
+        if (!(isset($data['gadgets']) && is_array($data['gadgets']))) {
+            throw InvalidDTOException::fromMessage("Invalid or missing 'gadgets' field in player's brawler data");
+        }
+
         if (!(isset($data['gears']) && is_array($data['gears']))) {
             throw InvalidDTOException::fromMessage("Invalid or missing 'gears' field in player's brawler data");
         }
 
         if (!(isset($data['starPowers']) && is_array($data['starPowers']))) {
             throw InvalidDTOException::fromMessage("Invalid or missing 'starPowers' field in player's brawler data");
-        }
-
-        if (!(isset($data['gadgets']) && is_array($data['gadgets']))) {
-            throw InvalidDTOException::fromMessage("Invalid or missing 'gadgets' field in player's brawler data");
         }
 
         // Create a new DTO instance
@@ -86,9 +86,9 @@ final readonly class PlayerBrawlerDTO
             rank: (int) $data['rank'],
             trophies: (int) $data['trophies'],
             highestTrophies: (int) $data['highestTrophies'],
+            accessories: AccessoryDTO::fromList($data['gadgets']),
             gears: GearDTO::fromList($data['gears']),
             starPowers: StarPowerDTO::fromList($data['starPowers']),
-            accessories: AccessoryDTO::fromList($data['gadgets']),
         );
     }
 
