@@ -128,7 +128,7 @@ final readonly class PlayerBrawlerDTO
             'tag' => $player->tag,
             'name' => $player->name,
             'nameColor' => $player->name_color,
-            'role' => $player->role ?? '',// todo enum, column of players table or intermediate (club_player.role) if many-to-many
+            'role' => $player->club_role,
             'trophies' => $player->trophies,
             'icon' => [
                 'id' => $player->icon_id,

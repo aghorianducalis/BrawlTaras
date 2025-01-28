@@ -30,6 +30,7 @@ use Illuminate\Support\Collection;
  * @property int $best_time_robo_rumble
  * @property int $best_time_as_big_brawler
  * @property int|null $club_id
+ * @property string|null $club_role
  * @property Carbon $created_at
  * @property Carbon $updated_at
  * @property-read Club|null $club
@@ -39,6 +40,13 @@ class Player extends Model
 {
     /** @use HasFactory<PlayerFactory> */
     use HasFactory;
+
+    public const CLUB_ROLES = [
+        'president',
+        'vice president',
+        'senior',
+        'member',
+    ];
 
     protected $table = 'players';
 
@@ -59,6 +67,7 @@ class Player extends Model
         'best_time_robo_rumble',
         'best_time_as_big_brawler',
         'club_id',
+        'club_role',
     ];
 
     protected $casts = [

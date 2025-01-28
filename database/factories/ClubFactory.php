@@ -41,7 +41,7 @@ class ClubFactory extends Factory
     }
 
     /**
-     * Attach Players to the Club.
+     * Attach players to the Club.
      *
      * @param int $count
      * @param array|callable $attributes
@@ -51,6 +51,7 @@ class ClubFactory extends Factory
     {
         return $this->afterCreating(fn(Club $club) => Player::factory()
             ->for($club)
+            ->withClub($club)
             ->count($count)
             ->create($attributes)
         );

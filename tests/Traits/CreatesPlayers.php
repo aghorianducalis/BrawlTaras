@@ -38,7 +38,7 @@ trait CreatesPlayers
         $this->assertSame($player->tag, $playerDTO->tag);
         $this->assertSame($player->name, $playerDTO->name);
         $this->assertSame($player->name_color, $playerDTO->nameColor);
-        $this->assertSame($player->role ?? '', $playerDTO->role);//todo
+        $this->assertSame($player->club_role, $playerDTO->role);
         $this->assertSame($player->trophies, $playerDTO->trophies);
         $this->assertSame($player->icon_id, $playerDTO->icon['id']);//todo
     }

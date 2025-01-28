@@ -61,7 +61,7 @@ final readonly class PlayerBattleLogDTO
                 $data['tag'],
                 $data['name'],
                 $data['nameColor'],
-                $data['role'],// todo enum or model
+                $data['role'],
                 $data['trophies'],
                 $data['icon']['id'],
             ) &&
@@ -119,7 +119,7 @@ final readonly class PlayerBattleLogDTO
             'tag' => $player->tag,
             'name' => $player->name,
             'nameColor' => $player->name_color,
-            'role' => $player->role ?? '',// todo enum, column of players table or intermediate (club_player.role) if many-to-many
+            'role' => $player->role ?? '',
             'trophies' => $player->trophies,
             'icon' => [
                 'id' => $player->icon_id,

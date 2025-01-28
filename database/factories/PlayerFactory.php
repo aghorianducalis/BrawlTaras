@@ -30,7 +30,7 @@ class PlayerFactory extends Factory
     {
         $tag = '#' . strtoupper($this->faker->unique()->bothify('#########?'));
 
-        return [
+        $state = [
             'tag' => $tag,
             'name' => "Player $tag",
             'name_color' => $this->faker->colorName(),
@@ -46,12 +46,33 @@ class PlayerFactory extends Factory
             'trio_victories' => $this->faker->randomNumber(5),
             'best_time_robo_rumble' => $this->faker->randomNumber(5),
             'best_time_as_big_brawler' => $this->faker->randomNumber(5),
-            'club_id' => Club::factory(),
         ];
+
+        if ($belongsToClub = $this->faker->boolean) {
+            $state = array_merge($state, [
+                'club_id' => Club::factory(),
+                'club_role' => $this->faker->randomElement(Player::CLUB_ROLES),
+            ]);
+        }
+
+        return $state;
     }
 
     /**
-     * Attach Brawlers to the Player.
+     * Indicate that the player is a club member.
+     */
+    public function withClub(?Club $club = null): Factory
+    {
+        $club = $club ?? Club::factory();
+
+        return $this->state(fn (array $attributes) => [
+            'club_id' => $club,
+            'club_role' => $this->faker->randomElement(Player::CLUB_ROLES),
+        ]);
+    }
+
+    /**
+     * Attach brawlers to the player.
      *
      * @param int $count
      * @param array|callable $attributes

@@ -16,7 +16,7 @@ use Illuminate\Support\Collection;
  * @property string $tag
  * @property string $name
  * @property string $description
- * @property string $type todo enum or ClubType model
+ * @property string $type
  * @property int $badge_id
  * @property int $required_trophies
  * @property int $trophies
