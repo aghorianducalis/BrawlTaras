@@ -40,64 +40,64 @@ final readonly class ClubDTO
      */
     public static function fromArray(array $data): self
     {
-        // Validate the structure of the data array
-        if (!(
-            isset(
-                $data['tag'],
-                $data['name'],
-                $data['description'],
-                $data['type'],// todo enum or model
-                $data['badgeId'],
-                $data['requiredTrophies'],
-                $data['trophies'],
-                $data['members'],
-            ) &&
-            is_numeric($data['badgeId']) &&
-            is_numeric($data['requiredTrophies']) &&
-            is_numeric($data['trophies']) &&
-            is_array($data['members'])
-        )) {
-            throw InvalidDTOException::fromMessage(
-                "Club data array has an invalid structure: " . json_encode($data)
-            );
+        if (!(isset($data['tag']) && is_string($data['tag']) && !empty(trim($data['tag'])))) {
+            throw InvalidDTOException::fromMessage("Invalid or missing 'tag' field in club data");
         }
 
-        // Create a new DTO instance
+        if (!(isset($data['name']) && is_string($data['name']) && !empty(trim($data['name'])))) {
+            throw InvalidDTOException::fromMessage("Invalid or missing 'name' field in club data");
+        }
+
+        if (!(isset($data['description']) && is_string($data['description']) && !empty(trim($data['description'])))) {
+            throw InvalidDTOException::fromMessage("Invalid or missing 'description' field in club data");
+        }
+
+        if (!(isset($data['type']) && is_string($data['type']) && !empty(trim($data['type'])))) {
+            throw InvalidDTOException::fromMessage("Invalid or missing 'type' field in club data");
+        }
+
+        if (!(isset($data['badgeId']) && is_numeric($data['badgeId']))) {
+            throw InvalidDTOException::fromMessage("Invalid or missing 'badgeId' field in club data");
+        }
+
+        if (!(isset($data['requiredTrophies']) && is_numeric($data['requiredTrophies']))) {
+            throw InvalidDTOException::fromMessage("Invalid or missing 'requiredTrophies' field in club data");
+        }
+
+        if (!(isset($data['trophies']) && is_numeric($data['trophies']))) {
+            throw InvalidDTOException::fromMessage("Invalid or missing 'trophies' field in club data");
+        }
+
+        if (!(isset($data['members']) && is_array($data['members']))) {
+            throw InvalidDTOException::fromMessage("Invalid or missing 'members' field in club data");
+        }
+
         return new self(
-            $data['tag'],
-            $data['name'],
-            $data['description'],
-            $data['type'],
-            (int) $data['badgeId'],
-            (int) $data['requiredTrophies'],
-            (int) $data['trophies'],
-            ClubPlayerDTO::fromList($data['members']),
+            tag: $data['tag'],
+            name: $data['name'],
+            description: $data['description'],
+            type: $data['type'],
+            badgeId: (int) $data['badgeId'],
+            requiredTrophies: (int) $data['requiredTrophies'],
+            trophies: (int) $data['trophies'],
+            members: ClubPlayerDTO::fromList($data['members']),
         );
     }
 
-    /**
-     * @param Club $club
-     * @return self
-     */
     public static function fromEloquentModel(Club $club): self
     {
-        return self::fromArray(self::eloquentModelToArray(club: $club));
-    }
-
-    public static function eloquentModelToArray(Club $club): array
-    {
-        return [
-            'tag' => $club->tag,
-            'name' => $club->name,
-            'description' => $club->description,
-            'type' => $club->type,
-            'badgeId' => $club->badge_id,
-            'requiredTrophies' => $club->required_trophies,
-            'trophies' => $club->trophies,
-            'members' => array_map(
-                fn(Player $player) => ClubPlayerDTO::eloquentModelToArray(player: $player),
+        return new self(
+            tag: $club->tag,
+            name: $club->name,
+            description: $club->description,
+            type: $club->type,
+            badgeId: $club->badge_id,
+            requiredTrophies: $club->required_trophies,
+            trophies: $club->trophies,
+            members: array_map(
+                fn(Player $player) => ClubPlayerDTO::fromEloquentModel(player: $player)->toArray(),
                 $club->members->all()
             ),
-        ];
+        );
     }
 }

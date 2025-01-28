@@ -15,7 +15,7 @@ final readonly class ClubPlayerDTO
      * @param string $nameColor
      * @param string $role
      * @param int $trophies
-     * @param array{id: int} $icon
+     * @param array{id: int|null} $icon
      */
     private function __construct(
         public string $tag,
@@ -27,6 +27,21 @@ final readonly class ClubPlayerDTO
     ) {}
 
     /**
+     * @return array{tag: string, name: string, nameColor: string, role: string, trophies: int, icon: array{id: int}}
+     */
+    public function toArray(): array
+    {
+        return [
+            'tag' => $this->tag,
+            'name' => $this->name,
+            'nameColor' => $this->nameColor,
+            'role' => $this->role,
+            'trophies' => $this->trophies,
+            'icon' => $this->icon,
+        ];
+    }
+
+    /**
      * Factory method to create DTO.
      *
      * @param array $data
@@ -35,31 +50,42 @@ final readonly class ClubPlayerDTO
      */
     public static function fromArray(array $data): self
     {
-        // Validate the structure of the data array
-        if (!(
-            isset(
-                $data['tag'],
-                $data['name'],
-                $data['nameColor'],
-                $data['role'],// todo enum or model
-                $data['trophies'],
-                $data['icon']['id'],
-            ) &&
-            is_numeric($data['trophies'])
-        )) {
-            throw InvalidDTOException::fromMessage(
-                "Player data array has an invalid structure: " . json_encode($data)
-            );
+        if (!(isset($data['tag']) && is_string($data['tag']) && !empty(trim($data['tag'])))) {
+            throw InvalidDTOException::fromMessage("Invalid or missing 'tag' field in club's member data");
         }
 
-        // Create a new DTO instance
+        if (!(isset($data['name']) && is_string($data['name']) && !empty(trim($data['name'])))) {
+            throw InvalidDTOException::fromMessage("Invalid or missing 'name' field in club's member data");
+        }
+
+        if (!(isset($data['nameColor']) && is_string($data['nameColor']) && !empty(trim($data['nameColor'])))) {
+            throw InvalidDTOException::fromMessage("Invalid or missing 'nameColor' field in club's member data");
+        }
+
+        if (!(isset($data['role']) && is_string($data['role']) && !empty(trim($data['role'])))) {
+            throw InvalidDTOException::fromMessage("Invalid or missing 'role' field in club's member data");
+        }
+
+        if (!(isset($data['trophies']) && is_numeric($data['trophies']))) {
+            throw InvalidDTOException::fromMessage("Invalid or missing 'trophies' field in club's member data");
+        }
+
+        if (!(
+            isset($data['icon']) &&
+            is_array($data['icon']) &&
+            isset($data['icon']['id']) &&
+            (is_null($data['icon']['id']) || is_numeric($data['icon']['id']))
+        )) {
+            throw InvalidDTOException::fromMessage("Invalid or missing 'icon' field in club's member data");
+        }
+
         return new self(
-            $data['tag'],
-            $data['name'],
-            $data['nameColor'],
-            $data['role'],
-            (int) $data['trophies'],
-            $data['icon'],
+            tag: $data['tag'],
+            name: $data['name'],
+            nameColor: $data['nameColor'],
+            role: $data['role'],
+            trophies: (int) $data['trophies'],
+            icon: $data['icon'],
         );
     }
 
@@ -77,20 +103,19 @@ final readonly class ClubPlayerDTO
 
     public static function fromEloquentModel(Player $player): self
     {
-        return self::fromArray(self::eloquentModelToArray(player: $player));
-    }
+        if (!$player->club_role) {
+            throw InvalidDTOException::fromMessage("Club's member must to have role specified.");
+        }
 
-    public static function eloquentModelToArray(Player $player): array
-    {
-        return [
-            'tag' => $player->tag,
-            'name' => $player->name,
-            'nameColor' => $player->name_color,
-            'role' => $player->role ?? '',// todo enum, column of players table or intermediate (club_player.role) if many-to-many
-            'trophies' => $player->trophies,
-            'icon' => [
+        return new self(
+            tag: $player->tag,
+            name: $player->name,
+            nameColor: $player->name_color,
+            role: $player->club_role,
+            trophies: $player->trophies,
+            icon: [
                 'id' => $player->icon_id,
             ],
-        ];
+        );
     }
 }

@@ -55,50 +55,90 @@ final readonly class PlayerDTO
      */
     public static function fromArray(array $data): self
     {
-        // Validate the structure of the data array
-        if (!(
-            isset(
-                $data['tag'],
-                $data['name'],
-                $data['nameColor'],
-                $data['icon'],
-                $data['trophies'],
-                $data['highestTrophies'],
-                $data['expLevel'],
-                $data['expPoints'],
-                $data['isQualifiedFromChampionshipChallenge'],
-                $data['3vs3Victories'],
-                $data['soloVictories'],
-                $data['duoVictories'],
-                $data['bestRoboRumbleTime'],
-                $data['bestTimeAsBigBrawler'],
-                $data['club'],
-                $data['brawlers'],
-            ) &&
-            (is_array($data['icon']) && isset($data['icon']['id']) && is_numeric($data['icon']['id'])) &&
-            is_numeric($data['trophies']) &&
-            is_numeric($data['highestTrophies']) &&
-            is_numeric($data['expLevel']) &&
-            is_numeric($data['expPoints']) &&
-            is_bool($data['isQualifiedFromChampionshipChallenge']) &&
-            is_numeric($data['3vs3Victories']) &&
-            is_numeric($data['soloVictories']) &&
-            is_numeric($data['duoVictories']) &&
-            is_numeric($data['bestTimeAsBigBrawler']) &&
-            (is_array($data['club']) && isset($data['club']['tag'], $data['club']['name'])) &&
-            (is_array($data['brawlers']))
-        )) {
-            throw InvalidDTOException::fromMessage(
-                "Player data array has an invalid structure: " . json_encode($data)
-            );
+        if (!(isset($data['tag']) && is_string($data['tag']) && !empty(trim($data['tag'])))) {
+            throw InvalidDTOException::fromMessage("Invalid or missing 'tag' field in player data");
         }
 
-        // Create a new DTO instance
+        if (!(isset($data['name']) && is_string($data['name']) && !empty(trim($data['name'])))) {
+            throw InvalidDTOException::fromMessage("Invalid or missing 'name' field in player data");
+        }
+
+        if (!(isset($data['nameColor']) && is_string($data['nameColor']) && !empty(trim($data['nameColor'])))) {
+            throw InvalidDTOException::fromMessage("Invalid or missing 'nameColor' field in player data");
+        }
+
+        if (!(isset($data['icon']['id']) && is_numeric($data['icon']['id']))) {
+            throw InvalidDTOException::fromMessage("Invalid or missing 'icon' field in player data");
+        }
+
+        if (!(isset($data['trophies']) && is_numeric($data['trophies']))) {
+            throw InvalidDTOException::fromMessage("Invalid or missing 'trophies' field in player data");
+        }
+
+        if (!(isset($data['highestTrophies']) && is_numeric($data['highestTrophies']))) {
+            throw InvalidDTOException::fromMessage("Invalid or missing 'highestTrophies' field in player data");
+        }
+
+        if (!(isset($data['expLevel']) && is_numeric($data['expLevel']))) {
+            throw InvalidDTOException::fromMessage("Invalid or missing 'expLevel' field in player data");
+        }
+
+        if (!(isset($data['expPoints']) && is_numeric($data['expPoints']))) {
+            throw InvalidDTOException::fromMessage("Invalid or missing 'expPoints' field in player data");
+        }
+
+        if (!(isset($data['isQualifiedFromChampionshipChallenge']) && is_bool($data['isQualifiedFromChampionshipChallenge']))) {
+            throw InvalidDTOException::fromMessage("Invalid or missing 'isQualifiedFromChampionshipChallenge' field in player data");
+        }
+
+        if (!(isset($data['soloVictories']) && is_numeric($data['soloVictories']))) {
+            throw InvalidDTOException::fromMessage("Invalid or missing 'soloVictories' field in player data");
+        }
+
+        if (!(isset($data['duoVictories']) && is_numeric($data['duoVictories']))) {
+            throw InvalidDTOException::fromMessage("Invalid or missing 'duoVictories' field in player data");
+        }
+
+        if (!(isset($data['3vs3Victories']) && is_numeric($data['3vs3Victories']))) {
+            throw InvalidDTOException::fromMessage("Invalid or missing '3vs3Victories' field in player data");
+        }
+
+        if (!(isset($data['bestRoboRumbleTime']) && is_numeric($data['bestRoboRumbleTime']))) {
+            throw InvalidDTOException::fromMessage("Invalid or missing 'bestRoboRumbleTime' field in player data");
+        }
+
+        if (!(isset($data['bestTimeAsBigBrawler']) && is_numeric($data['bestTimeAsBigBrawler']))) {
+            throw InvalidDTOException::fromMessage("Invalid or missing 'bestTimeAsBigBrawler' field in player data");
+        }
+
+        /*
+         * club data array must:
+         * - be empty if player does not belong to any club, or
+         * - have not-empty 'tag' and 'name' fields otherwise.
+         */
+        if (!(isset($data['club']) && is_array($data['club']))) {
+            throw InvalidDTOException::fromMessage("Invalid or missing 'club' field in player data");
+        } elseif (!empty($data['club'])) {
+            if (!(isset($data['club']['tag']) && is_string($data['club']['tag']) && !empty(trim($data['club']['tag'])))) {
+                throw InvalidDTOException::fromMessage("Invalid or missing 'club.tag' field in player data");
+            }
+
+            if (!(isset($data['club']['name']) && is_string($data['club']['name']) && !empty(trim($data['club']['name'])))) {
+                throw InvalidDTOException::fromMessage("Invalid or missing 'club.name' field in player data");
+            }
+        }
+
+        if (!(isset($data['brawlers']) && is_array($data['brawlers']))) {
+            throw InvalidDTOException::fromMessage("Invalid or missing 'brawlers' field in player data");
+        }
+
         return new self(
             tag: $data['tag'],
             name: $data['name'],
             nameColor: $data['nameColor'],
-            icon: $data['icon'],
+            icon: [
+                'id' => $data['icon']['id'],
+            ],
             trophies: (int) $data['trophies'],
             highestTrophies: (int) $data['highestTrophies'],
             expLevel: (int) $data['expLevel'],
