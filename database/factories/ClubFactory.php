@@ -33,15 +33,15 @@ class ClubFactory extends Factory
             'tag' => $tag,
             'name' => "Club $tag",
             'description' => $this->faker->text(),
-            'type' => $this->faker->randomElement(['social', 'competitive', 'casual']),
-            'badge_id' => $this->faker->numberBetween(),
+            'type' => $this->faker->randomElement(Club::CLUB_TYPES),
+            'badge_id' => $this->faker->randomNumber(5),
             'required_trophies' => $this->faker->numberBetween(0, 100000),
-            'trophies' => $this->faker->numberBetween(0, 100000000),
+            'trophies' => fn(array $attributes) => $this->faker->numberBetween($attributes['required_trophies'], $attributes['required_trophies'] * 10),
         ];
     }
 
     /**
-     * Attach players to the Club.
+     * Attach players to the club.
      *
      * @param int $count
      * @param array|callable $attributes
@@ -49,11 +49,8 @@ class ClubFactory extends Factory
      */
     public function withMembers(int $count = 10, array|callable $attributes = []): self
     {
-        return $this->afterCreating(fn(Club $club) => Player::factory()
-            ->for($club)
-            ->withClub($club)
-            ->count($count)
-            ->create($attributes)
+        return $this->afterCreating(
+            fn(Club $club) => Player::factory()->withClub($club)->count($count)->create($attributes)
         );
     }
 }
