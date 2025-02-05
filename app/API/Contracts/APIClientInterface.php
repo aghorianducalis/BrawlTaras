@@ -7,7 +7,6 @@ namespace App\API\Contracts;
 use App\API\DTO\Response\BrawlerDTO;
 use App\API\DTO\Response\ClubDTO;
 use App\API\DTO\Response\EventRotationDTO;
-use App\API\DTO\Response\ClubPlayerDTO;
 use App\API\DTO\Response\PlayerBattleLogDTO;
 use App\API\DTO\Response\PlayerDTO;
 use App\API\Exceptions\InvalidDTOException;
@@ -28,7 +27,7 @@ interface APIClientInterface
     /**
      * Fetch all brawlers.
      *
-     * @return array<BrawlerDTO>
+     * @return BrawlerDTO[]
      * @throws InvalidDTOException
      * @throws ResponseException
      */
@@ -48,7 +47,7 @@ interface APIClientInterface
      * List club members.
      *
      * @param string $clubTag
-     * @return array<ClubPlayerDTO>
+     * @return PlayerDTO[]
      * @throws InvalidDTOException
      * @throws ResponseException
      */
@@ -57,9 +56,9 @@ interface APIClientInterface
     /**
      * Fetch events rotation.
      *
-     * @return array<EventRotationDTO>
-     * @throws ResponseException
+     * @return EventRotationDTO[]
      * @throws InvalidDTOException
+     * @throws ResponseException
      */
     public function getEventsRotation(): array;
 
@@ -77,7 +76,7 @@ interface APIClientInterface
      * Get list of recent battle results for a player.
      *
      * @param string $playerTag
-     * @return array<PlayerBattleLogDTO>
+     * @return PlayerBattleLogDTO[]
      * @throws InvalidDTOException
      * @throws ResponseException
      */

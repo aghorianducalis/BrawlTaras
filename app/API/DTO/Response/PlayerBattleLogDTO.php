@@ -106,7 +106,7 @@ final readonly class PlayerBattleLogDTO
 
     /**
      * @param array<Player> $players
-     * @return array<ClubPlayerDTO>
+     * @return self[]
      */
     public static function fromEloquentModels(array $players): array
     {

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Traits;
 
-use App\API\DTO\Response\ClubPlayerDTO;
+use App\API\DTO\Response\PlayerDTO;
 use App\Models\Player;
 
 trait CreatesPlayers
@@ -33,13 +33,13 @@ trait CreatesPlayers
         );
     }
 
-    private function assertPlayerModelMatchesDTO(Player $player, ClubPlayerDTO $playerDTO): void
+    private function assertPlayerModelMatchesDTO(Player $player, PlayerDTO $playerDTO): void
     {
-        $this->assertSame($player->tag, $playerDTO->tag);
-        $this->assertSame($player->name, $playerDTO->name);
-        $this->assertSame($player->name_color, $playerDTO->nameColor);
-        $this->assertSame($player->club_role, $playerDTO->role);
-        $this->assertSame($player->trophies, $playerDTO->trophies);
-        $this->assertSame($player->icon_id, $playerDTO->icon['id']);//todo
+        $this->assertEquals($player->tag, $playerDTO->tag);
+        $this->assertEquals($player->name, $playerDTO->name);
+        $this->assertEquals($player->name_color, $playerDTO->nameColor);
+        $this->assertEquals($player->club_role, $playerDTO->clubRole);
+        $this->assertEquals($player->trophies, $playerDTO->trophies);
+        $this->assertEquals($player->icon_id, $playerDTO->icon['id']);
     }
 }

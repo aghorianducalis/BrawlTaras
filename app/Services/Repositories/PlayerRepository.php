@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Repositories;
 
-use App\API\DTO\Response\ClubPlayerDTO;
+use App\API\DTO\Response\PlayerDTO;
 use App\Models\Player;
 use App\Services\Repositories\Contracts\PlayerRepositoryInterface;
 use Illuminate\Support\Facades\DB;
@@ -33,26 +33,29 @@ final readonly class PlayerRepository implements PlayerRepositoryInterface
             $query->where('club_id', '=', $searchCriteria['club_id']);
         }
 
+        if (isset($searchCriteria['club_role'])) {
+            $query->where('club_role', '=', $searchCriteria['club_role']);
+        }
+
         return $query->first();
     }
 
-    public function createOrUpdateClubMember(ClubPlayerDTO $memberDTO): Player
+    public function createOrUpdatePlayer(PlayerDTO $playerDTO): Player
     {
+        $attributes = array_filter([
+            'tag' => $memberDTO->tag,
+            'name' => $memberDTO->name,
+            'name_color' => $memberDTO->nameColor,
+            'club_role' => $memberDTO->role,
+            'trophies' => $memberDTO->trophies,
+            'icon_id' => $memberDTO->icon['id'],
+        ], fn($value) => !is_null($value));
+
         $player = $this->findPlayer([
             'tag' => $memberDTO->tag,
         ]);
 
-        DB::transaction(function () use (&$player, $memberDTO) {
-            // Create or update Player
-            $attributes = [
-                'tag' => $memberDTO->tag,
-                'name' => $memberDTO->name,
-                'name_color' => $memberDTO->nameColor,
-                'role' => $memberDTO->role, // todo
-                'trophies' => $memberDTO->trophies,
-                'icon_id' => $memberDTO->icon['id'], // todo
-            ];
-
+        DB::transaction(function () use (&$player, $memberDTO, $attributes) {
             if ($player) {
                 $player->update(attributes: $attributes);
             } else {
@@ -61,10 +64,5 @@ final readonly class PlayerRepository implements PlayerRepositoryInterface
         });
 
         return $player->refresh();
-    }
-
-    public function createOrUpdateClubMembers(array $memberDTOs): array
-    {
-        return array_map(fn (ClubPlayerDTO $dto) => $this->createOrUpdateClubMember($dto), $memberDTOs);
     }
 }
