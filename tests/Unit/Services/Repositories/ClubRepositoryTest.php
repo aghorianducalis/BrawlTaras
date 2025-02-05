@@ -70,7 +70,7 @@ class ClubRepositoryTest extends TestCase
     #[TestDox('Create successfully the club with related entities.')]
     public function test_create_club_with_relations(): void
     {
-        $clubToCreate = Club::factory()->afterMaking(fn(Club $club) => $club->setRelation('members', Player::factory()->for($club)->count(2)->make()))->make();
+        $clubToCreate = Club::factory()->afterMaking(fn(Club $club) => $club->setRelation('members', Player::factory()->withClub($club)->count(2)->make()))->make();
         $clubDTO = ClubDTO::fromEloquentModel($clubToCreate);
 
         $this->assertDatabaseMissing($clubToCreate->getTable(), [
@@ -192,6 +192,10 @@ class ClubRepositoryTest extends TestCase
         $club->load(['members']);
 
         foreach ($clubDTO->members as $i => $playerDTO) {
+            dd(
+                $playerDTO,
+                $club->members->get($i),
+            );
             $this->assertPlayerModelMatchesDTO($club->members->get($i), $playerDTO);
         }
     }

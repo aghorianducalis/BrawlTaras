@@ -15,19 +15,32 @@ use Illuminate\Support\Collection;
  * @property int $id
  * @property string $tag
  * @property string $name
- * @property string $description
- * @property string $type
- * @property int $badge_id
- * @property int $required_trophies
- * @property int $trophies
+ * @property string|null $description
+ * @property string|null $type
+ * @property int|null $badge_id
+ * @property int|null $required_trophies
+ * @property int|null $trophies
  * @property Carbon $created_at
  * @property Carbon $updated_at
- * @property-read Collection|Player[]|array $members
+ * @property-read Collection|Player[]|array|null $members
  */
 class Club extends Model
 {
     /** @use HasFactory<ClubFactory> */
     use HasFactory;
+
+    public const CLUB_TYPES = [
+        'social',
+        'competitive',
+        'casual',
+    ];
+
+    public const CLUB_MEMBER_ROLES = [
+        'president',
+        'vice president',
+        'senior',
+        'member',
+    ];
 
     protected $table = 'clubs';
 

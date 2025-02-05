@@ -15,14 +15,14 @@ return new class extends Migration
             $table->id();
             $table->string('tag', 20)->unique();
             $table->string('name');
-            $table->string('description');
+            $table->string('description')->nullable();
 
-            $table->string('type', 20);
+            $table->string('type', 20)->nullable();
 //            $table->unsignedBigInteger('club_type_id')->unique();
 
-            $table->unsignedBigInteger('badge_id');
-            $table->unsignedBigInteger('required_trophies');
-            $table->unsignedBigInteger('trophies');
+            $table->unsignedBigInteger('badge_id')->nullable();
+            $table->unsignedBigInteger('required_trophies')->nullable();
+            $table->unsignedBigInteger('trophies')->nullable();
             $table->timestamps();
         });
     }
