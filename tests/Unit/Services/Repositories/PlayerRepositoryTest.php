@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services\Repositories;
 
-use App\API\DTO\Response\ClubPlayerDTO;
+use App\API\DTO\Response\PlayerDTO;
 use App\Models\Club;
 use App\Models\Player;
 use App\Services\Repositories\Contracts\PlayerRepositoryInterface;
@@ -25,7 +25,7 @@ use Tests\Traits\CreatesPlayers;
 #[Group('Repositories')]
 #[CoversClass(PlayerRepository::class)]
 #[CoversMethod(PlayerRepository::class, 'findPlayer')]
-#[CoversMethod(PlayerRepository::class, 'createOrUpdateClubMember')]
+#[CoversMethod(PlayerRepository::class, 'createOrUpdatePlayer')]
 #[UsesClass(Player::class)]
 #[UsesClass(PlayerFactory::class)]
 #[UsesClass(Club::class)]
@@ -68,13 +68,13 @@ class PlayerRepositoryTest extends TestCase
     #[TestDox('Create successfully the club member with related entities.')]
     public function test_create_club_member_with_relations(): void
     {
-        $memberDTO = ClubPlayerDTO::fromEloquentModel(Player::factory()->make());
+        $memberDTO = PlayerDTO::fromEloquentModel(Player::factory()->make());
 
         $this->assertDatabaseMissing((new Player())->getTable(), [
             'tag' => $memberDTO->tag,
         ]);
 
-        $member = $this->repository->createOrUpdateClubMember($memberDTO);
+        $member = $this->repository->createOrUpdatePlayer($memberDTO);
 
         $this->assertDatabaseHas($member->getTable(), [
             'id' => $member->id,
@@ -90,11 +90,11 @@ class PlayerRepositoryTest extends TestCase
     {
         $member = Player::factory()->create();
         // create DTO to store the new data for club member with the same tag
-        $memberDTO = ClubPlayerDTO::fromEloquentModel(Player::factory()->make(attributes: [
+        $memberDTO = PlayerDTO::fromEloquentModel(Player::factory()->make(attributes: [
             'tag' => $member->tag,
         ]));
 
-        $memberUpdated = $this->repository->createOrUpdateClubMember($memberDTO);
+        $memberUpdated = $this->repository->createOrUpdatePlayer($memberDTO);
 
         $this->assertDatabaseHas($memberUpdated->getTable(), [
             'id' => $memberUpdated->id,

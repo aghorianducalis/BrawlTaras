@@ -11,14 +11,12 @@ use App\API\DTO\Request\EventRotationListDTO;
 use App\API\DTO\Response\BrawlerDTO as BrawlerResponseDTO;
 use App\API\DTO\Response\ClubDTO;
 use App\API\DTO\Response\EventRotationDTO;
-use App\API\DTO\Response\ClubPlayerDTO;
 use App\API\DTO\Response\PlayerBrawlerDTO;
 use App\API\DTO\Response\PlayerDTO;
 use App\API\Enums\APIEndpoints;
 use App\API\Exceptions\InvalidDTOException;
 use App\API\Exceptions\ResponseException;
 use App\Models\Brawler;
-use App\Models\Club;
 use App\Models\Event;
 use App\Models\EventRotation;
 use App\Models\Player;
@@ -40,6 +38,7 @@ use PHPUnit\Framework\Attributes\TestWith;
 use Tests\TestCase;
 use Tests\Traits\CreatesBrawlers;
 use Tests\Traits\CreatesPlayers;
+use Tests\Traits\TestClubs;
 
 /**
  * Run these tests with PHPUnit to verify the behavior of APIClient.
@@ -69,6 +68,7 @@ use Tests\Traits\CreatesPlayers;
 #[CoversMethod(APIClient::class, 'getPlayerByTag')]
 class APIClientTest extends TestCase
 {
+    use TestClubs;
     use CreatesBrawlers;
     use CreatesPlayers;
     use RefreshDatabase;
@@ -443,8 +443,9 @@ class APIClientTest extends TestCase
     public function it_fetches_club_by_tag_successfully(): void
     {
         $club = $this->createClubWithMembers();
+
         $apiEndpoint = APIEndpoints::ClubByTag;
-        $mockResponse = new Response(200, [], json_encode(ClubDTO::fromEloquentModel($club), JSON_THROW_ON_ERROR));
+        $mockResponse = new Response(200, [], ClubDTO::fromEloquentModel($club)->toJson());
 
         $this->httpClientMock
             ->shouldReceive('request')
@@ -461,23 +462,7 @@ class APIClientTest extends TestCase
         $clubDTO = $this->apiClient->getClubByTag($club->tag);
 
         $this->assertInstanceOf(ClubDTO::class, $clubDTO);
-        $this->assertSame($club->tag, $clubDTO->tag);
-        $this->assertSame($club->name, $clubDTO->name);
-        $this->assertSame($club->description, $clubDTO->description);
-        $this->assertSame($club->type, $clubDTO->type);
-        $this->assertSame($club->badge_id, $clubDTO->badgeId);
-        $this->assertSame($club->required_trophies, $clubDTO->requiredTrophies);
-        $this->assertSame($club->trophies, $clubDTO->trophies);
-        $this->assertIsArray($clubDTO->members);
-        $this->assertCount($club->members->count(), $clubDTO->members);
-
-        foreach ($clubDTO->members as $i => $memberDTO) {
-            $this->assertInstanceOf(ClubPlayerDTO::class, $memberDTO);
-            /** @var Player $member */
-            $member = $club->members->get($i);
-
-            $this->assertPlayerModelMatchesDTO(player: $member, playerDTO: $memberDTO);
-        }
+        $this->assertClubDTOMatchesEloquentModel($club, $clubDTO);
     }
 
     #[Test]
@@ -560,7 +545,7 @@ class APIClientTest extends TestCase
         $mockResponse = new Response(
             200,
             [],
-            json_encode(['items' => array_map(fn(Player $player) => ClubPlayerDTO::fromEloquentModel($player), $club->members->all())], JSON_THROW_ON_ERROR),
+            json_encode(['items' => array_map(fn(Player $player) => PlayerDTO::fromEloquentModel($player), $club->members->all())], JSON_THROW_ON_ERROR),
         );
 
         $this->httpClientMock
@@ -581,7 +566,7 @@ class APIClientTest extends TestCase
         $this->assertCount($club->members->count(), $memberDTOs);
 
         foreach ($memberDTOs as $i => $memberDTO) {
-            $this->assertInstanceOf(ClubPlayerDTO::class, $memberDTO);
+            $this->assertInstanceOf(PlayerDTO::class, $memberDTO);
             /** @var Player $member */
             $member = $club->members->get($i);
 
@@ -656,15 +641,6 @@ class APIClientTest extends TestCase
         $this->apiClient->getClubMembers($clubTag);
     }
 
-    private function createClubWithMembers(
-        array|callable $attributes = [],
-        int $memberCount = 10,
-    ) : Club {
-        return Club::factory()
-            ->withMembers($memberCount)
-            ->create($attributes);
-    }
-
     /*
      * End of API endpoints for clubs.
      */
@@ -690,7 +666,7 @@ class APIClientTest extends TestCase
 //            json_encode(PlayerDTO::eloquentModelToArray($player), JSON_THROW_ON_ERROR),
 //        );
         $apiEndpoint = APIEndpoints::PlayerByTag;
-        $mockResponse = new Response(200, [], json_encode(PlayerDTO::eloquentModelToArray($player), JSON_THROW_ON_ERROR));
+        $mockResponse = new Response(200, [], json_encode(PlayerDTO::fromEloquentModel($player)->toArray(), JSON_THROW_ON_ERROR));
 
         $this->httpClientMock
             ->shouldReceive('request')
