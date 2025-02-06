@@ -15,6 +15,17 @@ final readonly class StarPowerDTO
     ) {}
 
     /**
+     * @return array{extId: string, name: string}
+     */
+    public function toArray(): array
+    {
+        return [
+            'extId' => $this->extId,
+            'name' => $this->name,
+        ];
+    }
+
+    /**
      * Factory method to create DTO.
      *
      * @param array $data
@@ -32,7 +43,7 @@ final readonly class StarPowerDTO
         }
 
         return new self(
-            extId: (int)$data['id'],
+            extId: (int) $data['id'],
             name: $data['name'],
         );
     }

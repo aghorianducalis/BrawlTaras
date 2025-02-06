@@ -20,7 +20,7 @@ use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\Attributes\UsesClass;
 use Tests\TestCase;
-use Tests\Traits\CreatesPlayers;
+use Tests\Traits\TestPlayers;
 
 #[Group('Repositories')]
 #[CoversClass(PlayerRepository::class)]
@@ -32,7 +32,7 @@ use Tests\Traits\CreatesPlayers;
 #[UsesClass(ClubFactory::class)]
 class PlayerRepositoryTest extends TestCase
 {
-    use CreatesPlayers;
+    use TestPlayers;
     use RefreshDatabase;
 
     private PlayerRepository $repository;
@@ -81,7 +81,7 @@ class PlayerRepositoryTest extends TestCase
             'tag' => $memberDTO->tag,
         ]);
 
-        $this->assertPlayerModelMatchesDTO($member, $memberDTO);
+        $this->assertPlayerDTOMatchesEloquentModel($memberDTO, $member);
     }
 
     #[Test]
@@ -101,6 +101,6 @@ class PlayerRepositoryTest extends TestCase
             'tag' => $memberDTO->tag,
         ]);
 
-        $this->assertPlayerModelMatchesDTO($memberUpdated, $memberDTO);
+        $this->assertPlayerDTOMatchesEloquentModel($memberDTO, $memberUpdated);
     }
 }

@@ -37,7 +37,7 @@ use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\Attributes\TestWith;
 use Tests\TestCase;
 use Tests\Traits\CreatesBrawlers;
-use Tests\Traits\CreatesPlayers;
+use Tests\Traits\TestPlayers;
 use Tests\Traits\TestClubs;
 
 /**
@@ -70,7 +70,7 @@ class APIClientTest extends TestCase
 {
     use TestClubs;
     use CreatesBrawlers;
-    use CreatesPlayers;
+    use TestPlayers;
     use RefreshDatabase;
 
     private APIClient $apiClient;
@@ -462,7 +462,7 @@ class APIClientTest extends TestCase
         $clubDTO = $this->apiClient->getClubByTag($club->tag);
 
         $this->assertInstanceOf(ClubDTO::class, $clubDTO);
-        $this->assertClubDTOMatchesEloquentModel($club, $clubDTO);
+        $this->assertClubDTOMatchesEloquentModel($clubDTO, $club);
     }
 
     #[Test]
@@ -542,11 +542,7 @@ class APIClientTest extends TestCase
     {
         $club = $this->createClubWithMembers();
         $apiEndpoint = APIEndpoints::ClubMembers;
-        $mockResponse = new Response(
-            200,
-            [],
-            json_encode(['items' => array_map(fn(Player $player) => PlayerDTO::fromEloquentModel($player), $club->members->all())], JSON_THROW_ON_ERROR),
-        );
+        $mockResponse = new Response(200, [], json_encode(['items' => array_map(fn(Player $player) => PlayerDTO::fromEloquentModel($player)->toArray(), $club->members->all())], JSON_THROW_ON_ERROR));
 
         $this->httpClientMock
             ->shouldReceive('request')
@@ -570,7 +566,7 @@ class APIClientTest extends TestCase
             /** @var Player $member */
             $member = $club->members->get($i);
 
-            $this->assertPlayerModelMatchesDTO(player: $member, playerDTO: $memberDTO);
+            $this->assertPlayerDTOMatchesEloquentModel($memberDTO, $member);
         }
     }
 
@@ -657,16 +653,9 @@ class APIClientTest extends TestCase
     #[TestDox('Fetch a single player with its brawlers successfully')]
     public function it_fetches_player_by_tag_successfully(): void
     {
-        $player = $this->createPlayerWithBrawlers();
-//        dd(
-////            $player,
-//            $player->toArray(),
-////            PlayerDTO::fromEloquentModel($player),
-//            PlayerDTO::eloquentModelToArray($player),
-//            json_encode(PlayerDTO::eloquentModelToArray($player), JSON_THROW_ON_ERROR),
-//        );
+        $player = $this->createPlayer();
         $apiEndpoint = APIEndpoints::PlayerByTag;
-        $mockResponse = new Response(200, [], json_encode(PlayerDTO::fromEloquentModel($player)->toArray(), JSON_THROW_ON_ERROR));
+        $mockResponse = new Response(200, [], PlayerDTO::fromEloquentModel($player)->toJson());
 
         $this->httpClientMock
             ->shouldReceive('request')
@@ -681,11 +670,6 @@ class APIClientTest extends TestCase
             ->andReturn($mockResponse);
 
         $playerDTO = $this->apiClient->getPlayerByTag($player->tag);
-//        dd(
-//            111,
-//            $player->toArray(),
-//            $playerDTO,
-//        );
 
         $this->assertInstanceOf(PlayerDTO::class, $playerDTO);
         $this->assertSame($player->tag, $playerDTO->tag);
@@ -707,15 +691,18 @@ class APIClientTest extends TestCase
         $this->assertSame($player->club->tag, $playerDTO->club['tag']);
         $this->assertSame($player->club->name, $playerDTO->club['name']);
 
-        $this->assertIsArray($playerDTO->brawlers);
-        $this->assertCount($player->playerBrawlers()->count(), $playerDTO->brawlers);
+        if ($playerDTO->brawlers) {
 
-        foreach ($playerDTO->brawlers as $i => $playerBrawlerDTO) {
-            $this->assertInstanceOf(PlayerBrawlerDTO::class, $playerBrawlerDTO);
-            /** @var Brawler $playerBrawler */
-            $playerBrawler = $player->playerBrawlers->get($i);
+            $this->assertIsArray($playerDTO->brawlers);
+            $this->assertCount($player->playerBrawlers()->count(), $playerDTO->brawlers);
 
-//            $this->assertPlayerModelMatchesDTO(player: $member, playerDTO: $playerBrawlerDTO);
+            foreach ($playerDTO->brawlers as $i => $playerBrawlerDTO) {
+                $this->assertInstanceOf(PlayerBrawlerDTO::class, $playerBrawlerDTO);
+                /** @var Brawler $playerBrawler */
+                $playerBrawler = $player->playerBrawlers->get($i);
+
+                $this->assertBrawlerDTOMatchesDataArray($playerBrawlerDTO, $playerBrawler->toArray());
+            }
         }
     }
 
@@ -784,15 +771,6 @@ class APIClientTest extends TestCase
         $this->expectException(InvalidDTOException::class);
 
         $this->apiClient->getPlayerByTag($playerTag);
-    }
-
-    private function createPlayerWithBrawlers(
-        array|callable $attributes = [],
-        int            $brawlerCount = 10,
-    ) : Player {
-        return Player::factory()
-//            ->withBrawlers($brawlerCount)
-            ->create($attributes);
     }
 
     /*

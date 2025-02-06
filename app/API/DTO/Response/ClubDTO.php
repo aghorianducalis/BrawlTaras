@@ -113,7 +113,7 @@ final readonly class ClubDTO
             badgeId: key_exists('badgeId', $data) ? (int) $data['badgeId'] : null,
             requiredTrophies: key_exists('requiredTrophies', $data) ? (int) $data['requiredTrophies'] : null,
             trophies: key_exists('trophies', $data) ? (int) $data['trophies'] : null,
-            members: key_exists('members', $data) ? array_map(fn(array $memberData) => PlayerDTO::fromArray($memberData), $data['members']) : null,
+            members: key_exists('members', $data) ? array_map(fn(array $memberData) => PlayerDTO::fromDataArray($memberData), $data['members']) : null,
         );
     }
 
