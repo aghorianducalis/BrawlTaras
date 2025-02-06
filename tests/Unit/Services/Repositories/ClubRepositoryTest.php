@@ -21,7 +21,7 @@ use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\Attributes\UsesClass;
 use Tests\TestCase;
-use Tests\Traits\CreatesPlayers;
+use Tests\Traits\TestPlayers;
 
 #[Group('Repositories')]
 #[CoversClass(ClubRepository::class)]
@@ -34,7 +34,7 @@ use Tests\Traits\CreatesPlayers;
 #[UsesClass(PlayerRepository::class)]
 class ClubRepositoryTest extends TestCase
 {
-    use CreatesPlayers;
+    use TestPlayers;
     use RefreshDatabase;
 
     private ClubRepository $repository;
@@ -196,7 +196,7 @@ class ClubRepositoryTest extends TestCase
                 $playerDTO,
                 $club->members->get($i),
             );
-            $this->assertPlayerModelMatchesDTO($club->members->get($i), $playerDTO);
+            $this->assertPlayerDTOMatchesEloquentModel($playerDTO, $club->members->get($i));
         }
     }
 }

@@ -16,6 +16,18 @@ final readonly class GearDTO
     ) {}
 
     /**
+     * @return array{extId: string, name: string, level: string}
+     */
+    public function toArray(): array
+    {
+        return [
+            'extId' => $this->extId,
+            'name' => $this->name,
+            'level' => $this->level,
+        ];
+    }
+
+    /**
      * Factory method to create DTO.
      *
      * @param array $data
@@ -37,9 +49,9 @@ final readonly class GearDTO
         }
 
         return new self(
-            extId: (int)$data['id'],
+            extId: (int) $data['id'],
             name: $data['name'],
-            level: (int)$data['level'],
+            level: (int) $data['level'],
         );
     }
 

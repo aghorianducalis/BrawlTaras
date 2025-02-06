@@ -17,18 +17,18 @@ use Illuminate\Support\Collection;
  * @property string $tag
  * @property string $name
  * @property string $name_color
- * @property int|null $icon_id
+ * @property int $icon_id
  * @property int $trophies
- * @property int $highest_trophies
- * @property int $highest_power_play_points
- * @property int $exp_level
- * @property int $exp_points
- * @property bool $is_qualified_from_championship_league
- * @property int $solo_victories
- * @property int $duo_victories
- * @property int $trio_victories
- * @property int $best_time_robo_rumble
- * @property int $best_time_as_big_brawler
+ * @property int|null $highest_trophies
+ * @property int|null $highest_power_play_points
+ * @property int|null $exp_level
+ * @property int|null $exp_points
+ * @property bool|null $is_qualified_from_championship_league
+ * @property int|null $solo_victories
+ * @property int|null $duo_victories
+ * @property int|null $trio_victories
+ * @property int|null $best_time_robo_rumble
+ * @property int|null $best_time_as_big_brawler
  * @property int|null $club_id
  * @property string|null $club_role
  * @property Carbon $created_at
@@ -40,13 +40,6 @@ class Player extends Model
 {
     /** @use HasFactory<PlayerFactory> */
     use HasFactory;
-
-    public const CLUB_ROLES = [
-        'president',
-        'vice president',
-        'senior',
-        'member',
-    ];
 
     protected $table = 'players';
 

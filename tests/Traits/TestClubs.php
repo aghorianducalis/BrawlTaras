@@ -15,7 +15,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(ClubFactory::class)]
 trait TestClubs
 {
-    use CreatesPlayers;
+    use TestPlayers;
 
     /**
      * Create a club with associated players.
@@ -36,11 +36,11 @@ trait TestClubs
     /**
      * Covers consistency between DTO and Eloquent model.
      *
-     * @param Club $club
      * @param ClubDTO $clubDTO
+     * @param Club $club
      * @return void
      */
-    public function assertClubDTOMatchesEloquentModel(Club $club, ClubDTO $clubDTO): void
+    public function assertClubDTOMatchesEloquentModel(ClubDTO $clubDTO, Club $club): void
     {
         $this->assertEquals($club->tag, $clubDTO->tag);
         $this->assertEquals($club->name, $clubDTO->name);
@@ -60,7 +60,7 @@ trait TestClubs
                 $playerDTO = $clubDTO->members[$i];
 
                 $this->assertInstanceOf(PlayerDTO::class, $playerDTO);
-                $this->assertPlayerModelMatchesDTO($player, $playerDTO);
+                $this->assertPlayerDTOMatchesEloquentModel($playerDTO, $player);
             }
         }
     }
@@ -92,13 +92,7 @@ trait TestClubs
                 $playerDTO = $clubDTO->members[$i];
 
                 $this->assertInstanceOf(PlayerDTO::class, $playerDTO);
-                // todo move to trait
-                $this->assertEquals($playerData['tag'], $playerDTO->tag);
-                $this->assertEquals($playerData['name'], $playerDTO->name);
-                $this->assertEquals($playerData['nameColor'], $playerDTO->nameColor);
-                $this->assertEquals($playerData['role'], $playerDTO->clubRole);
-                $this->assertEquals($playerData['trophies'], $playerDTO->trophies);
-                $this->assertEquals($playerData['icon']['id'], $playerDTO->icon['id']);
+                $this->assertPlayerDTOMatchesDataArray($playerDTO, $playerData);
             }
         }
     }

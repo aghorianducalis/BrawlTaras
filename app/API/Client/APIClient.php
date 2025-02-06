@@ -82,7 +82,7 @@ final readonly class APIClient implements APIClientInterface
                 throw InvalidDTOException::fromMessage('Invalid structure of club members array.');
             }
 
-            return PlayerDTO::fromList($responseData['items']);
+            return array_map(fn(array $memberData) => PlayerDTO::fromDataArray($memberData), $responseData['items']);
         } catch (ResponseException|InvalidDTOException $e) {
             Log::error("Error fetching members of club with tag $clubTag: {$e->getMessage()}.");
             throw $e;
@@ -109,7 +109,7 @@ final readonly class APIClient implements APIClientInterface
             $playerTag = $this->prepareTagValue($playerTag);
             $responseData = $this->makeRequest(APIEndpoints::PlayerByTag, ['player_tag' => $playerTag]);
 
-            return PlayerDTO::fromArray($responseData);
+            return PlayerDTO::fromDataArray($responseData);
         } catch (ResponseException|InvalidDTOException $e) {
             Log::error("Error fetching info of player with tag $playerTag: {$e->getMessage()}");
             throw $e;
