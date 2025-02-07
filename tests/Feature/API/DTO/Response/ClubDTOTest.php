@@ -6,7 +6,6 @@ namespace Tests\Feature\API\DTO\Response;
 
 use App\API\DTO\Response\ClubDTO;
 use App\API\Exceptions\InvalidDTOException;
-use App\Models\Club;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use JsonException;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -126,44 +125,5 @@ class ClubDTOTest extends TestCase
         } catch (JsonException $e) {
             $this->fail("JSON encoding failed: " . $e->getMessage());
         }
-    }
-
-    public static function provideClubData(): array
-    {
-        return [
-            'club without members' => [
-                [
-                    'tag' => '#12345',
-                    'name' => 'Test Club without members',
-                    'description' => 'A club without members for testing.',
-                    'type' => Club::CLUB_TYPES[1],
-                    'badgeId' => 1001,
-                    'requiredTrophies' => 500,
-                    'trophies' => 2000,
-                    'members' => [],
-                ],
-            ],
-            'club with 1 member' => [
-                [
-                    'tag' => '#777',
-                    'name' => 'Test Club with 1 member',
-                    'description' => 'A club for testing.',
-                    'type' => Club::CLUB_TYPES[0],
-                    'badgeId' => 2025,
-                    'requiredTrophies' => 30000,
-                    'trophies' => 150000,
-                    'members' => [
-                        [
-                            'tag' => '#ABC123',
-                            'name' => 'Test Player',
-                            'nameColor' => '#FFFFFF',
-                            'role' => Club::CLUB_MEMBER_ROLES[0],
-                            'trophies' => 1000,
-                            'icon' => ['id' => 1],
-                        ],
-                    ],
-                ],
-            ],
-        ];
     }
 }

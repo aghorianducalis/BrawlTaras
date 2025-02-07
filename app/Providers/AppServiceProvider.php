@@ -100,9 +100,7 @@ class AppServiceProvider extends ServiceProvider
             return new PlayerRepository();
         });
         $this->app->singleton(abstract: ClubRepositoryInterface::class, concrete: function ($app) {
-            return new ClubRepository(
-                playerRepository: $app->make(abstract: PlayerRepositoryInterface::class),
-            );
+            return new ClubRepository();
         });
 
         // Register Parser

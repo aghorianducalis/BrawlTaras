@@ -31,8 +31,8 @@ interface ClubRepositoryInterface
      * Bulk create or update club members in the database.
      *
      * @param Club $club
-     * @param PlayerDTO[] $memberDTOs
+     * @param PlayerDTO[] $playerDTOs
      * @return Club
      */
-    public function syncClubMembers(Club $club, array $memberDTOs): Club;
+    public function syncClubMembers(Club $club, array $playerDTOs): Club;
 }
