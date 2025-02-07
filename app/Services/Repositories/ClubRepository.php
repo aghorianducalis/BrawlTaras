@@ -5,18 +5,14 @@ declare(strict_types=1);
 namespace App\Services\Repositories;
 
 use App\API\DTO\Response\ClubDTO;
-use App\API\DTO\Response\PlayerDTO;
 use App\Models\Club;
-use App\Models\Player;
 use App\Services\Repositories\Contracts\ClubRepositoryInterface;
 use App\Services\Repositories\Contracts\PlayerRepositoryInterface;
 use Illuminate\Support\Facades\DB;
 
 final readonly class ClubRepository implements ClubRepositoryInterface
 {
-    public function __construct(
-        private PlayerRepositoryInterface $playerRepository,
-    ) {}
+    public function __construct() {}
 
     public function findClub(array $searchCriteria): ?Club
     {
@@ -39,10 +35,6 @@ final readonly class ClubRepository implements ClubRepositoryInterface
 
     public function createOrUpdateClub(ClubDTO $clubDTO): Club
     {
-        $club = $this->findClub([
-            'tag' => $clubDTO->tag,
-        ]);
-
         $attributes = array_filter([
             'tag' => $clubDTO->tag,
             'name' => $clubDTO->name,
@@ -53,6 +45,10 @@ final readonly class ClubRepository implements ClubRepositoryInterface
             'trophies' => $clubDTO->trophies,
         ], fn($value) => !is_null($value));
 
+        $club = $this->findClub([
+            'tag' => $clubDTO->tag,
+        ]);
+
         DB::transaction(function () use (&$club, $clubDTO, $attributes) {
             // Create or update Club
             if ($club) {
@@ -61,44 +57,37 @@ final readonly class ClubRepository implements ClubRepositoryInterface
                 $club = Club::query()->create(attributes: $attributes);
             }
 
-            // Synchronize a Club's related members.
-            if ($clubDTO->members) {
+            // Synchronize a Club's related members
+            if (!is_null($clubDTO->members)) {
                 $this->syncClubMembers($club, $clubDTO->members);
-                $club->load(['members']);
             }
         });
 
         return $club->refresh();
     }
 
-    /**
-     * @param Club $club
-     * @param PlayerDTO[] $memberDTOs
-     * @return Club
-     */
-    public function syncClubMembers(Club $club, array $memberDTOs): Club
+    public function syncClubMembers(Club $club, array $playerDTOs): Club
     {
-        $memberIds = [];
+        DB::transaction(function () use (&$club, $playerDTOs) {
+            $playerRepository = app(PlayerRepositoryInterface::class);
+            $players = collect();
 
-        foreach ($memberDTOs as $memberDTO) {
-            $player = $this->playerRepository->createOrUpdatePlayer(
-                playerDTO: $memberDTO,
-            );
-            $memberIds[] = $player->id;
-        }
+            foreach ($playerDTOs as $memberDTO) {
+                $player = $playerRepository->createOrUpdatePlayer($memberDTO);
+                $players->add($player);
+            }
 
-        // Attach new members
-        Player::query()
-            ->whereIn('id', $memberIds)
-            ->update(['club_id' => $club->id]);
+            // Attach new members
+            $club->members()->saveMany($players->all());
 
-        // Detach players not in $memberIds and attach the new ones
-        $club->members()
-            ->whereNotIn('id', $memberIds) // Detach old members
-            ->update([
-                'club_id' => null,
-                'club_role' => null,
-            ]);
+            // Detach old members
+            $club->members()
+                ->whereNotIn('id', $players->pluck('id')->toArray())
+                ->update([
+                    'club_id' => null,
+                    'club_role' => null,
+                ]);
+        });
 
         $club->refresh();
         $club->load(['members']);

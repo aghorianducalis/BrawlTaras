@@ -7,6 +7,7 @@ namespace Tests\Traits;
 use App\API\DTO\Response\ClubDTO;
 use App\API\DTO\Response\PlayerDTO;
 use App\Models\Club;
+use App\Models\Player;
 use Database\Factories\ClubFactory;
 use PHPUnit\Framework\Attributes\UsesClass;
 
@@ -50,6 +51,8 @@ trait TestClubs
         $this->assertEquals($club->required_trophies, $clubDTO->requiredTrophies);
         $this->assertEquals($club->trophies, $clubDTO->trophies);
 
+        $club->load(['members']);
+
         if ($club->members->isEmpty()) {
             $this->assertEmpty($clubDTO->members);
         } else {
@@ -59,6 +62,7 @@ trait TestClubs
             foreach ($club->members as $i => $player) {
                 $playerDTO = $clubDTO->members[$i];
 
+                $this->assertInstanceOf(Player::class, $player);
                 $this->assertInstanceOf(PlayerDTO::class, $playerDTO);
                 $this->assertPlayerDTOMatchesEloquentModel($playerDTO, $player);
             }
@@ -95,5 +99,66 @@ trait TestClubs
                 $this->assertPlayerDTOMatchesDataArray($playerDTO, $playerData);
             }
         }
+    }
+
+    public function assertEqualClubModels(Club $clubExpected, Club $clubActual): void
+    {
+        $this->assertSame($clubExpected->id, $clubActual->id);
+        $this->assertSame($clubExpected->tag, $clubActual->tag);
+        $this->assertSame($clubExpected->name, $clubActual->name);
+        $this->assertSame($clubExpected->description, $clubActual->description);
+        $this->assertSame($clubExpected->type, $clubActual->type);
+        $this->assertSame($clubExpected->badge_id, $clubActual->badge_id);
+        $this->assertSame($clubExpected->required_trophies, $clubActual->required_trophies);
+        $this->assertSame($clubExpected->trophies, $clubActual->trophies);
+        $this->assertTrue($clubExpected->created_at->equalTo($clubActual->created_at));
+
+        // compare the club members
+        $clubExpected->load(['members']);
+        $clubActual->load(['members']);
+
+        $this->assertEquals(
+            $clubExpected->members->toArray(),
+            $clubActual->members->toArray()
+        );
+    }
+
+    public static function provideClubData(): array
+    {
+        return [
+            'club without members' => [
+                [
+                    'tag' => '#12345',
+                    'name' => 'Test Club without members',
+                    'description' => 'A club without members for testing.',
+                    'type' => Club::CLUB_TYPES[1],
+                    'badgeId' => 1001,
+                    'requiredTrophies' => 500,
+                    'trophies' => 2000,
+                    'members' => [],
+                ],
+            ],
+            'club with 1 member' => [
+                [
+                    'tag' => '#777',
+                    'name' => 'Test Club with 1 member',
+                    'description' => 'A club for testing.',
+                    'type' => Club::CLUB_TYPES[0],
+                    'badgeId' => 2025,
+                    'requiredTrophies' => 30000,
+                    'trophies' => 150000,
+                    'members' => [
+                        [
+                            'tag' => '#ABC123',
+                            'name' => 'Test Player',
+                            'nameColor' => '#FFFFFF',
+                            'role' => Club::CLUB_MEMBER_ROLES[0],
+                            'trophies' => 1000,
+                            'icon' => ['id' => 1],
+                        ],
+                    ],
+                ],
+            ],
+        ];
     }
 }

@@ -5,44 +5,52 @@ declare(strict_types=1);
 namespace Tests\Unit\Services\Repositories;
 
 use App\API\DTO\Response\ClubDTO;
+use App\API\DTO\Response\PlayerDTO;
 use App\Models\Club;
 use App\Models\Player;
 use App\Services\Repositories\ClubRepository;
 use App\Services\Repositories\Contracts\ClubRepositoryInterface;
-use App\Services\Repositories\PlayerRepository;
 use Database\Factories\ClubFactory;
 use Database\Factories\PlayerFactory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\Attributes\UsesClass;
 use Tests\TestCase;
+use Tests\Traits\TestClubs;
 use Tests\Traits\TestPlayers;
 
 #[Group('Repositories')]
 #[CoversClass(ClubRepository::class)]
 #[CoversMethod(ClubRepository::class, 'findClub')]
 #[CoversMethod(ClubRepository::class, 'createOrUpdateClub')]
+#[CoversMethod(ClubRepository::class, 'syncClubMembers')]
 #[UsesClass(Club::class)]
+#[UsesClass(ClubDTO::class)]
 #[UsesClass(ClubFactory::class)]
 #[UsesClass(Player::class)]
+#[UsesClass(PlayerDTO::class)]
 #[UsesClass(PlayerFactory::class)]
-#[UsesClass(PlayerRepository::class)]
 class ClubRepositoryTest extends TestCase
 {
-    use TestPlayers;
     use RefreshDatabase;
+    use TestClubs;
+    use TestPlayers;
 
     private ClubRepository $repository;
 
     protected function setUp(): void
     {
         parent::setUp();
+
         $this->repository = app(ClubRepositoryInterface::class);
+        $this->clubTable = (new Club())->getTable();
+        $this->playerTable = (new Player())->getTable();
     }
 
     #[Test]
@@ -51,152 +59,167 @@ class ClubRepositoryTest extends TestCase
     #[TestWith(['name', 'Ukraina Vavilon'])]
     public function test_find_club_by_criteria(string $property, int|string $value): void
     {
-        $this->assertDatabaseMissing((new Club())->getTable(), [$property => $value]);
+        $this->assertDatabaseMissing($this->clubTable, [$property => $value]);
 
         /** @var Club $clubCreated */
         $clubCreated = Club::factory()->create(attributes: [$property => $value]);
 
-        $this->assertDatabaseHas($clubCreated->getTable(), [
+        $this->assertDatabaseHas($this->clubTable, [
             'id' => $clubCreated->id,
             $property => $value,
         ]);
 
         $clubFound = $this->repository->findClub([$property => $value]);
 
+        $this->assertNotNull($clubFound);
+        $this->assertInstanceOf(Club::class, $clubFound);
         $this->assertEqualClubModels($clubCreated, $clubFound);
     }
 
     #[Test]
-    #[TestDox('Create successfully the club with related entities.')]
-    public function test_create_club_with_relations(): void
+    #[TestDox('Create successfully the club with related players.')]
+    #[DataProvider('provideClubData')]
+    public function test_create_club_with_members(array $clubData): void
     {
-        $clubToCreate = Club::factory()->afterMaking(fn(Club $club) => $club->setRelation('members', Player::factory()->withClub($club)->count(2)->make()))->make();
-        $clubDTO = ClubDTO::fromEloquentModel($clubToCreate);
+        $clubDTO = ClubDTO::fromDataArray($clubData);
 
-        $this->assertDatabaseMissing($clubToCreate->getTable(), [
+        $this->assertDatabaseMissing($this->clubTable, [
             'tag' => $clubDTO->tag,
         ]);
 
-        foreach ($clubToCreate->members as $player) {
-            $this->assertDatabaseMissing($player->getTable(), [
+        foreach ($clubDTO->members as $player) {
+            $this->assertDatabaseMissing($this->playerTable, [
                 'tag' => $player->tag,
             ]);
         }
 
         $club = $this->repository->createOrUpdateClub($clubDTO);
 
-        $this->assertDatabaseHas($club->getTable(), [
-            'id' => $club->id,
-            'tag' => $clubDTO->tag,
-        ]);
+        $this->assertClubDTOMatchesEloquentModel($clubDTO, $club);
 
-        $this->assertClubModelMatchesDTO($club, $clubDTO);
+        $this->assertDatabaseHas($this->clubTable, [
+            'id' => $club->id,
+            'tag' => $club->tag,
+        ]);
 
         // assert that all members belong to club (DB relation check)
         foreach ($club->members as $player) {
-            $this->assertDatabaseHas($player->getTable(), [
+            $this->assertDatabaseHas($this->playerTable, [
+                'id' => $player->id,
                 'tag' => $player->tag,
                 'club_id' => $club->id,
+                'club_role' => $player->club_role,
             ]);
         }
     }
 
     #[Test]
-    #[TestDox('Update successfully the club with related entities.')]
-    public function test_update_existing_club(): void
+    #[TestDox('Update successfully the club with related players.')]
+    #[DataProvider('provideClubData')]
+    public function test_update_existing_club_with_members(array $clubData): void
     {
-        $club = Club::factory()->withMembers()->create();
+        $club = $this->createClubWithMembers();
         // list of all old members of that club
         $oldMembers = $club->members;
+
         // assert that all members belong to club (DB relation check)
         foreach ($oldMembers as $player) {
-            $this->assertDatabaseHas($player->getTable(), [
+            $this->assertDatabaseHas($this->playerTable, [
                 'id' => $player->id,
                 'tag' => $player->tag,
                 'club_id' => $club->id,
+                'club_role' => $player->club_role,
             ]);
         }
 
         // create DTO to store the new data for club with the same tag
-        $clubDTO = ClubDTO::fromEloquentModel(Club::factory()->withMembers()->make(attributes: [
+        $clubData['tag'] = $club->tag;
+        $clubDTO = ClubDTO::fromDataArray($clubData);
+
+        $club = $this->repository->createOrUpdateClub($clubDTO);
+
+        $this->assertClubDTOMatchesEloquentModel($clubDTO, $club);
+
+        // ensure there is only 1 club stored in DB
+        $this->assertDatabaseCount($this->clubTable, 1);
+        $this->assertDatabaseHas($this->clubTable, [
+            'id' => $club->id,
             'tag' => $club->tag,
-        ]));
-
-        $clubUpdated = $this->repository->createOrUpdateClub($clubDTO);
-
-        $this->assertDatabaseHas($clubUpdated->getTable(), [
-            'id' => $clubUpdated->id,
-            'tag' => $clubDTO->tag,
         ]);
 
-        $this->assertClubModelMatchesDTO($clubUpdated, $clubDTO);
-
-        $club->load(['members']);
-
-        // assert that all new members belong to club (DB relation check)
-        foreach ($club->members as $player) {
-            $this->assertDatabaseHas($player->getTable(), [
-                'id' => $player->id,
-                'tag' => $player->tag,
-                'club_id' => $club->id,
-            ]);
-        }
         // assert that all old members have been detached from club
         foreach ($oldMembers as $player) {
-            $this->assertDatabaseHas($player->getTable(), [
+            $this->assertDatabaseHas($this->playerTable, [
                 'id' => $player->id,
                 'tag' => $player->tag,
                 'club_id' => null,
+                'club_role' => null,
             ]);
+        }
+
+        // assert that all new members belong to club
+        foreach ($club->members as $i => $player) {
+            $this->assertDatabaseHas($this->playerTable, [
+                'id' => $player->id,
+                'tag' => $player->tag,
+                'club_id' => $club->id,
+                'club_role' => $player->club_role,
+            ]);
+            $this->assertPlayerDTOMatchesEloquentModel($clubDTO->members[$i], $player);
         }
     }
 
-    private function assertEqualClubModels(Club $clubExpected, ?Club $clubActual): void
+    #[Test]
+    #[TestDox('Sync club players successfully. After sync the old members are detached from club and new members attached.')]
+    public function test_sync_club_members(): void
     {
-        $this->assertNotNull($clubActual);
-        $this->assertInstanceOf(Club::class, $clubActual);
-        $this->assertSame($clubExpected->id, $clubActual->id);
-        $this->assertSame($clubExpected->tag, $clubActual->tag);
-        $this->assertSame($clubExpected->name, $clubActual->name);
-        $this->assertSame($clubExpected->description, $clubActual->description);
-        $this->assertSame($clubExpected->type, $clubActual->type);
-        $this->assertSame($clubExpected->badge_id, $clubActual->badge_id);
-        $this->assertSame($clubExpected->required_trophies, $clubActual->required_trophies);
-        $this->assertSame($clubExpected->trophies, $clubActual->trophies);
-        $this->assertTrue($clubExpected->created_at->equalTo($clubActual->created_at));
+        $club = $this->createClubWithMembers();
 
-        // compare the club's relations
-        $clubExpected->load([
-            'members',
-        ]);
-        $clubActual->load([
-            'members',
+        $this->assertDatabaseHas($this->clubTable, [
+            'id' => $club->id,
+            'tag' => $club->tag,
         ]);
 
-        $this->assertEquals(
-            $clubExpected->members->toArray(),
-            $clubActual->members->toArray()
-        );
-    }
+        $oldMembers = $club->members;
 
-    private function assertClubModelMatchesDTO(Club $club, ClubDTO $clubDTO): void
-    {
-        $this->assertSame($club->tag, $clubDTO->tag);
-        $this->assertSame($club->name, $clubDTO->name);
-        $this->assertSame($club->description, $clubDTO->description);
-        $this->assertSame($club->type, $clubDTO->type);
-        $this->assertSame($club->badge_id, $clubDTO->badgeId);
-        $this->assertSame($club->required_trophies, $clubDTO->requiredTrophies);
-        $this->assertSame($club->trophies, $clubDTO->trophies);
+        // assert that all members belong to club (DB relation check)
+        foreach ($oldMembers as $player) {
+            $this->assertDatabaseHas($this->playerTable, [
+                'id' => $player->id,
+                'tag' => $player->tag,
+                'club_id' => $club->id,
+                'club_role' => $player->club_role,
+            ]);
+        }
 
-        $club->load(['members']);
+        /** @var PlayerDTO[] $newMemberDTOs */
+        $newMemberDTOs = Player::factory()
+            ->count(5)
+            ->make()
+            ->transform(fn (Player $player) => PlayerDTO::fromEloquentModel($player))
+            ->all();
 
-        foreach ($clubDTO->members as $i => $playerDTO) {
-            dd(
-                $playerDTO,
-                $club->members->get($i),
-            );
-            $this->assertPlayerDTOMatchesEloquentModel($playerDTO, $club->members->get($i));
+        $club = $this->repository->syncClubMembers($club, $newMemberDTOs);
+
+        // assert that all old members have been detached from club
+        foreach ($oldMembers as $player) {
+            $this->assertDatabaseHas($this->playerTable, [
+                'id' => $player->id,
+                'tag' => $player->tag,
+                'club_id' => null,
+                'club_role' => null,
+            ]);
+        }
+
+        // assert that all new members belong to club
+        foreach ($club->members as $i => $player) {
+            $this->assertDatabaseHas($this->playerTable, [
+                'id' => $player->id,
+                'tag' => $player->tag,
+                'club_id' => $club->id,
+                'club_role' => $player->club_role,
+            ]);
+            $this->assertPlayerDTOMatchesEloquentModel($newMemberDTOs[$i], $player);
         }
     }
 }
