@@ -14,7 +14,7 @@ use Illuminate\Support\Collection;
 /**
  * @property int $id
  * @property string $tag
- * @property string $name
+ * @property string|null $name
  * @property string|null $description
  * @property string|null $type
  * @property int|null $badge_id

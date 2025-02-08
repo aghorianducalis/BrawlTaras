@@ -34,6 +34,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use Tests\TestCase;
 use Tests\Traits\CreatesBrawlers;
 use Tests\Traits\CreatesEventRotations;
+use Tests\Traits\TestClubs;
 
 #[Group('Parser')]
 #[CoversClass(Parser::class)]
@@ -47,9 +48,10 @@ use Tests\Traits\CreatesEventRotations;
 #[UsesClass(ParsingException::class)]
 class ParserTest extends TestCase
 {
+    use RefreshDatabase;
     use CreatesBrawlers;
     use CreatesEventRotations;
-    use RefreshDatabase;
+    use TestClubs;
 
     private ParserInterface $parser;
     private MockInterface|APIClientInterface $apiClient;
@@ -247,15 +249,20 @@ class ParserTest extends TestCase
             ->with($club->tag)
             ->andReturn($clubDTO->members);
 
-        $this->playerRepository->shouldReceive('createOrUpdateClubMembers')
+        $this->clubRepository->shouldReceive('syncClubMembersByTag')
             ->once()
-            ->with($clubDTO->members)
-            ->andReturn($club->members->all());
+            ->with($club->tag, $clubDTO->members)
+            ->andReturn($club);
 
         try {
             $result = $this->parser->parseClubMembers($club->tag);
 
-            $this->assertEquals($club->members->all(), $result);
+            $this->assertEqualClubModels($club, $result);
+            $this->assertEqualsCanonicalizing(
+                $club->members->pluck('tag')->toArray(),
+                $result->members->pluck('tag')->toArray(),
+                'Club members do not match expected values'
+            );
         } catch (ParsingException $e) {
             $this->fail('ParsingException was thrown: ' . $e->getMessage());
         }
