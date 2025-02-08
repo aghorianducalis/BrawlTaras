@@ -94,4 +94,12 @@ final readonly class ClubRepository implements ClubRepositoryInterface
 
         return $club;
     }
+
+    public function syncClubMembersByTag(string $clubTag, array $playerDTOs): Club
+    {
+        $club = $this->findClub(['tag' => $clubTag]) ??
+            $this->createOrUpdateClub(ClubDTO::fromDataArray(['tag' => $clubTag]));
+
+        return $this->syncClubMembers($club, $playerDTOs);
+    }
 }

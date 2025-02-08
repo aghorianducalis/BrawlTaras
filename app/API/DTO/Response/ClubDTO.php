@@ -13,7 +13,7 @@ final readonly class ClubDTO
 {
     /**
      * @param string $tag
-     * @param string $name
+     * @param string|null $name
      * @param string|null $description
      * @param string|null $type
      * @param int|null $badgeId
@@ -23,7 +23,7 @@ final readonly class ClubDTO
      */
     private function __construct(
         public string $tag,
-        public string $name,
+        public ?string $name,
         public ?string $description,
         public ?string $type,
         public ?int $badgeId,
@@ -33,7 +33,7 @@ final readonly class ClubDTO
     ) {}
 
     /**
-     * @return array{tag: string, name: string, description: string|null, type: string|null, badgeId: int|null, requiredTrophies: int|null, trophies: int|null, members: array<array{tag: string, name: string, nameColor: string, role: string, trophies: int, icon: array{id: int}}>|null}
+     * @return array{tag: string, name: string|null, description: string|null, type: string|null, badgeId: int|null, requiredTrophies: int|null, trophies: int|null, members: array<array{tag: string, name: string, nameColor: string, role: string, trophies: int, icon: array{id: int}}>|null}
      */
     public function toArray(): array
     {
@@ -77,8 +77,8 @@ final readonly class ClubDTO
             throw InvalidDTOException::fromMessage("Invalid or missing 'tag' field in club data.");
         }
 
-        if (!(key_exists('name', $data) && is_string($data['name']) && !empty(trim($data['name'])))) {
-            throw InvalidDTOException::fromMessage("Invalid or missing 'name' field in club data.");
+        if (key_exists('name', $data) && !(is_string($data['name']) && !empty(trim($data['name'])))) {
+            throw InvalidDTOException::fromMessage("Invalid 'name' field in club data.");
         }
 
         if (key_exists('description', $data) && !(is_string($data['description']) && !empty(trim($data['description'])))) {
@@ -107,7 +107,7 @@ final readonly class ClubDTO
 
         return new self(
             tag: $data['tag'],
-            name: $data['name'],
+            name: $data['name'] ?? null,
             description: $data['description'] ?? null,
             type: $data['type'] ?? null,
             badgeId: key_exists('badgeId', $data) ? (int) $data['badgeId'] : null,

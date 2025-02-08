@@ -43,7 +43,6 @@ class ClubDTOTest extends TestCase
     #[Test]
     #[TestDox('Ensuring invalid input without required fields is rejected.')]
     #[TestWith(['tag'])]
-    #[TestWith(['name'])]
     public function test_fromDataArray_throws_exception_on_missing_required_data(string $property): void
     {
         $clubData = self::provideClubData();

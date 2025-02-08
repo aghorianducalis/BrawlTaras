@@ -35,4 +35,15 @@ interface ClubRepositoryInterface
      * @return Club
      */
     public function syncClubMembers(Club $club, array $playerDTOs): Club;
+
+    /**
+     * Wrapper for syncClubMembers() in case there is only club tag specified.
+     *
+     * @see self::syncClubMembers()
+     *
+     * @param string $clubTag
+     * @param PlayerDTO[] $playerDTOs
+     * @return Club
+     */
+    public function syncClubMembersByTag(string $clubTag, array $playerDTOs): Club;
 }

@@ -61,6 +61,8 @@ class PlayerRepositoryTest extends TestCase
 
         $memberFound = $this->repository->findPlayer([$property => $value]);
 
+        $this->assertNotNull($memberFound);
+        $this->assertInstanceOf(Player::class, $memberFound);
         $this->assertEqualPlayerModels($memberCreated, $memberFound);
     }
 

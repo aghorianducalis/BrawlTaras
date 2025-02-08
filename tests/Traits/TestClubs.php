@@ -126,6 +126,12 @@ trait TestClubs
     public static function provideClubData(): array
     {
         return [
+            // todo
+//            'club with tag only' => [
+//                [
+//                    'tag' => '#12345',
+//                ],
+//            ],
             'club without members' => [
                 [
                     'tag' => '#12345',

@@ -75,12 +75,12 @@ readonly class Parser implements ParserInterface
         }
     }
 
-    public function parseClubMembers(string $clubTag): array
+    public function parseClubMembers(string $clubTag): Club
     {
         try {
             $playerDTOs = $this->apiClient->getClubMembers($clubTag);
 
-            return $this->playerRepository->createOrUpdateClubMembers($playerDTOs);
+            return $this->clubRepository->syncClubMembersByTag($clubTag, $playerDTOs);
         } catch (ResponseException|InvalidDTOException $e) {
             Log::error('Failed to parse club members: ' . $e->getMessage(), [
                 'exception' => $e

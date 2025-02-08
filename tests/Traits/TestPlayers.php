@@ -10,10 +10,8 @@ use App\Models\Player;
 
 trait TestPlayers
 {
-    public function assertEqualPlayerModels(Player $playerExpected, ?Player $playerActual): void
+    public function assertEqualPlayerModels(Player $playerExpected, Player $playerActual): void
     {
-        $this->assertNotNull($playerActual);
-        $this->assertInstanceOf(Player::class, $playerActual);
         $this->assertSame($playerExpected->id, $playerActual->id);
         $this->assertSame($playerExpected->tag, $playerActual->tag);
         $this->assertSame($playerExpected->name, $playerActual->name);
@@ -21,16 +19,12 @@ trait TestPlayers
         $this->assertTrue($playerExpected->created_at->equalTo($playerActual->created_at));
 
         // compare the player's relations
-        $playerExpected->load([
-            'club',
-        ]);
-        $playerActual->load([
-            'club',
-        ]);
+        $playerExpected->load(['club']);
+        $playerActual->load(['club']);
 
         $this->assertEquals(
-            $playerExpected->club->toArray(),
-            $playerActual->club->toArray()
+            $playerExpected->club?->toArray(),
+            $playerActual->club?->toArray()
         );
     }
 

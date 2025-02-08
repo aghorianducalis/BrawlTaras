@@ -6,8 +6,10 @@ namespace App\Services\Repositories;
 
 use App\API\DTO\Response\AccessoryDTO;
 use App\API\DTO\Response\BrawlerDTO;
+use App\API\DTO\Response\PlayerBrawlerDTO;
 use App\API\DTO\Response\StarPowerDTO;
 use App\Models\Brawler;
+use App\Models\Player;
 use App\Services\Repositories\Contracts\AccessoryRepositoryInterface;
 use App\Services\Repositories\Contracts\BrawlerRepositoryInterface;
 use App\Services\Repositories\Contracts\StarPowerRepositoryInterface;
@@ -71,6 +73,17 @@ final readonly class BrawlerRepository implements BrawlerRepositoryInterface
     {
         // todo calls can lead to N+1 query issues. Consider bulk inserts/updates if the data size is significant.
         return array_map(fn (BrawlerDTO $dto) => $this->createOrUpdateBrawler($dto), $brawlerDTOs);
+    }
+
+    /**
+     * @see ClubRepository::syncClubMembers
+     * @param Player $player
+     * @param PlayerBrawlerDTO[] $playerBrawlerDTOs
+     * @return Player
+     */
+    public function syncPlayerBrawlers(Player $player, array $playerBrawlerDTOs): Player
+    {
+        return $player;
     }
 
     /**

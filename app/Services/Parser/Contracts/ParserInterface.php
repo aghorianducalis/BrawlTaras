@@ -46,10 +46,10 @@ interface ParserInterface
      * List club members.
      *
      * @param string $clubTag
-     * @return array<Player>
+     * @return Club
      * @throws ParsingException If an unrecoverable error occurs during parsing.
      */
-    public function parseClubMembers(string $clubTag): array;
+    public function parseClubMembers(string $clubTag): Club;
 
     /**
      * Parse all event rotations from the API and store/update them in the local database.

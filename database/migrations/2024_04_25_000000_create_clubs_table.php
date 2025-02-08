@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('clubs', function (Blueprint $table) {
             $table->id();
             $table->string('tag', 20)->unique();
-            $table->string('name');
+            $table->string('name')->nullable();
             $table->string('description')->nullable();
 
             $table->string('type', 20)->nullable();
