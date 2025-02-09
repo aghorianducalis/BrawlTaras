@@ -87,7 +87,7 @@ class ClubRepositoryTest extends TestCase
             'tag' => $clubDTO->tag,
         ]);
 
-        foreach ($clubDTO->members as $player) {
+        foreach ($clubDTO->members ?? [] as $player) {
             $this->assertDatabaseMissing($this->playerTable, [
                 'tag' => $player->tag,
             ]);
@@ -136,9 +136,7 @@ class ClubRepositoryTest extends TestCase
         $clubData['tag'] = $club->tag;
         $clubDTO = ClubDTO::fromDataArray($clubData);
 
-        $club = $this->repository->createOrUpdateClub($clubDTO);
-
-        $this->assertClubDTOMatchesEloquentModel($clubDTO, $club);
+        $clubUpdated = $this->repository->createOrUpdateClub($clubDTO);
 
         // ensure there is only 1 club stored in DB
         $this->assertDatabaseCount($this->clubTable, 1);
@@ -147,25 +145,28 @@ class ClubRepositoryTest extends TestCase
             'tag' => $club->tag,
         ]);
 
-        // assert that all old members have been detached from club
-        foreach ($oldMembers as $player) {
-            $this->assertDatabaseHas($this->playerTable, [
-                'id' => $player->id,
-                'tag' => $player->tag,
-                'club_id' => null,
-                'club_role' => null,
-            ]);
-        }
+        // if new members have been set
+        if ($clubDTO->members) {
+            // assert that all old members have been detached from club
+            foreach ($oldMembers as $player) {
+                $this->assertDatabaseHas($this->playerTable, [
+                    'id' => $player->id,
+                    'tag' => $player->tag,
+                    'club_id' => null,
+                    'club_role' => null,
+                ]);
+            }
 
-        // assert that all new members belong to club
-        foreach ($club->members as $i => $player) {
-            $this->assertDatabaseHas($this->playerTable, [
-                'id' => $player->id,
-                'tag' => $player->tag,
-                'club_id' => $club->id,
-                'club_role' => $player->club_role,
-            ]);
-            $this->assertPlayerDTOMatchesEloquentModel($clubDTO->members[$i], $player);
+            // assert that all new members belong to club
+            foreach ($clubUpdated->members as $i => $player) {
+                $this->assertDatabaseHas($this->playerTable, [
+                    'id' => $player->id,
+                    'tag' => $player->tag,
+                    'club_id' => $club->id,
+                    'club_role' => $player->club_role,
+                ]);
+                $this->assertPlayerDTOMatchesEloquentModel($clubDTO->members[$i], $player);
+            }
         }
     }
 

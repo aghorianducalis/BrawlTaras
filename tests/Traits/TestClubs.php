@@ -79,12 +79,12 @@ trait TestClubs
     public function assertClubDTOMatchesDataArray(ClubDTO $clubDTO, array $clubData): void
     {
         $this->assertEquals($clubData['tag'], $clubDTO->tag);
-        $this->assertEquals($clubData['name'], $clubDTO->name);
-        $this->assertEquals($clubData['description'], $clubDTO->description);
-        $this->assertEquals($clubData['type'], $clubDTO->type);
-        $this->assertEquals($clubData['badgeId'], $clubDTO->badgeId);
-        $this->assertEquals($clubData['requiredTrophies'], $clubDTO->requiredTrophies);
-        $this->assertEquals($clubData['trophies'], $clubDTO->trophies);
+        $this->assertEquals($clubData['name'] ?? null, $clubDTO->name);
+        $this->assertEquals($clubData['description'] ?? null, $clubDTO->description);
+        $this->assertEquals($clubData['type'] ?? null, $clubDTO->type);
+        $this->assertEquals($clubData['badgeId'] ?? null, $clubDTO->badgeId);
+        $this->assertEquals($clubData['requiredTrophies'] ?? null, $clubDTO->requiredTrophies);
+        $this->assertEquals($clubData['trophies'] ?? null, $clubDTO->trophies);
 
         if (empty($clubData['members'])) {
             $this->assertEmpty($clubDTO->members);
@@ -126,12 +126,11 @@ trait TestClubs
     public static function provideClubData(): array
     {
         return [
-            // todo
-//            'club with tag only' => [
-//                [
-//                    'tag' => '#12345',
-//                ],
-//            ],
+            'club with tag only' => [
+                [
+                    'tag' => '#123ABC',
+                ],
+            ],
             'club without members' => [
                 [
                     'tag' => '#12345',
