@@ -131,4 +131,58 @@ trait TestPlayers
             ->withClub()
             ->create($attributes);
     }
+
+    public static function providePlayerData(): array
+    {
+        return [
+            'player' => [
+                [
+                    'tag' => '#12345',
+                    'name' => 'Test Player 1',
+                    'nameColor' => '#fff000',
+                    'icon' => ['id' => 123],
+                    'trophies' => 50000,
+                    'highestTrophies' => 50123,
+                    'expLevel' => 45,
+                    'expPoints' => 1000,
+                    'isQualifiedFromChampionshipChallenge' => true,
+                    'soloVictories' => 3000,
+                    'duoVictories' => 2500,
+                    '3vs3Victories' => 3300,
+                    'bestRoboRumbleTime' => 99,
+                    'bestTimeAsBigBrawler' => 60,
+//                    'role' => null,
+//                    'club' => null,
+//                    'brawlers' => null,
+                ],
+            ],
+//            'player with club' => [
+//                [
+//                    'tag' => '#12345',
+//                    'name' => 'Test Player 2',
+//                    'nameColor' => '#fff000',
+//                    'icon' => ['id' => 123],
+//                    'trophies' => 50000,
+//                    'highestTrophies' => 50123,
+//                    'expLevel' => 45,
+//                    'expPoints' => 1000,
+//                    'isQualifiedFromChampionshipChallenge' => true,
+//                    'soloVictories' => 3000,
+//                    'duoVictories' => 2500,
+//                    '3vs3Victories' => 3300,
+//                    'bestRoboRumbleTime' => 99,
+//                    'bestTimeAsBigBrawler' => 60,
+//                    'role' => Club::CLUB_MEMBER_ROLES[1],
+//                    'club' => [
+//                        'tag' => '#777',
+//                        'name' => 'Test Club with 1 member',
+//                    ],
+//                ],
+//            ],
+//            'player without brawlers' => [
+//            ],
+//            'player with 1 brawler' => [
+//            ],
+        ];
+    }
 }

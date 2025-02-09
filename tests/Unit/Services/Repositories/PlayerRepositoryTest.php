@@ -102,6 +102,7 @@ class PlayerRepositoryTest extends TestCase
             'id' => $memberUpdated->id,
             'tag' => $memberDTO->tag,
         ]);
+        $this->assertDatabaseCount($memberUpdated->getTable(), 1);
 
         $this->assertPlayerDTOMatchesEloquentModel($memberDTO, $memberUpdated);
     }

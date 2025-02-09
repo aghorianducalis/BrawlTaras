@@ -37,7 +37,7 @@ final readonly class ClubDTO
      */
     public function toArray(): array
     {
-        return [
+        return array_filter([
             'tag' => $this->tag,
             'name' => $this->name,
             'description' => $this->description,
@@ -53,7 +53,7 @@ final readonly class ClubDTO
                 'trophies' => $member->trophies,
                 'icon' => $member->icon,
             ], $this->members),
-        ];
+        ], fn($value) => !is_null($value));
     }
 
     /**

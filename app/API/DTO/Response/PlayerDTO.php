@@ -36,18 +36,18 @@ final readonly class PlayerDTO
         public string $nameColor,
         public array $icon,
         public int $trophies,
-        public ?int $highestTrophies = null,
-        public ?int $expLevel = null,
-        public ?int $expPoints = null,
-        public ?bool $isQualifiedFromChampionshipChallenge = null,
-        public ?int $victoriesSolo = null,
-        public ?int $victoriesDuo = null,
-        public ?int $victories3vs3 = null,
-        public ?int $bestRoboRumbleTime = null,
-        public ?int $bestTimeAsBigBrawler = null,
-        public ?string $clubRole = null,
-        public ?array $club = null,
-        public ?array $brawlers = null,
+        public ?int $highestTrophies,
+        public ?int $expLevel,
+        public ?int $expPoints,
+        public ?bool $isQualifiedFromChampionshipChallenge,
+        public ?int $victoriesSolo,
+        public ?int $victoriesDuo,
+        public ?int $victories3vs3,
+        public ?int $bestRoboRumbleTime,
+        public ?int $bestTimeAsBigBrawler,
+        public ?string $clubRole,
+        public ?array $club,
+        public ?array $brawlers,
     ) {}
 
     /**
@@ -87,7 +87,7 @@ final readonly class PlayerDTO
             $array['brawlers'] = array_map(fn(PlayerBrawlerDTO $brawlerDTO) => $brawlerDTO->toArray(), $this->brawlers);
         }
 
-        return $array;
+        return array_filter($array, fn($value) => !is_null($value));
     }
 
     /**
