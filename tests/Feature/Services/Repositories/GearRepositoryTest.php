@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Services\Repositories;
+namespace Tests\Feature\Services\Repositories;
 
 use App\API\DTO\Response\GearDTO;
 use App\Models\Gear;
-use App\Services\Repositories\GearRepository;
 use App\Services\Repositories\Contracts\GearRepositoryInterface;
+use App\Services\Repositories\GearRepository;
 use Database\Factories\GearFactory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\CoversClass;

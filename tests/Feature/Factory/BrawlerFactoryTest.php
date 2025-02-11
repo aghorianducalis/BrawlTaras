@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Factory;
+namespace Tests\Feature\Factory;
 
 use Database\Factories\AccessoryFactory;
 use Database\Factories\BrawlerFactory;

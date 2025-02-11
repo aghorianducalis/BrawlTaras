@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Services\Parser;
+namespace Tests\Feature\Services\Parser;
 
 use App\API\Client\APIClient;
 use App\API\Contracts\APIClientInterface;

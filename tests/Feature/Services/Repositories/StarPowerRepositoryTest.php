@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Services\Repositories;
+namespace Tests\Feature\Services\Repositories;
 
 use App\API\DTO\Response\StarPowerDTO;
 use App\Models\StarPower;
