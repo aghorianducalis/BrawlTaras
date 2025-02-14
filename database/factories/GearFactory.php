@@ -29,7 +29,6 @@ class GearFactory extends Factory
         return [
             'ext_id' => $this->faker->unique()->randomNumber(),
             'name' => "Gear #" . $this->faker->unique()->numerify(),
-            'level' => $this->faker->numberBetween(0, 11),
         ];
     }
 }

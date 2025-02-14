@@ -15,7 +15,6 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('ext_id')->unique();
             $table->string('name');
-            $table->unsignedTinyInteger('level')->default(0);
             $table->timestamps();
         });
     }

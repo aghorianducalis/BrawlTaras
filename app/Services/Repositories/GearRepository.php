@@ -27,10 +27,6 @@ final readonly class GearRepository implements GearRepositoryInterface
             $query->where('name', 'like', "%{$searchCriteria['name']}%");
         }
 
-        if (isset($searchCriteria['level'])) {
-            $query->where('level', '=', $searchCriteria['level']);
-        }
-
         return $query->first();
     }
 
@@ -42,7 +38,6 @@ final readonly class GearRepository implements GearRepositoryInterface
         $newData = [
             'ext_id' => $gearDTO->extId, // unnecessary since 'ext_id' remains unchanged
             'name' => $gearDTO->name,
-            'level' => $gearDTO->level,
         ];
 
         DB::transaction(function () use (&$gear, $newData) {

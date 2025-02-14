@@ -104,7 +104,6 @@ class BrawlerFactoryTest extends TestCase
                 'id',
                 'ext_id',
                 'name',
-                'level',
             ]));
         }
 

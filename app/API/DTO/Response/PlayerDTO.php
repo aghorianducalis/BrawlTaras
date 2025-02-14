@@ -51,7 +51,7 @@ final readonly class PlayerDTO
     ) {}
 
     /**
-     * @return array{tag: string, name: string, nameColor: string, icon: array{id: int|null}, trophies: int, highestTrophies: int|null, expLevel: int|null, expPoints: int|null, isQualifiedFromChampionshipChallenge: bool|null, victoriesSolo: int|null, victoriesDuo: int|null, victories3vs3: int|null, bestRoboRumbleTime: int|null, bestTimeAsBigBrawler: int|null, role: string|null, club: null|array{tag: string, name: string}, brawlers: null|array{array{extId: int, name: string, power: int, rank: int, trophies: int, highestTrophies: int, gadgets: array<array{extId: string, name: string}>, gears: array<array{extId: string, name: string, level: string}>, starPowers: array<array{extId: string, name: string}>}}}
+     * @return array{tag: string, name: string, nameColor: string, icon: array{id: int|null}, trophies: int, highestTrophies: int|null, expLevel: int|null, expPoints: int|null, isQualifiedFromChampionshipChallenge: bool|null, victoriesSolo: int|null, victoriesDuo: int|null, victories3vs3: int|null, bestRoboRumbleTime: int|null, bestTimeAsBigBrawler: int|null, role: string|null, club: null|array{tag: string, name: string}, brawlers: null|array{array{extId: int, name: string, power: int, rank: int, trophies: int, highestTrophies: int, gadgets: array<array{extId: string, name: string}>, gears: array<array{extId: string, name: string}>, starPowers: array<array{extId: string, name: string}>}}}
      */
     public function toArray(): array
     {

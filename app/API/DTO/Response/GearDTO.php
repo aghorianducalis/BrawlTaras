@@ -12,18 +12,16 @@ final readonly class GearDTO
     private function __construct(
         public int $extId,
         public string $name,
-        public int $level,
     ) {}
 
     /**
-     * @return array{extId: string, name: string, level: string}
+     * @return array{extId: string, name: string}
      */
     public function toArray(): array
     {
         return [
             'extId' => $this->extId,
             'name' => $this->name,
-            'level' => $this->level,
         ];
     }
 
@@ -44,14 +42,9 @@ final readonly class GearDTO
             throw InvalidDTOException::fromMessage("Invalid or missing 'name' field in Gear data");
         }
 
-        if (!(isset($data['level']) && is_numeric($data['level']))) {
-            throw InvalidDTOException::fromMessage("Invalid or missing 'level' field in Gear data");
-        }
-
         return new self(
             extId: (int) $data['id'],
             name: $data['name'],
-            level: (int) $data['level'],
         );
     }
 
@@ -78,7 +71,6 @@ final readonly class GearDTO
         return new self(
             extId: $gear->ext_id,
             name: $gear->name,
-            level: $gear->level,
         );
     }
 }

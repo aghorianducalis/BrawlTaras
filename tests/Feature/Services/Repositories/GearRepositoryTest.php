@@ -42,7 +42,6 @@ class GearRepositoryTest extends TestCase
     #[TestDox('Fetch a gear successfully.')]
     #[TestWith(['ext_id', 123])]
     #[TestWith(['name', 'Quick load'])]
-    #[TestWith(['level', 5])]
     public function test_find_gear_by_criteria(string $property, int|string $value): void
     {
         $table = (new Gear())->getTable();
@@ -63,7 +62,6 @@ class GearRepositoryTest extends TestCase
         $this->assertEquals($gearCreated->id, $gearFound->id);
         $this->assertEquals($gearCreated->ext_id, $gearFound->ext_id);
         $this->assertEquals($gearCreated->name, $gearFound->name);
-        $this->assertEquals($gearCreated->level, $gearFound->level);
     }
 
     #[Test]
@@ -77,7 +75,6 @@ class GearRepositoryTest extends TestCase
         $this->assertDatabaseMissing($table, $gearToCreate->only([
             'ext_id',
             'name',
-            'level',
         ]));
 
         $dto = GearDTO::fromEloquentModel($gearToCreate);
@@ -86,12 +83,10 @@ class GearRepositoryTest extends TestCase
 
         $this->assertEquals($gearToCreate->ext_id, $gearCreated->ext_id);
         $this->assertEquals($gearToCreate->name, $gearCreated->name);
-        $this->assertEquals($gearToCreate->level, $gearCreated->level);
 
         $this->assertDatabaseHas($table, $gearToCreate->only([
             'ext_id',
             'name',
-            'level',
         ]));
     }
 
@@ -107,7 +102,6 @@ class GearRepositoryTest extends TestCase
             'id',
             'ext_id',
             'name',
-            'level',
         ]));
 
         $gearToUpdate = Gear::factory()->make($gear->only(['id', 'ext_id']));
@@ -118,13 +112,11 @@ class GearRepositoryTest extends TestCase
         $this->assertEquals($gearToUpdate->id, $gearUpdated->id);
         $this->assertEquals($gearToUpdate->ext_id, $gearUpdated->ext_id);
         $this->assertEquals($gearToUpdate->name, $gearUpdated->name);
-        $this->assertEquals($gearToUpdate->level, $gearUpdated->level);
 
         $this->assertDatabaseHas($table, $gearToUpdate->only([
             'id',
             'ext_id',
             'name',
-            'level',
         ]));
     }
 }

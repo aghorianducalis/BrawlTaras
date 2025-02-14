@@ -17,10 +17,10 @@ return new class extends Migration
             $table->foreign('player_id')->references('id')->on('players');
             $table->unsignedBigInteger('brawler_id');
             $table->foreign('brawler_id')->references('id')->on('brawlers');
-            $table->unsignedSmallInteger('power')->default(0);
-            $table->unsignedSmallInteger('rank')->default(0);
-            $table->unsignedInteger('trophies')->default(0);
-            $table->unsignedInteger('highest_trophies')->default(0);
+            $table->unsignedSmallInteger('power');
+            $table->unsignedSmallInteger('rank');
+            $table->unsignedInteger('trophies');
+            $table->unsignedInteger('highest_trophies');
             $table->timestamps();
         });
     }

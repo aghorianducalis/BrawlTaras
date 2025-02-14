@@ -36,7 +36,7 @@ final readonly class PlayerBrawlerDTO
     ) {}
 
     /**
-     * @return array{extId: int, name: string, power: int, rank: int, trophies: int, highestTrophies: int, gadgets: array<array{extId: string, name: string}>, gears: array<array{extId: string, name: string, level: string}>, starPowers: array<array{extId: string, name: string}>}
+     * @return array{extId: int, name: string, power: int, rank: int, trophies: int, highestTrophies: int, gadgets: array<array{extId: string, name: string}>, gears: array<array{extId: string, name: string}>, starPowers: array<array{extId: string, name: string}>}
      */
     public function toArray(): array
     {
