@@ -9,6 +9,7 @@ use App\API\Exceptions\InvalidDTOException;
 use App\API\Exceptions\ResponseException;
 use App\Models\Brawler;
 use App\Models\Club;
+use App\Models\Player;
 use App\Services\Parser\Contracts\ParserInterface;
 use App\Services\Parser\Exceptions\ParsingException;
 use App\Services\Repositories\Contracts\BrawlerRepositoryInterface;
@@ -68,7 +69,7 @@ readonly class Parser implements ParserInterface
 
             return $this->clubRepository->createOrUpdateClub($clubDTO);
         } catch (ResponseException|InvalidDTOException $e) {
-            Log::error('Failed to parse club: ' . $e->getMessage(), [
+            Log::error("Failed to parse Club with tag $clubTag: " . $e->getMessage(), [
                 'exception' => $e
             ]);
             throw ParsingException::fromException($e);
@@ -82,7 +83,7 @@ readonly class Parser implements ParserInterface
 
             return $this->clubRepository->syncClubMembersByTag($clubTag, $playerDTOs);
         } catch (ResponseException|InvalidDTOException $e) {
-            Log::error('Failed to parse club members: ' . $e->getMessage(), [
+            Log::error("Failed to parse members of Club with tag $clubTag: " . $e->getMessage(), [
                 'exception' => $e
             ]);
             throw ParsingException::fromException($e);
@@ -101,6 +102,20 @@ readonly class Parser implements ParserInterface
             return $this->eventRotationRepository->createOrUpdateEventRotations($rotationDTOs);
         } catch (ResponseException|InvalidDTOException|ValidationException $e) {
             Log::error('Failed to parse events rotation: ' . $e->getMessage(), [
+                'exception' => $e
+            ]);
+            throw ParsingException::fromException($e);
+        }
+    }
+
+    public function parsePlayerByTag(string $playerTag): Player
+    {
+        try {
+            $playerDTO = $this->apiClient->getPlayerByTag($playerTag);
+
+            return $this->playerRepository->createOrUpdatePlayer($playerDTO);
+        } catch (ResponseException|InvalidDTOException $e) {
+            Log::error("Failed to parse Player with tag $playerTag: " . $e->getMessage(), [
                 'exception' => $e
             ]);
             throw ParsingException::fromException($e);

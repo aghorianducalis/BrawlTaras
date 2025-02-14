@@ -58,4 +58,13 @@ interface ParserInterface
      * @throws ParsingException If an unrecoverable error occurs during parsing.
      */
     public function parseEventsRotation(): array;
+
+    /**
+     * Get information about a single player by player tag.
+     *
+     * @param string $playerTag
+     * @return Player The parsed and saved player with its club and brawlers.
+     * @throws ParsingException If an unrecoverable error occurs during parsing.
+     */
+    public function parsePlayerByTag(string $playerTag): Player;
 }
