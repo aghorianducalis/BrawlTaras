@@ -18,6 +18,7 @@ return new class extends Migration
             $table->unsignedBigInteger('brawler_gear_id');
             $table->foreign('brawler_gear_id')->references('id')->on('brawler_gear');
             $table->unsignedTinyInteger('level');
+            $table->timestamps();
         });
     }
 

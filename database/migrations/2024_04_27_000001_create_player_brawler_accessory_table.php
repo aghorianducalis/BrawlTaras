@@ -17,6 +17,7 @@ return new class extends Migration
             $table->foreign('player_brawler_id')->references('id')->on('player_brawlers');
             $table->unsignedBigInteger('brawler_accessory_id');
             $table->foreign('brawler_accessory_id')->references('id')->on('brawler_accessory');
+            $table->timestamps();
         });
     }
 
