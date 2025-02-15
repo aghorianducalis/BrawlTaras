@@ -9,7 +9,6 @@ use Database\Factories\BrawlerFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
 
 /**
@@ -18,10 +17,12 @@ use Illuminate\Support\Collection;
  * @property string $name
  * @property Carbon $created_at
  * @property Carbon $updated_at
- * @property-read Collection|Accessory[]|array $accessories
- * @property-read Collection|Gear[]|array $gears
- * @property-read Collection|StarPower[]|array $starPowers
- * @property-read Collection|PlayerBrawler[]|array $playerBrawlers
+ * @property-read Accessory[]|array|Collection $accessories
+ * @property-read Gear[]|array|Collection $gears
+ * @property-read StarPower[]|array|Collection $starPowers
+ * @property-read Player[]|array|Collection $players
+ * @property-read PlayerBrawler|null $player_brawler
+// * @property-read mixed|null $brawler_accessory
  */
 class Brawler extends Model
 {
@@ -46,12 +47,19 @@ class Brawler extends Model
      */
     public function accessories(): BelongsToMany
     {
-        return $this->belongsToMany(
-            related: Accessory::class,
-            table: 'brawler_accessory',
-            foreignPivotKey: 'brawler_id',
-            relatedPivotKey: 'accessory_id',
-        );
+        return $this
+            ->belongsToMany(
+                related: Accessory::class,
+                table: 'brawler_accessory',
+                foreignPivotKey: 'brawler_id',
+                relatedPivotKey: 'accessory_id',
+            )
+            ->withPivot([
+                'id',
+                'brawler_id',
+                'accessory_id',
+            ])
+            ->as('brawler_accessory');
     }
 
     /**
@@ -61,12 +69,19 @@ class Brawler extends Model
      */
     public function gears(): BelongsToMany
     {
-        return $this->belongsToMany(
-            related: Gear::class,
-            table: 'brawler_gear',
-            foreignPivotKey: 'brawler_id',
-            relatedPivotKey: 'gear_id',
-        );
+        return $this
+            ->belongsToMany(
+                related: Gear::class,
+                table: 'brawler_gear',
+                foreignPivotKey: 'brawler_id',
+                relatedPivotKey: 'gear_id',
+            )
+            ->withPivot([
+                'id',
+                'brawler_id',
+                'gear_id',
+            ])
+            ->as('brawler_gear');
     }
 
     /**
@@ -76,21 +91,44 @@ class Brawler extends Model
      */
     public function starPowers(): BelongsToMany
     {
-        return $this->belongsToMany(
-            related: StarPower::class,
-            table: 'brawler_star_power',
-            foreignPivotKey: 'brawler_id',
-            relatedPivotKey: 'star_power_id',
-        );
+        return $this
+            ->belongsToMany(
+                related: StarPower::class,
+                table: 'brawler_star_power',
+                foreignPivotKey: 'brawler_id',
+                relatedPivotKey: 'star_power_id',
+            )
+            ->withPivot([
+                'id',
+                'brawler_id',
+                'star_power_id',
+            ])
+            ->as('brawler_star_power');
     }
 
     /**
-     * Get the player brawlers.
+     * Get the players that have this brawler.
      *
-     * @return HasMany
+     * @return BelongsToMany
      */
-    public function playerBrawlers(): HasMany
+    public function players(): BelongsToMany
     {
-        return $this->hasMany(PlayerBrawler::class, 'brawler_id', 'id');
+        return $this
+            ->belongsToMany(
+                related: Player::class,
+                table: 'player_brawlers',
+                foreignPivotKey: 'brawler_id',
+                relatedPivotKey: 'player_id',
+            )
+            ->using(PlayerBrawler::class)
+            ->withPivot([
+                'id',
+                'power',
+                'rank',
+                'trophies',
+                'highest_trophies',
+            ])
+            ->withTimestamps()
+            ->as('player_brawler');
     }
 }

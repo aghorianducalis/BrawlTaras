@@ -83,8 +83,8 @@ final readonly class PlayerRepository implements PlayerRepositoryInterface
             }
 
             // Synchronize a player's brawlers
-            if ($playerDTO->brawlers) {
-                $player = app(BrawlerRepositoryInterface::class)->syncPlayerBrawlers($player, $playerDTO->brawlers);
+            if ($playerDTO->playerBrawlers) {
+                $player = app(BrawlerRepositoryInterface::class)->syncPlayerBrawlers($player, $playerDTO->playerBrawlers);
             }
         });
 

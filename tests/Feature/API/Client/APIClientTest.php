@@ -691,17 +691,17 @@ class APIClientTest extends TestCase
         $this->assertSame($player->club->tag, $playerDTO->club['tag']);
         $this->assertSame($player->club->name, $playerDTO->club['name']);
 
-        if ($playerDTO->brawlers) {
+        if ($playerDTO->playerBrawlers) {
 
-            $this->assertIsArray($playerDTO->brawlers);
-            $this->assertCount($player->playerBrawlers()->count(), $playerDTO->brawlers);
+            $this->assertIsArray($playerDTO->playerBrawlers);
+            $this->assertCount($player->brawlers()->count(), $playerDTO->playerBrawlers);
 
-            foreach ($playerDTO->brawlers as $i => $playerBrawlerDTO) {
+            foreach ($playerDTO->playerBrawlers as $i => $playerBrawlerDTO) {
                 $this->assertInstanceOf(PlayerBrawlerDTO::class, $playerBrawlerDTO);
                 /** @var Brawler $playerBrawler */
-                $playerBrawler = $player->playerBrawlers->get($i);
+                $playerBrawler = $player->brawlers->get($i);
 
-                $this->assertBrawlerDTOMatchesDataArray($playerBrawlerDTO, $playerBrawler->toArray());
+                $this->assertBrawlerModelMatchesDTO($playerBrawler, $playerBrawlerDTO);
             }
         }
     }

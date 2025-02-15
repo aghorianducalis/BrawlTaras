@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\API\DTO\Response;
 
 use App\API\Exceptions\InvalidDTOException;
-use App\Models\Gear;
+use App\Models\PlayerBrawlerStarPower;
 
-final readonly class GearDTO
+final readonly class PlayerBrawlerStarPowerDTO
 {
     private function __construct(
         public int $extId,
@@ -21,7 +21,7 @@ final readonly class GearDTO
     {
         return [
             'extId' => $this->extId,
-            'name' => $this->name,
+            'name'  => $this->name,
         ];
     }
 
@@ -35,11 +35,11 @@ final readonly class GearDTO
     public static function fromArray(array $data): self
     {
         if (!(isset($data['id']) && is_numeric($data['id']))) {
-            throw InvalidDTOException::fromMessage("Invalid or missing 'id' field in Gear data");
+            throw InvalidDTOException::fromMessage("Invalid or missing 'id' field in player brawler StarPower data");
         }
 
         if (!(isset($data['name']) && is_string($data['name']) && !empty(trim($data['name'])))) {
-            throw InvalidDTOException::fromMessage("Invalid or missing 'name' field in Gear data");
+            throw InvalidDTOException::fromMessage("Invalid or missing 'name' field in player brawler StarPower data");
         }
 
         return new self(
@@ -63,14 +63,18 @@ final readonly class GearDTO
     /**
      * Factory method to create DTO from Eloquent model.
      *
-     * @param Gear $gear
+     * @param PlayerBrawlerStarPower $playerBrawlerStarPower
      * @return self
      */
-    public static function fromEloquentModel(Gear $gear): self
+    public static function fromEloquentModel(PlayerBrawlerStarPower $playerBrawlerStarPower): self
     {
+        if (is_null($playerBrawlerStarPower->starPower)) {
+            throw InvalidDTOException::fromMessage("There is no StarPower associated with player brawler star power: {$playerBrawlerStarPower->toJson()}");
+        }
+
         return new self(
-            extId: $gear->ext_id,
-            name: $gear->name,
+            extId: $playerBrawlerStarPower->starPower->ext_id,
+            name: $playerBrawlerStarPower->starPower->name,
         );
     }
 }

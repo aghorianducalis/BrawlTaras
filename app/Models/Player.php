@@ -9,7 +9,7 @@ use Database\Factories\PlayerFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Collection;
 
 /**
@@ -34,7 +34,7 @@ use Illuminate\Support\Collection;
  * @property Carbon $created_at
  * @property Carbon $updated_at
  * @property-read Club|null $club
- * @property-read Collection|PlayerBrawler[]|array $playerBrawlers
+ * @property-read Brawler[]|Collection|array $brawlers
  */
 class Player extends Model
 {
@@ -90,12 +90,28 @@ class Player extends Model
     }
 
     /**
-     * Get the player brawlers.
+     * Get the player's brawlers.
      *
-     * @return HasMany
+     * @return BelongsToMany
      */
-    public function playerBrawlers(): HasMany
+    public function brawlers(): BelongsToMany
     {
-        return $this->hasMany(PlayerBrawler::class, 'player_id', 'id');
+        return $this
+            ->belongsToMany(
+                related: Brawler::class,
+                table: 'player_brawlers',
+                foreignPivotKey: 'player_id',
+                relatedPivotKey: 'brawler_id',
+            )
+            ->using(PlayerBrawler::class)
+            ->withPivot([
+                'id',
+                'power',
+                'rank',
+                'trophies',
+                'highest_trophies',
+            ])
+            ->withTimestamps()
+            ->as('player_brawler');
     }
 }

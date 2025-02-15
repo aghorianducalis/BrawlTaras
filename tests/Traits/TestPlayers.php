@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Traits;
 
-use App\API\DTO\Response\BrawlerDTO;
+use App\API\DTO\Response\PlayerBrawlerDTO;
 use App\API\DTO\Response\PlayerDTO;
 use App\Models\Player;
 
@@ -112,16 +112,18 @@ trait TestPlayers
         }
 
         if (isset($playerData['brawlers']) && is_array($playerData['brawlers'])) {
-            foreach ($playerData['brawlers'] as $i => $brawlerData) {
-                $this->assertIsArray($brawlerData);
-                $this->assertInstanceOf(BrawlerDTO::class, $playerDTO->brawlers[$i]);
-                $this->assertBrawlerDTOMatchesDataArray($playerDTO->brawlers[$i], $brawlerData);
+            foreach ($playerData['brawlers'] as $i => $playerBrawlerData) {
+                $this->assertIsArray($playerBrawlerData);
+                $this->assertInstanceOf(PlayerBrawlerDTO::class, $playerDTO->playerBrawlers[$i]);
+                $this->assertPlayerBrawlerDTOMatchesDataArray($playerDTO->playerBrawlers[$i], $playerBrawlerData);
             }
         }
     }
 
-    public function assertBrawlerDTOMatchesDataArray(BrawlerDTO $brawlerDTO, array $brawlerData): void
-    {}
+    public function assertPlayerBrawlerDTOMatchesDataArray(PlayerBrawlerDTO $playerBrawlerDTO, array $playerBrawlerData): void
+    {
+        // todo
+    }
 
     public function createPlayer(
         array|callable    $attributes = [],

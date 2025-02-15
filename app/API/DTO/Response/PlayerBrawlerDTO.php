@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\API\DTO\Response;
 
 use App\API\Exceptions\InvalidDTOException;
-use App\Models\Accessory;
-use App\Models\Gear;
 use App\Models\PlayerBrawler;
-use App\Models\StarPower;
+use App\Models\PlayerBrawlerAccessory;
+use App\Models\PlayerBrawlerGear;
+use App\Models\PlayerBrawlerStarPower;
 
 final readonly class PlayerBrawlerDTO
 {
@@ -19,9 +19,9 @@ final readonly class PlayerBrawlerDTO
      * @param int $rank
      * @param int $trophies
      * @param int $highestTrophies
-     * @param array<AccessoryDTO> $accessories
-     * @param array<GearDTO> $gears
-     * @param array<StarPowerDTO> $starPowers
+     * @param array<PlayerBrawlerAccessoryDTO> $accessories
+     * @param array<PlayerBrawlerGearDTO> $gears
+     * @param array<PlayerBrawlerStarPowerDTO> $starPowers
      */
     private function __construct(
         public int    $extId,
@@ -36,7 +36,7 @@ final readonly class PlayerBrawlerDTO
     ) {}
 
     /**
-     * @return array{extId: int, name: string, power: int, rank: int, trophies: int, highestTrophies: int, gadgets: array<array{extId: string, name: string}>, gears: array<array{extId: string, name: string}>, starPowers: array<array{extId: string, name: string}>}
+     * @return array{extId: int, name: string, power: int, rank: int, trophies: int, highestTrophies: int, gadgets: array<array{extId: int, name: string}>, gears: array<array{extId: int, name: string, level: int}>, starPowers: array<array{extId: int, name: string}>}
      */
     public function toArray(): array
     {
@@ -47,9 +47,9 @@ final readonly class PlayerBrawlerDTO
             'rank' => $this->rank,
             'trophies' => $this->trophies,
             'highestTrophies' => $this->highestTrophies,
-            'gadgets' => array_map(fn(AccessoryDTO $accessoryDTO) => $accessoryDTO->toArray(), $this->accessories),
-            'gears' => array_map(fn(GearDTO $gearDTO) => $gearDTO->toArray(), $this->gears),
-            'starPowers' => array_map(fn(StarPowerDTO $starPowerDTO) => $starPowerDTO->toArray(), $this->starPowers),
+            'gadgets' => array_map(fn(PlayerBrawlerAccessoryDTO $accessoryDTO) => $accessoryDTO->toArray(), $this->accessories),
+            'gears' => array_map(fn(PlayerBrawlerGearDTO $gearDTO) => $gearDTO->toArray(), $this->gears),
+            'starPowers' => array_map(fn(PlayerBrawlerStarPowerDTO $starPowerDTO) => $starPowerDTO->toArray(), $this->starPowers),
         ];
     }
 
@@ -105,9 +105,9 @@ final readonly class PlayerBrawlerDTO
             rank: (int) $data['rank'],
             trophies: (int) $data['trophies'],
             highestTrophies: (int) $data['highestTrophies'],
-            accessories: AccessoryDTO::fromList($data['gadgets']),
-            gears: GearDTO::fromList($data['gears']),
-            starPowers: StarPowerDTO::fromList($data['starPowers']),
+            accessories: PlayerBrawlerAccessoryDTO::fromList($data['gadgets']),
+            gears: PlayerBrawlerGearDTO::fromList($data['gears']),
+            starPowers: PlayerBrawlerStarPowerDTO::fromList($data['starPowers']),
         );
     }
 
@@ -120,9 +120,9 @@ final readonly class PlayerBrawlerDTO
             rank: $playerBrawler->rank,
             trophies: $playerBrawler->trophies,
             highestTrophies: $playerBrawler->highest_trophies,
-            accessories: array_map(fn(Accessory $accessory) => AccessoryDTO::fromEloquentModel($accessory), $playerBrawler->accessories->all()),
-            gears: array_map(fn(Gear $gear) => GearDTO::fromEloquentModel($gear), $playerBrawler->gears->all()),
-            starPowers: array_map(fn(StarPower $starPower) => StarPowerDTO::fromEloquentModel($starPower), $playerBrawler->starPowers->all()),
+            accessories: array_map(fn(PlayerBrawlerAccessory $accessory) => PlayerBrawlerAccessoryDTO::fromEloquentModel($accessory), $playerBrawler->playerBrawlerAccessories->all()),
+            gears: array_map(fn(PlayerBrawlerGear $gear) => PlayerBrawlerGearDTO::fromEloquentModel($gear), $playerBrawler->playerBrawlerGears->all()),
+            starPowers: array_map(fn(PlayerBrawlerStarPower $starPower) => PlayerBrawlerStarPowerDTO::fromEloquentModel($starPower), $playerBrawler->playerBrawlerStarPowers->all()),
         );
     }
 }

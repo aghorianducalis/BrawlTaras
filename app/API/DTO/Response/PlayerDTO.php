@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\API\DTO\Response;
 
 use App\API\Exceptions\InvalidDTOException;
+use App\Models\Brawler;
 use App\Models\Player;
-use App\Models\PlayerBrawler;
 use JsonException;
 
 final readonly class PlayerDTO
@@ -28,26 +28,26 @@ final readonly class PlayerDTO
      * @param int|null $bestTimeAsBigBrawler
      * @param string|null $clubRole
      * @param array{tag: string, name: string}|null $club
-     * @param PlayerBrawlerDTO[]|null $brawlers
+     * @param PlayerBrawlerDTO[]|null $playerBrawlers
      */
     private function __construct(
-        public string $tag,
-        public string $name,
-        public string $nameColor,
-        public array $icon,
-        public int $trophies,
-        public ?int $highestTrophies,
-        public ?int $expLevel,
-        public ?int $expPoints,
-        public ?bool $isQualifiedFromChampionshipChallenge,
-        public ?int $victoriesSolo,
-        public ?int $victoriesDuo,
-        public ?int $victories3vs3,
-        public ?int $bestRoboRumbleTime,
-        public ?int $bestTimeAsBigBrawler,
+        public string  $tag,
+        public string  $name,
+        public string  $nameColor,
+        public array   $icon,
+        public int     $trophies,
+        public ?int    $highestTrophies,
+        public ?int    $expLevel,
+        public ?int    $expPoints,
+        public ?bool   $isQualifiedFromChampionshipChallenge,
+        public ?int    $victoriesSolo,
+        public ?int    $victoriesDuo,
+        public ?int    $victories3vs3,
+        public ?int    $bestRoboRumbleTime,
+        public ?int    $bestTimeAsBigBrawler,
         public ?string $clubRole,
-        public ?array $club,
-        public ?array $brawlers,
+        public ?array  $club,
+        public ?array  $playerBrawlers,
     ) {}
 
     /**
@@ -83,8 +83,8 @@ final readonly class PlayerDTO
             ];
         }
 
-        if ($this->brawlers) {
-            $array['brawlers'] = array_map(fn(PlayerBrawlerDTO $brawlerDTO) => $brawlerDTO->toArray(), $this->brawlers);
+        if ($this->playerBrawlers) {
+            $array['brawlers'] = array_map(fn(PlayerBrawlerDTO $brawlerDTO) => $brawlerDTO->toArray(), $this->playerBrawlers);
         }
 
         return array_filter($array, fn($value) => !is_null($value));
@@ -220,12 +220,14 @@ final readonly class PlayerDTO
             bestTimeAsBigBrawler: isset($data['bestTimeAsBigBrawler']) ? (int) $data['bestTimeAsBigBrawler'] : null,
             clubRole: $data['role'] ?? null,
             club: $club,
-            brawlers: $brawlers,
+            playerBrawlers: $brawlers,
         );
     }
 
     public static function fromEloquentModel(Player $player): self
     {
+        $player->load(['club', 'brawlers']);
+
         return new self(
             tag: $player->tag,
             name: $player->name,
@@ -250,9 +252,9 @@ final readonly class PlayerDTO
                     'name' => $player->club->name,
                 ] :
                 null,
-            brawlers: $player->playerBrawlers->isEmpty() ?
+            playerBrawlers: $player->brawlers->isEmpty() ?
                 null :
-                array_map(fn(PlayerBrawler $brawler) => PlayerBrawlerDTO::fromEloquentModel($brawler), $player->playerBrawlers),
+                array_map(fn(Brawler $brawler) => PlayerBrawlerDTO::fromEloquentModel($brawler->player_brawler), $player->brawlers),
         );
     }
 }

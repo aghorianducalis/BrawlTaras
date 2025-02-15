@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\API\DTO\Response;
 
 use App\API\Exceptions\InvalidDTOException;
-use App\Models\Gear;
+use App\Models\PlayerBrawlerAccessory;
 
-final readonly class GearDTO
+final readonly class PlayerBrawlerAccessoryDTO
 {
     private function __construct(
         public int $extId,
@@ -21,7 +21,7 @@ final readonly class GearDTO
     {
         return [
             'extId' => $this->extId,
-            'name' => $this->name,
+            'name'  => $this->name,
         ];
     }
 
@@ -35,11 +35,11 @@ final readonly class GearDTO
     public static function fromArray(array $data): self
     {
         if (!(isset($data['id']) && is_numeric($data['id']))) {
-            throw InvalidDTOException::fromMessage("Invalid or missing 'id' field in Gear data");
+            throw InvalidDTOException::fromMessage("Invalid or missing 'id' field in player brawler Accessory data");
         }
 
         if (!(isset($data['name']) && is_string($data['name']) && !empty(trim($data['name'])))) {
-            throw InvalidDTOException::fromMessage("Invalid or missing 'name' field in Gear data");
+            throw InvalidDTOException::fromMessage("Invalid or missing 'name' field in player brawler Accessory data");
         }
 
         return new self(
@@ -63,14 +63,18 @@ final readonly class GearDTO
     /**
      * Factory method to create DTO from Eloquent model.
      *
-     * @param Gear $gear
+     * @param PlayerBrawlerAccessory $playerBrawlerAccessory
      * @return self
      */
-    public static function fromEloquentModel(Gear $gear): self
+    public static function fromEloquentModel(PlayerBrawlerAccessory $playerBrawlerAccessory): self
     {
+        if (is_null($playerBrawlerAccessory->accessory)) {
+            throw InvalidDTOException::fromMessage("There is no Accessory associated with player brawler accessory: {$playerBrawlerAccessory->toJson()}");
+        }
+
         return new self(
-            extId: $gear->ext_id,
-            name: $gear->name,
+            extId: $playerBrawlerAccessory->accessory->ext_id,
+            name: $playerBrawlerAccessory->accessory->name,
         );
     }
 }
