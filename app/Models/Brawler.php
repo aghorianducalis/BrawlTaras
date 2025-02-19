@@ -21,8 +21,10 @@ use Illuminate\Support\Collection;
  * @property-read Gear[]|array|Collection $gears
  * @property-read StarPower[]|array|Collection $starPowers
  * @property-read Player[]|array|Collection $players
+ * @property-read BrawlerAccessory|null $brawler_accessory
+ * @property-read BrawlerGear|null $brawler_gear
+ * @property-read BrawlerStarPower|null $brawler_star_power
  * @property-read PlayerBrawler|null $player_brawler
-// * @property-read mixed|null $brawler_accessory
  */
 class Brawler extends Model
 {
@@ -54,6 +56,7 @@ class Brawler extends Model
                 foreignPivotKey: 'brawler_id',
                 relatedPivotKey: 'accessory_id',
             )
+            ->using(BrawlerAccessory::class)
             ->withPivot([
                 'id',
                 'brawler_id',
@@ -76,6 +79,7 @@ class Brawler extends Model
                 foreignPivotKey: 'brawler_id',
                 relatedPivotKey: 'gear_id',
             )
+            ->using(BrawlerGear::class)
             ->withPivot([
                 'id',
                 'brawler_id',
@@ -98,6 +102,7 @@ class Brawler extends Model
                 foreignPivotKey: 'brawler_id',
                 relatedPivotKey: 'star_power_id',
             )
+            ->using(BrawlerStarPower::class)
             ->withPivot([
                 'id',
                 'brawler_id',

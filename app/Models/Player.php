@@ -35,6 +35,7 @@ use Illuminate\Support\Collection;
  * @property Carbon $updated_at
  * @property-read Club|null $club
  * @property-read Brawler[]|Collection|array $brawlers
+ * @property-read PlayerBrawler|null $player_brawler
  */
 class Player extends Model
 {

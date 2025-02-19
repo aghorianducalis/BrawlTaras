@@ -113,7 +113,12 @@ class APIClientTest extends TestCase
     public function it_fetches_brawler_by_id_successfully(): void
     {
         $apiEndpoint = APIEndpoints::BrawlerById;
-        $brawlerExpected = $this->createBrawlerWithRelations();
+        $brawlerExpected = $this->createBrawlerWithRelations(
+            accessoryCount: 2,
+            gearCount: 2,
+            starPowerCount: 2,
+            playerCount: 2,
+        );
         $mockResponse = new Response(200, [], BrawlerRequestDTO::fromBrawlerModel($brawlerExpected)->toJson());
         $this->httpClientMock
             ->shouldReceive('request')
@@ -209,7 +214,12 @@ class APIClientTest extends TestCase
     public function it_fetches_all_brawlers_successfully(): void
     {
         $apiEndpoint = APIEndpoints::Brawlers;
-        $brawlersExpected = array_map(fn () => $this->createBrawlerWithRelations(), range(1, 2));
+        $brawlersExpected = array_map(fn () => $this->createBrawlerWithRelations(
+            accessoryCount: 2,
+            gearCount: 2,
+            starPowerCount: 2,
+            playerCount: 2,
+        ), range(1, 2));
         $mockResponse = new Response(200, [], BrawlerListRequestDTO::fromListOfBrawlerModels($brawlersExpected)->toJson());
 
         $this->httpClientMock

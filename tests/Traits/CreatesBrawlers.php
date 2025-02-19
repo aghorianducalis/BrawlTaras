@@ -21,28 +21,48 @@ trait CreatesBrawlers
         'accessories',
         'gears',
         'starPowers',
+        'players',
     ];
 
     /**
-     * Create a brawler with associated accessories, gears and star powers.
+     * Create a brawler with attached accessories, gears, star powers and players.
      *
      * @param (callable(array<string, mixed>): array<string, mixed>)|array<string, mixed> $attributes
      * @param int $accessoryCount
      * @param int $gearCount
      * @param int $starPowerCount
+     * @param int $playerCount
      * @return Brawler
      */
     public function createBrawlerWithRelations(
         array|callable $attributes = [],
-        int            $accessoryCount = 2,
-        int            $gearCount = 2,
-        int            $starPowerCount = 2,
+        int            $accessoryCount = 0,
+        int            $gearCount = 0,
+        int            $starPowerCount = 0,
+        int            $playerCount = 0,
     ) : Brawler {
-        return Brawler::factory()
-            ->withAccessories($accessoryCount)
-            ->withGears($gearCount)
-            ->withStarPowers($starPowerCount)
-            ->create($attributes);
+        $factory = Brawler::factory();
+
+        if ($accessoryCount) {
+            $factory = $factory->withAccessories($accessoryCount);
+        }
+
+        if ($gearCount) {
+            $factory = $factory->withGears($gearCount);
+        }
+
+        if ($starPowerCount) {
+            $factory = $factory->withStarPowers($starPowerCount);
+        }
+
+        if ($playerCount) {
+            $factory = $factory->withPlayers($playerCount);
+        }
+
+        $brawler = $factory->create($attributes);
+        $brawler->load(self::BRAWLER_RELATIONS);
+
+        return $brawler;
     }
 
     /**
@@ -139,6 +159,7 @@ trait CreatesBrawlers
                     'name' => $starPower->name,
                 ])->toArray()
             );
+            // todo players
         }
     }
 }
