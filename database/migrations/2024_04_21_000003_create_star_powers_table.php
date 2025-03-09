@@ -15,8 +15,6 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('ext_id')->unique();
             $table->string('name');
-            $table->unsignedBigInteger('brawler_id');
-            $table->foreign('brawler_id')->references('id')->on('brawlers');
             $table->timestamps();
         });
     }

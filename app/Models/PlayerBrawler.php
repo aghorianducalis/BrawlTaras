@@ -6,9 +6,9 @@ namespace App\Models;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\Pivot;
 use Illuminate\Support\Collection;
 
 /**
@@ -23,12 +23,13 @@ use Illuminate\Support\Collection;
  * @property Carbon $updated_at
  * @property-read Player $player
  * @property-read Brawler $brawler
- * @property-read Collection|Accessory[]|array $accessories
- * @property-read Collection|Gear[]|array $gears
- * @property-read Collection|StarPower[]|array $starPowers
+ * @property-read Collection|PlayerBrawlerAccessory[]|array $playerBrawlerAccessories
+ * @property-read Collection|PlayerBrawlerGear[]|array $playerBrawlerGears
+ * @property-read Collection|PlayerBrawlerStarPower[]|array $playerBrawlerStarPowers
  */
-class PlayerBrawler extends Model
+class PlayerBrawler extends Pivot
 {
+    // todo
     use HasFactory;
 
     protected $table = 'player_brawlers';
@@ -52,7 +53,7 @@ class PlayerBrawler extends Model
     ];
 
     /**
-     * Get the related player entity.
+     * Get the related player.
      *
      * @return BelongsTo
      */
@@ -62,7 +63,7 @@ class PlayerBrawler extends Model
     }
 
     /**
-     * Get the related brawler entity.
+     * Get the related brawler.
      *
      * @return BelongsTo
      */
@@ -72,35 +73,44 @@ class PlayerBrawler extends Model
     }
 
     /**
-     * Get the accessories for the brawler.
+     * Get the accessories for the player's brawler.
      *
      * @return HasMany
      */
-    public function accessories(): HasMany
+    public function playerBrawlerAccessories(): HasMany
     {
-        // todo player_brawler_accessory brawler_accessory_id
-        return $this->hasMany(Accessory::class, 'brawler_accessory_id', 'id');
+        return $this->hasMany(
+            related: PlayerBrawlerAccessory::class,
+            foreignKey: 'player_brawler_id',
+            localKey: 'id',
+        );
     }
 
     /**
-     * Get the accessories for the brawler.
+     * Get the gears for the player's brawler.
      *
      * @return HasMany
      */
-    public function gears(): HasMany
+    public function playerBrawlerGears(): HasMany
     {
-        // todo player_brawler_gear gear_id
-        return $this->hasMany(Gear::class, 'gear_id', 'id');
+        return $this->hasMany(
+            related: PlayerBrawlerGear::class,
+            foreignKey: 'player_brawler_id',
+            localKey: 'id',
+        );
     }
 
     /**
-     * Get the star powers for the brawler.
+     * Get the star powers for the player's brawler.
      *
      * @return HasMany
      */
-    public function starPowers(): HasMany
+    public function playerBrawlerStarPowers(): HasMany
     {
-        // todo player_brawler_star_power brawler_star_power_id
-        return $this->hasMany(StarPower::class, 'brawler_star_power_id', 'id');
+        return $this->hasMany(
+            related: PlayerBrawlerStarPower::class,
+            foreignKey: 'player_brawler_id',
+            localKey: 'id',
+        );
     }
 }

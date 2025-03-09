@@ -52,7 +52,7 @@ final readonly class EventRotationDTO
      * Factory method to create an array of DTO.
      *
      * @param array $list Raw parsed data containing an array of event rotation entities.
-     * @return array<int, EventRotationDTO> Array of DTO instances converted from the raw data array.
+     * @return array<EventRotationDTO> Array of DTO instances converted from the raw data array.
      * @throws InvalidDTOException if required fields are missing or invalid.
      */
     public static function fromList(array $list): array

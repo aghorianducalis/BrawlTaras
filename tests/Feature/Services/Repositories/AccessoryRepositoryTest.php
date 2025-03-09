@@ -2,11 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Services\Repositories;
+namespace Tests\Feature\Services\Repositories;
 
 use App\API\DTO\Response\AccessoryDTO;
 use App\Models\Accessory;
-use App\Models\Brawler;
 use App\Services\Repositories\AccessoryRepository;
 use App\Services\Repositories\Contracts\AccessoryRepositoryInterface;
 use Database\Factories\AccessoryFactory;
@@ -26,6 +25,7 @@ use Tests\TestCase;
 #[CoversMethod(AccessoryRepository::class, 'createOrUpdateAccessory')]
 #[UsesClass(Accessory::class)]
 #[UsesClass(AccessoryFactory::class)]
+#[UsesClass(AccessoryDTO::class)]
 class AccessoryRepositoryTest extends TestCase
 {
     use RefreshDatabase;
@@ -40,16 +40,17 @@ class AccessoryRepositoryTest extends TestCase
 
     #[Test]
     #[TestDox('Fetch the accessory successfully.')]
-    #[TestWith(['name', 'Shield'])]
     #[TestWith(['ext_id', 123])]
+    #[TestWith(['name', 'Shield'])]
     public function test_find_accessory_by_criteria(string $property, int|string $value): void
     {
-        $this->assertDatabaseMissing((new Accessory())->getTable(), [$property => $value]);
+        $table = (new Accessory())->getTable();
+        $this->assertDatabaseMissing($table, [$property => $value]);
 
         /** @var Accessory $accessoryCreated */
         $accessoryCreated = Accessory::factory()->create([$property => $value]);
 
-        $this->assertDatabaseHas($accessoryCreated->getTable(), [
+        $this->assertDatabaseHas($table, [
             'id' => $accessoryCreated->id,
             $property => $value,
         ]);
@@ -61,71 +62,61 @@ class AccessoryRepositoryTest extends TestCase
         $this->assertEquals($accessoryCreated->id, $accessoryFound->id);
         $this->assertEquals($accessoryCreated->ext_id, $accessoryFound->ext_id);
         $this->assertEquals($accessoryCreated->name, $accessoryFound->name);
-        $this->assertEquals($accessoryCreated->brawler_id, $accessoryFound->brawler_id);
     }
 
     #[Test]
-    #[TestDox('Create successfully an accessory for related brawler.')]
+    #[TestDox('Create successfully an accessory.')]
     public function test_create_accessory(): void
     {
-        /** @var Brawler $brawler */
-        $brawler = Brawler::factory()->create();
-        /** @var Accessory $accessory */
-        $accessory = Accessory::factory()->for($brawler)->make();
+        /** @var Accessory $accessoryToCreate */
+        $accessoryToCreate = Accessory::factory()->make();
+        $table = $accessoryToCreate->getTable();
 
-        $this->assertDatabaseMissing($accessory->getTable(), $accessory->only([
+        $this->assertDatabaseMissing($table, $accessoryToCreate->only([
             'ext_id',
             'name',
-            'brawler_id',
         ]));
 
-        $dto = AccessoryDTO::fromArray([
-            'id' => $accessory->ext_id,
-            'name' => $accessory->name,
-        ]);
+        $dto = AccessoryDTO::fromEloquentModel($accessoryToCreate);
 
-        $accessoryCreated = $this->repository->createOrUpdateAccessory($dto, $accessory->brawler_id);
-        $this->assertDatabaseHas($accessory->getTable(), $accessory->only([
+        $accessoryCreated = $this->repository->createOrUpdateAccessory($dto);
+
+        $this->assertEquals($accessoryToCreate->ext_id, $accessoryCreated->ext_id);
+        $this->assertEquals($accessoryToCreate->name, $accessoryCreated->name);
+
+        $this->assertDatabaseHas($table, $accessoryToCreate->only([
             'ext_id',
             'name',
-            'brawler_id',
         ]));
-        $this->assertEquals($accessory->ext_id, $accessoryCreated->ext_id);
-        $this->assertEquals($accessory->name, $accessoryCreated->name);
-        $this->assertEquals($accessory->brawler_id, $accessoryCreated->brawler_id);
     }
 
     #[Test]
-    #[TestDox('Update successfully an accessory for related brawler.')]
+    #[TestDox('Update successfully an accessory.')]
     public function test_update_existing_accessory(): void
     {
-        /** @var Brawler $brawler */
-        $brawler = Brawler::factory()->create();
         /** @var Accessory $accessory */
-        $accessory = Accessory::factory()->for($brawler)->create();
+        $accessory = Accessory::factory()->create();
+        $table = $accessory->getTable();
 
-        $this->assertDatabaseHas($accessory->getTable(), $accessory->only([
+        $this->assertDatabaseHas($table, $accessory->only([
             'id',
             'ext_id',
             'name',
-            'brawler_id',
         ]));
 
-        $dto = AccessoryDTO::fromArray([
-            'id' => $accessory->ext_id,
-            'name' => 'new name of accessory',
-        ]);
+        $accessoryToUpdate = Accessory::factory()->make($accessory->only(['id', 'ext_id']));
+        $dto = AccessoryDTO::fromEloquentModel($accessoryToUpdate);
 
-        $accessoryUpdated = $this->repository->createOrUpdateAccessory($dto, $accessory->brawler_id);
-        $this->assertDatabaseHas($accessory->getTable(), [
-            'id' => $accessory->id,
-            'ext_id' => $dto->extId,
-            'name' => $dto->name,
-            'brawler_id' => $accessory->brawler_id,
-        ]);
-        $this->assertEquals($accessory->id, $accessoryUpdated->id);
-        $this->assertEquals($accessory->ext_id, $accessoryUpdated->ext_id);
-        $this->assertEquals($dto->name, $accessoryUpdated->name);
-        $this->assertEquals($accessory->brawler_id, $accessoryUpdated->brawler_id);
+        $accessoryUpdated = $this->repository->createOrUpdateAccessory($dto);
+
+        $this->assertEquals($accessoryToUpdate->id, $accessoryUpdated->id);
+        $this->assertEquals($accessoryToUpdate->ext_id, $accessoryUpdated->ext_id);
+        $this->assertEquals($accessoryToUpdate->name, $accessoryUpdated->name);
+
+        $this->assertDatabaseHas($table, $accessoryToUpdate->only([
+            'id',
+            'ext_id',
+            'name',
+        ]));
     }
 }

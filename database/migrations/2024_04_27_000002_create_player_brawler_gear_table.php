@@ -13,10 +13,12 @@ return new class extends Migration
     {
         Schema::create('player_brawler_gear', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('player_id');
-            $table->foreign('player_id')->references('id')->on('players');
-            $table->unsignedBigInteger('gear_id');
-            $table->foreign('gear_id')->references('id')->on('gears');
+            $table->unsignedBigInteger('player_brawler_id');
+            $table->foreign('player_brawler_id')->references('id')->on('player_brawlers');
+            $table->unsignedBigInteger('brawler_gear_id');
+            $table->foreign('brawler_gear_id')->references('id')->on('brawler_gear');
+            $table->unsignedTinyInteger('level');
+            $table->timestamps();
         });
     }
 

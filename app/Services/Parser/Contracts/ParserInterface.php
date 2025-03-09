@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace App\Services\Parser\Contracts;
 
 use App\Models\Brawler;
+use App\Models\Club;
+use App\Models\EventRotation;
+use App\Models\Player;
 use App\Services\Parser\Exceptions\ParsingException;
 
 /**
@@ -29,4 +32,39 @@ interface ParserInterface
      * @throws ParsingException If an unrecoverable error occurs during parsing.
      */
     public function parseAllBrawlers(): array;
+
+    /**
+     * Get information about a single clan by club tag and store/update them in the local database.
+     *
+     * @param string $clubTag
+     * @return Club The parsed and saved club with its members (players).
+     * @throws ParsingException If an unrecoverable error occurs during parsing.
+     */
+    public function parseClubByTag(string $clubTag): Club;
+
+    /**
+     * List club members.
+     *
+     * @param string $clubTag
+     * @return Club
+     * @throws ParsingException If an unrecoverable error occurs during parsing.
+     */
+    public function parseClubMembers(string $clubTag): Club;
+
+    /**
+     * Parse all event rotations from the API and store/update them in the local database.
+     *
+     * @return array<EventRotation> The list of parsed and saved event rotations.
+     * @throws ParsingException If an unrecoverable error occurs during parsing.
+     */
+    public function parseEventsRotation(): array;
+
+    /**
+     * Get information about a single player by player tag.
+     *
+     * @param string $playerTag
+     * @return Player The parsed and saved player with its club and brawlers.
+     * @throws ParsingException If an unrecoverable error occurs during parsing.
+     */
+    public function parsePlayerByTag(string $playerTag): Player;
 }

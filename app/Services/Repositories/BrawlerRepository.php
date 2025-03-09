@@ -6,8 +6,10 @@ namespace App\Services\Repositories;
 
 use App\API\DTO\Response\AccessoryDTO;
 use App\API\DTO\Response\BrawlerDTO;
+use App\API\DTO\Response\PlayerBrawlerDTO;
 use App\API\DTO\Response\StarPowerDTO;
 use App\Models\Brawler;
+use App\Models\Player;
 use App\Services\Repositories\Contracts\AccessoryRepositoryInterface;
 use App\Services\Repositories\Contracts\BrawlerRepositoryInterface;
 use App\Services\Repositories\Contracts\StarPowerRepositoryInterface;
@@ -20,7 +22,7 @@ final readonly class BrawlerRepository implements BrawlerRepositoryInterface
         private StarPowerRepositoryInterface $starPowerRepository
     ) {}
 
-    public function findBrawler(array $searchCriteria): ?Brawler
+    public function findBrawler(array $searchCriteria, mixed $relations = null): ?Brawler
     {
         // nice todo Optimize the findBrawler query to minimize redundant DB calls when processing multiple Brawlers.
         $query = Brawler::query();
@@ -37,6 +39,10 @@ final readonly class BrawlerRepository implements BrawlerRepositoryInterface
             $query->where('name', 'like', "%{$searchCriteria['name']}%");
         }
 
+        if ($relations) {
+            $query->with($relations);
+        }
+
         return $query->first();
     }
 
@@ -46,8 +52,8 @@ final readonly class BrawlerRepository implements BrawlerRepositoryInterface
             'ext_id' => $brawlerDTO->extId,
         ]);
         $attributes = [
-            'name' => $brawlerDTO->name,
             'ext_id' => $brawlerDTO->extId,
+            'name' => $brawlerDTO->name,
         ];
 
         DB::transaction(function () use (&$brawler, $brawlerDTO, $attributes) {
@@ -70,10 +76,20 @@ final readonly class BrawlerRepository implements BrawlerRepositoryInterface
     }
 
     /**
-     * todo Ensure syncRelations uses optimized queries, especially for many-to-many relationships.
-     * todo Lazy loading could cause performance bottlenecks here.
-     *
-     * Sync Brawler accessories and star powers.
+     * @see ClubRepository::syncClubMembers
+     * @param Player $player
+     * @param PlayerBrawlerDTO[] $playerBrawlerDTOs
+     * @return Player
+     */
+    public function syncPlayerBrawlers(Player $player, array $playerBrawlerDTOs): Player
+    {
+        return $player;
+    }
+
+    /**
+     * Synchronize a Brawler's related entities: accessories, gears and star powers.
+     * todo Ensure "sync relations" uses optimized queries, especially for many-to-many relationships.
+     * NOTE: Lazy loading could cause performance bottlenecks here.
      *
      * @param Brawler $brawler
      * @param BrawlerDTO $brawlerDTO
@@ -81,38 +97,22 @@ final readonly class BrawlerRepository implements BrawlerRepositoryInterface
      */
     private function syncRelations(Brawler $brawler, BrawlerDTO $brawlerDTO): void
     {
-        $this->syncRelation(
-            $brawler,
-            'accessories',
-            $brawlerDTO->accessories,
-            fn (AccessoryDTO $dto) => $this->accessoryRepository->createOrUpdateAccessory($dto, $brawler->id)
-        );
-
-        $this->syncRelation(
-            $brawler,
-            'starPowers',
-            $brawlerDTO->starPowers,
-            fn (StarPowerDTO $dto) => $this->starPowerRepository->createOrUpdateStarPower($dto, $brawler->id)
-        );
-    }
-
-    /**
-     * Synchronize a Brawler's related entities.
-     *
-     * @template T
-     * @param Brawler $brawler
-     * @param string $relation
-     * @param T[] $items
-     * @param callable(T): mixed $createOrUpdateCallback
-     * @return void
-     */
-    private function syncRelation(Brawler $brawler, string $relation, array $items, callable $createOrUpdateCallback): void
-    {
-        $newEntities = collect($items)
-            ->map(fn ($dto) => $createOrUpdateCallback($dto))
+        $accessoryIds = collect($brawlerDTO->accessories)
+            ->map(fn (AccessoryDTO $dto) => $this->accessoryRepository->createOrUpdateAccessory($dto))
             ->pluck('id')
             ->toArray();
 
-        $brawler->{$relation}()->whereNotIn('id', $newEntities)->delete();
+        // todo check logic
+        $brawler->accessories()->whereNotIn('id', $accessoryIds)->detach();
+        $brawler->accessories()->attach($accessoryIds);
+
+        $starPowerIds = collect($brawlerDTO->starPowers)
+            ->map(fn (StarPowerDTO $dto) => $this->starPowerRepository->createOrUpdateStarPower($dto))
+            ->pluck('id')
+            ->toArray();
+
+        // todo check logic
+        $brawler->starPowers()->whereNotIn('id', $starPowerIds)->detach();
+        $brawler->starPowers()->attach($starPowerIds);
     }
 }

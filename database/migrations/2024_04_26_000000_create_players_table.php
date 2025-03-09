@@ -13,25 +13,26 @@ return new class extends Migration
     {
         Schema::create('players', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('ext_id')->unique();
             $table->string('tag', 20)->unique();
             $table->string('name');
             $table->string('name_color', 20);
-            $table->unsignedSmallInteger('icon_id')->nullable();
-            $table->unsignedInteger('trophies')->default(0);
-            $table->unsignedInteger('highest_trophies')->default(0);
-            $table->unsignedInteger('highest_power_play_points')->default(0);
-            $table->unsignedInteger('exp_level')->default(0);
-            $table->unsignedInteger('exp_points')->default(0);
-            $table->boolean('is_qualified_from_championship_league')->default(false);
-            $table->unsignedInteger('solo_victories')->default(0);
-            $table->unsignedInteger('duo_victories')->default(0);
-            $table->unsignedInteger('trio_victories')->default(0);
-            $table->unsignedInteger('best_time_robo_rumble')->default(0);
-            $table->unsignedInteger('best_time_as_big_brawler')->default(0);
-            // todo
-//            $table->unsignedBigInteger('club_id');
-//            $table->foreign('club_id')->references('id')->on('clubs');
+            $table->unsignedInteger('icon_id');
+            $table->unsignedInteger('trophies');
+            $table->unsignedInteger('highest_trophies')->nullable();
+            $table->unsignedInteger('highest_power_play_points')->nullable();
+            $table->unsignedInteger('exp_level')->nullable();
+            $table->unsignedInteger('exp_points')->nullable();
+            $table->boolean('is_qualified_from_championship_league')->nullable();
+            $table->unsignedInteger('solo_victories')->nullable();
+            $table->unsignedInteger('duo_victories')->nullable();
+            $table->unsignedInteger('trio_victories')->nullable();
+            $table->unsignedInteger('best_time_robo_rumble')->nullable();
+            $table->unsignedInteger('best_time_as_big_brawler')->nullable();
+
+            $table->unsignedBigInteger('club_id')->nullable();
+            $table->foreign('club_id')->references('id')->on('clubs');
+            $table->string('club_role', 100)->nullable();
+
             $table->timestamps();
         });
     }

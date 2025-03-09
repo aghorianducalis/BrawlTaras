@@ -2,21 +2,25 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Services\Parser;
+namespace Tests\Feature\Services\Parser;
 
 use App\API\Client\APIClient;
 use App\API\Contracts\APIClientInterface;
 use App\API\DTO\Response\BrawlerDTO;
+use App\API\DTO\Response\ClubDTO;
 use App\API\DTO\Response\EventRotationDTO;
 use App\API\Exceptions\ResponseException;
 use App\Models\Brawler;
+use App\Models\Club;
 use App\Models\EventRotation;
 use App\Services\Parser\Contracts\ParserInterface;
 use App\Services\Parser\Exceptions\ParsingException;
 use App\Services\Parser\Parser;
 use App\Services\Repositories\BrawlerRepository;
 use App\Services\Repositories\Contracts\BrawlerRepositoryInterface;
+use App\Services\Repositories\Contracts\ClubRepositoryInterface;
 use App\Services\Repositories\Contracts\Event\EventRotationRepositoryInterface;
+use App\Services\Repositories\Contracts\PlayerRepositoryInterface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Log;
 use Mockery;
@@ -30,24 +34,30 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use Tests\TestCase;
 use Tests\Traits\CreatesBrawlers;
 use Tests\Traits\CreatesEventRotations;
+use Tests\Traits\TestClubs;
 
 #[Group('Parser')]
 #[CoversClass(Parser::class)]
 #[CoversMethod(Parser::class, 'parseBrawlerByExternalId')]
 #[CoversMethod(Parser::class, 'parseAllBrawlers')]
+#[CoversMethod(Parser::class, 'parseClubByTag')]
+#[CoversMethod(Parser::class, 'parseClubMembers')]
 #[CoversMethod(Parser::class, 'parseEventsRotation')]
 #[UsesClass(APIClient::class)]
 #[UsesClass(BrawlerRepository::class)]
 #[UsesClass(ParsingException::class)]
 class ParserTest extends TestCase
 {
+    use RefreshDatabase;
     use CreatesBrawlers;
     use CreatesEventRotations;
-    use RefreshDatabase;
+    use TestClubs;
 
     private ParserInterface $parser;
     private MockInterface|APIClientInterface $apiClient;
     private MockInterface|BrawlerRepositoryInterface $brawlerRepository;
+    private MockInterface|ClubRepositoryInterface $clubRepository;
+    private MockInterface|PlayerRepositoryInterface $playerRepository;
     private MockInterface|EventRotationRepositoryInterface $eventRotationRepository;
 
     protected function setUp(): void
@@ -55,10 +65,14 @@ class ParserTest extends TestCase
         parent::setUp();
         $this->apiClient = Mockery::mock(APIClientInterface::class);
         $this->brawlerRepository = Mockery::mock(BrawlerRepositoryInterface::class);
+        $this->clubRepository = Mockery::mock(ClubRepositoryInterface::class);
+        $this->playerRepository = Mockery::mock(PlayerRepositoryInterface::class);
         $this->eventRotationRepository = Mockery::mock(EventRotationRepositoryInterface::class);
         $this->parser = new Parser(
             apiClient: $this->apiClient,
             brawlerRepository: $this->brawlerRepository,
+            clubRepository: $this->clubRepository,
+            playerRepository: $this->playerRepository,
             eventRotationRepository: $this->eventRotationRepository,
         );
     }
@@ -86,10 +100,13 @@ class ParserTest extends TestCase
             ->with($brawlerDTO)
             ->andReturn($brawler);
 
-        // nice todo assert that ParsingException was not thrown (thus suppressing IDE warning)
-        $result = $this->parser->parseBrawlerByExternalId($brawler->ext_id);
+        try {
+            $result = $this->parser->parseBrawlerByExternalId($brawler->ext_id);
 
-        $this->assertEquals($brawler, $result);
+            $this->assertEquals($brawler, $result);
+        } catch (ParsingException $e) {
+            $this->fail('ParsingException was thrown: ' . $e->getMessage());
+        }
     }
 
     #[Test]
@@ -128,10 +145,13 @@ class ParserTest extends TestCase
             ->with($brawlerDTOs)
             ->andReturn($brawlers);
 
-        // nice todo assert that ParsingException was not thrown (thus suppressing IDE warning)
-        $result = $this->parser->parseAllBrawlers();
+        try {
+            $result = $this->parser->parseAllBrawlers();
 
-        $this->assertEquals($brawlers, $result);
+            $this->assertEquals($brawlers, $result);
+        } catch (ParsingException $e) {
+            $this->fail('ParsingException was thrown: ' . $e->getMessage());
+        }
     }
 
     #[Test]
@@ -181,8 +201,70 @@ class ParserTest extends TestCase
             ->with($rotationDTOs)
             ->andReturn($rotations);
 
-        $result = $this->parser->parseEventsRotation();
+        try {
+            $result = $this->parser->parseEventsRotation();
 
-        $this->assertEquals($rotations, $result);
+            $this->assertEquals($rotations, $result);
+        } catch (ParsingException $e) {
+            $this->fail('ParsingException was thrown: ' . $e->getMessage());
+        }
+    }
+
+    #[Test]
+    #[TestDox('Parses club successfully.')]
+    public function test_parses_club_successfully(): void
+    {
+        $club = Club::factory()->withMembers()->create();
+        $clubDTO = ClubDTO::fromEloquentModel($club);
+
+        $this->apiClient->shouldReceive('getClubByTag')
+            ->once()
+            ->with($club->tag)
+            ->andReturn($clubDTO);
+
+        $this->clubRepository->shouldReceive('createOrUpdateClub')
+            ->once()
+            ->with($clubDTO)
+            ->andReturn($club);
+
+        try {
+            $result = $this->parser->parseClubByTag($club->tag);
+
+            $this->assertEquals($club, $result);
+            $this->assertEquals($club->members, $result->members);
+        } catch (ParsingException $e) {
+            $this->fail('ParsingException was thrown: ' . $e->getMessage());
+        }
+    }
+
+    #[Test]
+    #[TestDox('Parses club members successfully.')]
+    public function test_parses_club_members_successfully(): void
+    {
+        $club = Club::factory()->withMembers()->create();
+        $clubDTO = ClubDTO::fromEloquentModel($club);
+
+        $this->apiClient->shouldReceive('getClubMembers')
+            ->once()
+            ->with($club->tag)
+            ->andReturn($clubDTO->members);
+
+        $this->clubRepository->shouldReceive('syncClubMembersByTag')
+            ->once()
+            ->with($club->tag, $clubDTO->members)
+            ->andReturn($club);
+
+        try {
+            $result = $this->parser->parseClubMembers($club->tag);
+
+            $this->assertEqualClubModels($club, $result);
+            $this->assertEqualsCanonicalizing(
+                $club->members->pluck('tag')->toArray(),
+                $result->members->pluck('tag')->toArray(),
+                'Club members do not match expected values'
+            );
+        } catch (ParsingException $e) {
+            $this->fail('ParsingException was thrown: ' . $e->getMessage());
+        }
     }
 }

@@ -5,46 +5,52 @@ declare(strict_types=1);
 namespace App\Models;
 
 use Carbon\Carbon;
+use Database\Factories\PlayerFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Collection;
 
 /**
  * @property int $id
- * @property int $ext_id
  * @property string $tag
  * @property string $name
  * @property string $name_color
- * @property int|null $icon_id
+ * @property int $icon_id
  * @property int $trophies
- * @property int $highest_trophies
- * @property int $exp_level
- * @property int $exp_points
- * @property bool $is_qualified_from_championship_league
- * @property int $solo_victories
- * @property int $duo_victories
- * @property int $trio_victories
- * @property int $best_time_robo_rumble
- * @property int $best_time_as_big_brawler
+ * @property int|null $highest_trophies
+ * @property int|null $highest_power_play_points
+ * @property int|null $exp_level
+ * @property int|null $exp_points
+ * @property bool|null $is_qualified_from_championship_league
+ * @property int|null $solo_victories
+ * @property int|null $duo_victories
+ * @property int|null $trio_victories
+ * @property int|null $best_time_robo_rumble
+ * @property int|null $best_time_as_big_brawler
+ * @property int|null $club_id
+ * @property string|null $club_role
  * @property Carbon $created_at
  * @property Carbon $updated_at
- * @property-read Collection|PlayerBrawler[]|array $playerBrawlers
+ * @property-read Club|null $club
+ * @property-read Brawler[]|Collection|array $brawlers
  */
 class Player extends Model
 {
+    /** @use HasFactory<PlayerFactory> */
     use HasFactory;
 
     protected $table = 'players';
 
     protected $fillable = [
-        'ext_id',
         'tag',
         'name',
         'name_color',
         'icon_id',
         'trophies',
         'highest_trophies',
+        'highest_power_play_points',
         'exp_level',
         'exp_points',
         'is_qualified_from_championship_league',
@@ -53,13 +59,15 @@ class Player extends Model
         'trio_victories',
         'best_time_robo_rumble',
         'best_time_as_big_brawler',
+        'club_id',
+        'club_role',
     ];
 
     protected $casts = [
-        'ext_id'                                => 'integer',
         'icon_id'                               => 'integer',
         'trophies'                              => 'integer',
         'highest_trophies'                      => 'integer',
+        'highest_power_play_points'             => 'integer',
         'exp_level'                             => 'integer',
         'exp_points'                            => 'integer',
         'is_qualified_from_championship_league' => 'bool',
@@ -68,15 +76,42 @@ class Player extends Model
         'trio_victories'                        => 'integer',
         'best_time_robo_rumble'                 => 'integer',
         'best_time_as_big_brawler'              => 'integer',
+        'club_id'                               => 'integer',
     ];
 
     /**
-     * Get the player brawlers.
+     * Get the club that player belongs to.
      *
-     * @return HasMany
+     * @return BelongsTo
      */
-    public function playerBrawlers(): HasMany
+    public function club(): BelongsTo
     {
-        return $this->hasMany(PlayerBrawler::class, 'player_id', 'id');
+        return $this->belongsTo(Club::class, 'club_id', 'id');
+    }
+
+    /**
+     * Get the player's brawlers.
+     *
+     * @return BelongsToMany
+     */
+    public function brawlers(): BelongsToMany
+    {
+        return $this
+            ->belongsToMany(
+                related: Brawler::class,
+                table: 'player_brawlers',
+                foreignPivotKey: 'player_id',
+                relatedPivotKey: 'brawler_id',
+            )
+            ->using(PlayerBrawler::class)
+            ->withPivot([
+                'id',
+                'power',
+                'rank',
+                'trophies',
+                'highest_trophies',
+            ])
+            ->withTimestamps()
+            ->as('player_brawler');
     }
 }

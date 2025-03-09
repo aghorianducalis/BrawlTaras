@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Services\Repositories\Event;
+namespace Tests\Feature\Services\Repositories\Event;
 
 use App\Models\Event;
 use App\Models\EventMap;

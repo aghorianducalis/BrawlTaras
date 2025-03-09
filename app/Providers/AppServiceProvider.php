@@ -10,14 +10,18 @@ use App\Services\Parser\Contracts\ParserInterface;
 use App\Services\Parser\Parser;
 use App\Services\Repositories\AccessoryRepository;
 use App\Services\Repositories\BrawlerRepository;
+use App\Services\Repositories\ClubRepository;
 use App\Services\Repositories\Contracts\AccessoryRepositoryInterface;
 use App\Services\Repositories\Contracts\BrawlerRepositoryInterface;
+use App\Services\Repositories\Contracts\ClubRepositoryInterface;
 use App\Services\Repositories\Contracts\Event\EventMapRepositoryInterface;
 use App\Services\Repositories\Contracts\Event\EventModeRepositoryInterface;
 use App\Services\Repositories\Contracts\Event\EventModifierRepositoryInterface;
 use App\Services\Repositories\Contracts\Event\EventRepositoryInterface;
 use App\Services\Repositories\Contracts\Event\EventRotationRepositoryInterface;
 use App\Services\Repositories\Contracts\Event\EventRotationSlotRepositoryInterface;
+use App\Services\Repositories\Contracts\GearRepositoryInterface;
+use App\Services\Repositories\Contracts\PlayerRepositoryInterface;
 use App\Services\Repositories\Contracts\StarPowerRepositoryInterface;
 use App\Services\Repositories\Event\EventMapRepository;
 use App\Services\Repositories\Event\EventModeRepository;
@@ -25,6 +29,8 @@ use App\Services\Repositories\Event\EventModifierRepository;
 use App\Services\Repositories\Event\EventRepository;
 use App\Services\Repositories\Event\EventRotationRepository;
 use App\Services\Repositories\Event\EventRotationSlotRepository;
+use App\Services\Repositories\GearRepository;
+use App\Services\Repositories\PlayerRepository;
 use App\Services\Repositories\StarPowerRepository;
 use GuzzleHttp\Client as HttpClient;
 use Illuminate\Support\ServiceProvider;
@@ -48,6 +54,9 @@ class AppServiceProvider extends ServiceProvider
         // Register repositories
         $this->app->singleton(abstract: AccessoryRepositoryInterface::class, concrete: function ($app) {
             return new AccessoryRepository();
+        });
+        $this->app->singleton(abstract: GearRepositoryInterface::class, concrete: function ($app) {
+            return new GearRepository();
         });
         $this->app->singleton(abstract: StarPowerRepositoryInterface::class, concrete: function ($app) {
             return new StarPowerRepository();
@@ -86,11 +95,21 @@ class AppServiceProvider extends ServiceProvider
             );
         });
 
+        // repositories for clubs and players
+        $this->app->singleton(abstract: PlayerRepositoryInterface::class, concrete: function ($app) {
+            return new PlayerRepository();
+        });
+        $this->app->singleton(abstract: ClubRepositoryInterface::class, concrete: function ($app) {
+            return new ClubRepository();
+        });
+
         // Register Parser
         $this->app->singleton(abstract: ParserInterface::class, concrete: function ($app) {
             return new Parser(
                 apiClient: $app->make(APIClientInterface::class),
                 brawlerRepository: $app->make(BrawlerRepositoryInterface::class),
+                clubRepository: $app->make(ClubRepositoryInterface::class),
+                playerRepository: $app->make(PlayerRepositoryInterface::class),
                 eventRotationRepository: $app->make(EventRotationRepositoryInterface::class),
             );
         });

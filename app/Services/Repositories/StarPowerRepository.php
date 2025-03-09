@@ -23,10 +23,6 @@ final readonly class StarPowerRepository implements StarPowerRepositoryInterface
             $query->where('ext_id', '=', $searchCriteria['ext_id']);
         }
 
-        if (isset($searchCriteria['brawler_id'])) {
-            $query->where('brawler_id', '=', $searchCriteria['brawler_id']);
-        }
-
         if (isset($searchCriteria['name'])) {
             $query->where('name', 'like', "%{$searchCriteria['name']}%");
         }
@@ -34,16 +30,14 @@ final readonly class StarPowerRepository implements StarPowerRepositoryInterface
         return $query->first();
     }
 
-    public function createOrUpdateStarPower(StarPowerDTO $starPowerDTO, int $brawlerId): StarPower
+    public function createOrUpdateStarPower(StarPowerDTO $starPowerDTO): StarPower
     {
         $starPower = $this->findStarPower([
             'ext_id' => $starPowerDTO->extId,
-            'brawler_id' => $brawlerId,
         ]);
         $newData = [
+            'ext_id' => $starPowerDTO->extId, // unnecessary since 'ext_id' remains unchanged
             'name' => $starPowerDTO->name,
-            'ext_id' => $starPowerDTO->extId,
-            'brawler_id' => $brawlerId,
         ];
 
         DB::transaction(function () use (&$starPower, $newData) {

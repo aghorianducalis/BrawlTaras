@@ -29,7 +29,7 @@ interface EventRotationRepositoryInterface
      * Bulk create or update event rotations in the database and sync related entities.
      *
      * @param array<EventRotationDTO> $rotationDTOs
-     * @return array<EventRotationDTO>
+     * @return array<EventRotation>
      */
     public function createOrUpdateEventRotations(array $rotationDTOs): array;
 }

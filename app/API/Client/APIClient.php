@@ -6,7 +6,10 @@ namespace App\API\Client;
 
 use App\API\Contracts\APIClientInterface;
 use App\API\DTO\Response\BrawlerDTO;
+use App\API\DTO\Response\ClubDTO;
 use App\API\DTO\Response\EventRotationDTO;
+use App\API\DTO\Response\PlayerBattleLogDTO;
+use App\API\DTO\Response\PlayerDTO;
 use App\API\Enums\APIEndpoints;
 use App\API\Exceptions\InvalidDTOException;
 use App\API\Exceptions\ResponseException;
@@ -27,8 +30,6 @@ final readonly class APIClient implements APIClientInterface
      * app(\App\API\Client\APIClient::class)->getBrawler(16000000)
      *
      * @inheritdoc
-     * @throws ResponseException
-     * @throws InvalidDTOException
      */
     public function getBrawler(int $externalId): BrawlerDTO
     {
@@ -45,8 +46,6 @@ final readonly class APIClient implements APIClientInterface
      * app(\App\API\Client\APIClient::class)->getBrawlers();
      *
      * @inheritdoc
-     * @throws ResponseException
-     * @throws InvalidDTOException
      */
     public function getBrawlers(): array
     {
@@ -55,6 +54,37 @@ final readonly class APIClient implements APIClientInterface
             return BrawlerDTO::fromList($responseData);
         } catch (ResponseException|InvalidDTOException $e) {
             Log::error("Error fetching brawlers: {$e->getMessage()}");
+            throw $e;
+        }
+    }
+
+    public function getClubByTag(string $clubTag): ClubDTO
+    {
+        try {
+            $clubTag = $this->prepareTagValue($clubTag);
+            $responseData = $this->makeRequest(APIEndpoints::ClubByTag, ['club_tag' => $clubTag]);
+
+            return ClubDTO::fromDataArray($responseData);
+        } catch (ResponseException|InvalidDTOException $e) {
+            Log::error("Error fetching club with tag $clubTag: {$e->getMessage()}.");
+
+            throw $e;
+        }
+    }
+
+    public function getClubMembers(string $clubTag): array
+    {
+        try {
+            $clubTag = $this->prepareTagValue($clubTag);
+            $responseData = $this->makeRequest(APIEndpoints::ClubMembers, ['club_tag' => $clubTag]);
+
+            if (!(isset($responseData['items']) && is_array($responseData['items']))) {
+                throw InvalidDTOException::fromMessage('Invalid structure of club members array.');
+            }
+
+            return array_map(fn(array $memberData) => PlayerDTO::fromDataArray($memberData), $responseData['items']);
+        } catch (ResponseException|InvalidDTOException $e) {
+            Log::error("Error fetching members of club with tag $clubTag: {$e->getMessage()}.");
             throw $e;
         }
     }
@@ -69,6 +99,37 @@ final readonly class APIClient implements APIClientInterface
             return EventRotationDTO::fromList($responseData);
         } catch (ResponseException|InvalidDTOException $e) {
             Log::error("Error fetching events rotation: {$e->getMessage()}");
+            throw $e;
+        }
+    }
+
+    public function getPlayerByTag(string $playerTag): PlayerDTO
+    {
+        try {
+            $playerTag = $this->prepareTagValue($playerTag);
+            $responseData = $this->makeRequest(APIEndpoints::PlayerByTag, ['player_tag' => $playerTag]);
+
+            return PlayerDTO::fromDataArray($responseData);
+        } catch (ResponseException|InvalidDTOException $e) {
+            Log::error("Error fetching info of player with tag $playerTag: {$e->getMessage()}");
+            throw $e;
+        }
+    }
+
+    public function getPlayerBattleLog(string $playerTag): array
+    {
+        try {
+            $playerTag = $this->prepareTagValue($playerTag);
+            $responseData = $this->makeRequest(APIEndpoints::PlayerBattleLog, ['player_tag' => $playerTag]);
+
+            if (!(isset($responseData['items']) && is_array($responseData['items']))) {
+                throw InvalidDTOException::fromMessage('invalid structure of player battle log.');
+            }
+
+            // todo BattleResult or Battle DTO
+            return PlayerBattleLogDTO::fromList($responseData['items']);
+        } catch (ResponseException|InvalidDTOException $e) {
+            Log::error("Error fetching battle log of player with tag $playerTag: {$e->getMessage()}");
             throw $e;
         }
     }
@@ -114,5 +175,11 @@ final readonly class APIClient implements APIClientInterface
             ]);
             throw ResponseException::fromMessage('Invalid JSON response from API');
         }
+    }
+
+    private function prepareTagValue(string $value): string
+    {
+        // todo ensure club or player tag starts with "%23" instead of "#"
+        return $value;
     }
 }
