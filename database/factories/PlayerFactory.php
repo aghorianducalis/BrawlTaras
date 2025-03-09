@@ -48,22 +48,23 @@ class PlayerFactory extends Factory
             'best_time_as_big_brawler' => $this->faker->numberBetween(0, 300),
         ];
 
-        if ($belongsToClub = $this->faker->boolean) {
-            $state = array_merge($state, $this->defineStateWithClub());
-        }
-
         return $state;
     }
 
     /**
      * Indicate that the player is a club member.
      *
-     * @param Club|Factory|null $club
+     * @param Club|null $club
      * @return self
      */
-    public function withClub(Club|Factory|null $club = null): self
+    public function withClub(Club|null $club = null): self
     {
-        return $this->state(fn (array $attributes) => $this->defineStateWithClub($club));
+        $club = $club ?? Club::factory()->create();
+
+        return $this->state(fn (array $attributes) => [
+            'club_id'   => $club->id,
+            'club_role' => $this->faker->randomElement(Club::CLUB_MEMBER_ROLES),
+        ]);
     }
 
     /**
@@ -80,19 +81,5 @@ class PlayerFactory extends Factory
             ->count($count)
             ->create($attributes)
         );
-    }
-
-    /**
-     * @param Club|Factory|null $club
-     * @return array{club_id: Club|Factory|int, club_role: string}
-     */
-    private function defineStateWithClub(Club|Factory|null $club = null): array
-    {
-        $club = $club ?? Club::factory();
-
-        return [
-            'club_id' => $club,
-            'club_role' => $this->faker->randomElement(Club::CLUB_MEMBER_ROLES),
-        ];
     }
 }
