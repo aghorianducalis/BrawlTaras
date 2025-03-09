@@ -90,6 +90,8 @@ class BrawlerFactory extends Factory
     /**
      * Attach players to the brawler.
      *
+     * @see PlayerFactory::withBrawlers()
+     *
      * @param int $count
      * @param array|callable $playerAttributes
      * @param array|callable $playerBrawlerAttributes for pivot

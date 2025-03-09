@@ -7,6 +7,7 @@ namespace App\API\Client;
 use App\API\Contracts\APIClientInterface;
 use App\API\DTO\Response\BrawlerDTO;
 use App\API\DTO\Response\ClubDTO;
+use App\API\DTO\Response\ClubMemberDTO;
 use App\API\DTO\Response\EventRotationDTO;
 use App\API\DTO\Response\PlayerBattleLogDTO;
 use App\API\DTO\Response\PlayerDTO;
@@ -82,16 +83,13 @@ final readonly class APIClient implements APIClientInterface
                 throw InvalidDTOException::fromMessage('Invalid structure of club members array.');
             }
 
-            return array_map(fn(array $memberData) => PlayerDTO::fromDataArray($memberData), $responseData['items']);
+            return array_map(fn(array $memberData) => ClubMemberDTO::fromArray($memberData), $responseData['items']);
         } catch (ResponseException|InvalidDTOException $e) {
             Log::error("Error fetching members of club with tag $clubTag: {$e->getMessage()}.");
             throw $e;
         }
     }
 
-    /**
-     * @inheritdoc
-     */
     public function getEventsRotation(): array
     {
         try {
@@ -109,7 +107,7 @@ final readonly class APIClient implements APIClientInterface
             $playerTag = $this->prepareTagValue($playerTag);
             $responseData = $this->makeRequest(APIEndpoints::PlayerByTag, ['player_tag' => $playerTag]);
 
-            return PlayerDTO::fromDataArray($responseData);
+            return PlayerDTO::fromArray($responseData);
         } catch (ResponseException|InvalidDTOException $e) {
             Log::error("Error fetching info of player with tag $playerTag: {$e->getMessage()}");
             throw $e;

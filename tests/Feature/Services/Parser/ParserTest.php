@@ -222,7 +222,7 @@ class ParserTest extends TestCase
             ->with($club->tag)
             ->andReturn($clubDTO);
 
-        $this->clubRepository->shouldReceive('createOrUpdateClub')
+        $this->clubRepository->shouldReceive('createOrUpdateClubFromDTOAndSyncClubMembers')
             ->once()
             ->with($clubDTO)
             ->andReturn($club);
@@ -249,7 +249,7 @@ class ParserTest extends TestCase
             ->with($club->tag)
             ->andReturn($clubDTO->members);
 
-        $this->clubRepository->shouldReceive('syncClubMembersByTag')
+        $this->clubRepository->shouldReceive('createOrUpdateClubFromTagAndSyncClubMembers')
             ->once()
             ->with($club->tag, $clubDTO->members)
             ->andReturn($club);

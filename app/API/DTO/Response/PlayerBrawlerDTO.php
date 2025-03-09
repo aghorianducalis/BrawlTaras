@@ -41,15 +41,15 @@ final readonly class PlayerBrawlerDTO
     public function toArray(): array
     {
         return [
-            'extId' => $this->extId,
-            'name' => $this->name,
-            'power' => $this->power,
-            'rank' => $this->rank,
-            'trophies' => $this->trophies,
+            'id'              => $this->extId,
+            'name'            => $this->name,
+            'power'           => $this->power,
+            'rank'            => $this->rank,
+            'trophies'        => $this->trophies,
             'highestTrophies' => $this->highestTrophies,
-            'gadgets' => array_map(fn(PlayerBrawlerAccessoryDTO $accessoryDTO) => $accessoryDTO->toArray(), $this->accessories),
-            'gears' => array_map(fn(PlayerBrawlerGearDTO $gearDTO) => $gearDTO->toArray(), $this->gears),
-            'starPowers' => array_map(fn(PlayerBrawlerStarPowerDTO $starPowerDTO) => $starPowerDTO->toArray(), $this->starPowers),
+            'gadgets'         => array_map(fn(PlayerBrawlerAccessoryDTO $accessoryDTO) => $accessoryDTO->toArray(), $this->accessories),
+            'gears'           => array_map(fn(PlayerBrawlerGearDTO $gearDTO) => $gearDTO->toArray(), $this->gears),
+            'starPowers'      => array_map(fn(PlayerBrawlerStarPowerDTO $starPowerDTO) => $starPowerDTO->toArray(), $this->starPowers),
         ];
     }
 
@@ -105,14 +105,33 @@ final readonly class PlayerBrawlerDTO
             rank: (int) $data['rank'],
             trophies: (int) $data['trophies'],
             highestTrophies: (int) $data['highestTrophies'],
-            accessories: PlayerBrawlerAccessoryDTO::fromList($data['gadgets']),
-            gears: PlayerBrawlerGearDTO::fromList($data['gears']),
-            starPowers: PlayerBrawlerStarPowerDTO::fromList($data['starPowers']),
+            accessories: PlayerBrawlerAccessoryDTO::fromArrayList($data['gadgets']),
+            gears: PlayerBrawlerGearDTO::fromArrayList($data['gears']),
+            starPowers: PlayerBrawlerStarPowerDTO::fromArrayList($data['starPowers']),
         );
+    }
+
+    /**
+     * Factory method to create an array of DTO.
+     *
+     * @param array<array> $list
+     * @return array<self>
+     * @throws InvalidDTOException if required fields are missing or invalid.
+     */
+    public static function fromArrayList(array $list): array
+    {
+        return array_map(fn(array $item) => self::fromArray($item), $list);
     }
 
     public static function fromEloquentModel(PlayerBrawler $playerBrawler): self
     {
+        $playerBrawler->load([
+            'brawler',
+            'playerBrawlerAccessories.accessory',
+            'playerBrawlerGears.gear',
+            'playerBrawlerStarPowers.starPower',
+        ]);
+
         return new self(
             extId: $playerBrawler->brawler->ext_id,
             name: $playerBrawler->brawler->name,
@@ -120,9 +139,9 @@ final readonly class PlayerBrawlerDTO
             rank: $playerBrawler->rank,
             trophies: $playerBrawler->trophies,
             highestTrophies: $playerBrawler->highest_trophies,
-            accessories: array_map(fn(PlayerBrawlerAccessory $accessory) => PlayerBrawlerAccessoryDTO::fromEloquentModel($accessory), $playerBrawler->playerBrawlerAccessories->all()),
-            gears: array_map(fn(PlayerBrawlerGear $gear) => PlayerBrawlerGearDTO::fromEloquentModel($gear), $playerBrawler->playerBrawlerGears->all()),
-            starPowers: array_map(fn(PlayerBrawlerStarPower $starPower) => PlayerBrawlerStarPowerDTO::fromEloquentModel($starPower), $playerBrawler->playerBrawlerStarPowers->all()),
+            accessories: $playerBrawler->playerBrawlerAccessories->transform(fn(PlayerBrawlerAccessory $accessory) => PlayerBrawlerAccessoryDTO::fromEloquentModel($accessory))->toArray(),
+            gears: $playerBrawler->playerBrawlerGears->transform(fn(PlayerBrawlerGear $gear) => PlayerBrawlerGearDTO::fromEloquentModel($gear))->toArray(),
+            starPowers: $playerBrawler->playerBrawlerStarPowers->transform(fn(PlayerBrawlerStarPower $starPower) => PlayerBrawlerStarPowerDTO::fromEloquentModel($starPower))->toArray(),
         );
     }
 }

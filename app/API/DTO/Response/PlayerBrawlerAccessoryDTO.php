@@ -51,13 +51,13 @@ final readonly class PlayerBrawlerAccessoryDTO
     /**
      * Factory method to create an array of DTO.
      *
-     * @param array $list
+     * @param array<array> $list
      * @return array<self>
      * @throws InvalidDTOException if required fields are missing or invalid.
      */
-    public static function fromList(array $list): array
+    public static function fromArrayList(array $list): array
     {
-        return array_map(fn($item) => self::fromArray($item), $list);
+        return array_map(fn(array $item) => self::fromArray($item), $list);
     }
 
     /**
@@ -68,7 +68,7 @@ final readonly class PlayerBrawlerAccessoryDTO
      */
     public static function fromEloquentModel(PlayerBrawlerAccessory $playerBrawlerAccessory): self
     {
-        if (is_null($playerBrawlerAccessory->accessory)) {
+        if (!$playerBrawlerAccessory->accessory) {
             throw InvalidDTOException::fromMessage("There is no Accessory associated with player brawler accessory: {$playerBrawlerAccessory->toJson()}");
         }
 

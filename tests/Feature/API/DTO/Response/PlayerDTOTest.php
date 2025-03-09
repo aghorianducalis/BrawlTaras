@@ -22,7 +22,7 @@ use Tests\Traits\TestPlayers;
 #[CoversClass(PlayerDTO::class)]
 #[CoversMethod(PlayerDTO::class, 'toArray')]
 #[CoversMethod(PlayerDTO::class, 'toJson')]
-#[CoversMethod(PlayerDTO::class, 'fromDataArray')]
+#[CoversMethod(PlayerDTO::class, 'fromArray')]
 #[CoversMethod(PlayerDTO::class, 'fromEloquentModel')]
 class PlayerDTOTest extends TestCase
 {
@@ -31,10 +31,10 @@ class PlayerDTOTest extends TestCase
 
     #[Test]
     #[TestDox('Covers correct instantiation from a valid data array. Ensuring valid input is transformed correctly.')]
-    #[DataProvider('providePlayerData')]
+    #[DataProvider('providePlayerDTOData')]
     public function test_fromDataArray_creates_valid_dto(array $playerData): void
     {
-        $playerDTO = PlayerDTO::fromDataArray($playerData);
+        $playerDTO = PlayerDTO::fromArray($playerData);
 
         $this->assertInstanceOf(PlayerDTO::class, $playerDTO);
         $this->assertPlayerDTOMatchesDataArray($playerDTO, $playerData);
@@ -47,14 +47,27 @@ class PlayerDTOTest extends TestCase
     #[TestWith(['nameColor'])]
     #[TestWith(['icon'])]
     #[TestWith(['trophies'])]
+    #[TestWith(['highestTrophies'])]
+    #[TestWith(['expLevel'])]
+    #[TestWith(['expPoints'])]
+    #[TestWith(['isQualifiedFromChampionshipChallenge'])]
+    #[TestWith(['soloVictories'])]
+    #[TestWith(['duoVictories'])]
+    #[TestWith(['3vs3Victories'])]
+    #[TestWith(['bestRoboRumbleTime'])]
+    #[TestWith(['bestTimeAsBigBrawler'])]
+    #[TestWith(['club'])]
+    #[TestWith(['brawlers'])]
     public function test_fromDataArray_throws_exception_on_missing_required_data(string $property): void
     {
-        $playerData = self::providePlayerData();
+        $playerDataArray = self::providePlayerDTOData();
+        $key = array_rand($playerDataArray);
+        $playerData = $playerDataArray[$key][0];
         unset($playerData[$property]);
 
         $this->expectException(InvalidDTOException::class);
 
-        PlayerDTO::fromDataArray($playerData);
+        PlayerDTO::fromArray($playerData);
     }
 
     #[Test]
@@ -93,13 +106,19 @@ class PlayerDTOTest extends TestCase
     #[TestWith(['bestRoboRumbleTime', 'string'])]
     #[TestWith(['bestTimeAsBigBrawler', null])]
     #[TestWith(['bestTimeAsBigBrawler', 'string'])]
+    #[TestWith(['club', null])]
+    #[TestWith(['club', 'string'])]
+    #[TestWith(['club', 123.45])]
+    #[TestWith(['brawlers', null])]
+    #[TestWith(['brawlers', 'string'])]
+    #[TestWith(['brawlers', 123.45])]
     public function test_fromDataArray_throws_exception_on_invalid_data(string $property, mixed $value): void
     {
-        $playerData = array_merge(self::providePlayerData(), [$property => $value]);
+        $playerData = array_merge(self::providePlayerDTOData(), [$property => $value]);
 
         $this->expectException(InvalidDTOException::class);
 
-        PlayerDTO::fromDataArray($playerData);
+        PlayerDTO::fromArray($playerData);
     }
 
     #[Test]
@@ -116,10 +135,10 @@ class PlayerDTOTest extends TestCase
 
     #[Test]
     #[TestDox('Converts DTO to an array correctly. Covers proper serialization to array.')]
-    #[DataProvider('providePlayerData')]
+    #[DataProvider('providePlayerDTOData')]
     public function test_toArray_returns_correct_structure(array $playerData): void
     {
-        $playerDTO = PlayerDTO::fromDataArray($playerData);
+        $playerDTO = PlayerDTO::fromArray($playerData);
 
         $playerDTOArray = $playerDTO->toArray();
 
@@ -129,10 +148,10 @@ class PlayerDTOTest extends TestCase
 
     #[Test]
     #[TestDox('Serializes DTO to JSON. Ensuring JSON encoding works correctly.')]
-    #[DataProvider('providePlayerData')]
+    #[DataProvider('providePlayerDTOData')]
     public function test_toJson_encodes_correctly(array $playerData): void
     {
-        $playerDTO = PlayerDTO::fromDataArray($playerData);
+        $playerDTO = PlayerDTO::fromArray($playerData);
 
         try {
             $json = $playerDTO->toJson();

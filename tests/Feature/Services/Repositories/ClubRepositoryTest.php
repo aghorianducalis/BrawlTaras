@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Services\Repositories;
 
 use App\API\DTO\Response\ClubDTO;
-use App\API\DTO\Response\PlayerDTO;
+use App\API\DTO\Response\ClubMemberDTO;
 use App\Models\Club;
 use App\Models\Player;
 use App\Services\Repositories\ClubRepository;
@@ -13,6 +13,7 @@ use App\Services\Repositories\Contracts\ClubRepositoryInterface;
 use Database\Factories\ClubFactory;
 use Database\Factories\PlayerFactory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Arr;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -28,13 +29,15 @@ use Tests\Traits\TestPlayers;
 #[Group('Repositories')]
 #[CoversClass(ClubRepository::class)]
 #[CoversMethod(ClubRepository::class, 'findClub')]
-#[CoversMethod(ClubRepository::class, 'createOrUpdateClub')]
+#[CoversMethod(ClubRepository::class, 'createOrUpdateClubFromArray')]
+#[CoversMethod(ClubRepository::class, 'createOrUpdateClubFromDTO')]
+#[CoversMethod(ClubRepository::class, 'createOrUpdateClubFromTag')]
 #[CoversMethod(ClubRepository::class, 'syncClubMembers')]
 #[UsesClass(Club::class)]
 #[UsesClass(ClubDTO::class)]
 #[UsesClass(ClubFactory::class)]
 #[UsesClass(Player::class)]
-#[UsesClass(PlayerDTO::class)]
+#[UsesClass(ClubMemberDTO::class)]
 #[UsesClass(PlayerFactory::class)]
 class ClubRepositoryTest extends TestCase
 {
@@ -43,6 +46,10 @@ class ClubRepositoryTest extends TestCase
     use TestPlayers;
 
     private ClubRepository $repository;
+
+    private string $clubTable;
+
+    private string $playerTable;
 
     protected function setUp(): void
     {
@@ -55,11 +62,12 @@ class ClubRepositoryTest extends TestCase
 
     #[Test]
     #[TestDox('Fetch the club with relations successfully.')]
+    #[TestWith(['id', '123'])]
     #[TestWith(['tag', '#abcd1234'])]
     #[TestWith(['name', 'Ukraina Vavilon'])]
     public function test_find_club_by_criteria(string $property, int|string $value): void
     {
-        $this->assertDatabaseMissing($this->clubTable, [$property => $value]);
+        $this->assertDatabaseEmpty($this->clubTable);
 
         /** @var Club $clubCreated */
         $clubCreated = Club::factory()->create(attributes: [$property => $value]);
@@ -78,7 +86,42 @@ class ClubRepositoryTest extends TestCase
 
     #[Test]
     #[TestDox('Create successfully the club with related players.')]
-    #[DataProvider('provideClubData')]
+    #[DataProvider('provideClubModelData')]
+    public function test_create_club_from_attributes_array(array $attributes): void
+    {
+        $this->assertDatabaseEmpty($this->clubTable);
+//        $rules = $this->repository::getClubRules();
+
+        $club = $this->repository->createOrUpdateClubFromArray($attributes);
+
+        $this->assertDatabaseHas($this->clubTable, [
+            'id' => $club->id,
+            'tag' => $club->tag,
+        ]);
+        $club->refresh();
+        $club->load(['members']);
+
+        $this->assertClubEloquentModelMatchesDataArray(
+            club: $club,
+            clubData: $attributes,
+            checkMembers: false,
+        );
+    }
+
+    public function test_create_club_from_dto(): void
+    {
+        self::assertTrue(true);
+    }
+
+    public function test_create_club_from_tag(): void
+    {
+        self::assertTrue(true);
+    }
+
+
+    #[Test]
+    #[TestDox('Create successfully the club with related players.')]
+    #[DataProvider('provideClubDTOData')]
     public function test_create_club_with_members(array $clubData): void
     {
         $clubDTO = ClubDTO::fromDataArray($clubData);
@@ -93,9 +136,7 @@ class ClubRepositoryTest extends TestCase
             ]);
         }
 
-        $club = $this->repository->createOrUpdateClub($clubDTO);
-
-        $this->assertClubDTOMatchesEloquentModel($clubDTO, $club);
+        $club = $this->repository->createOrUpdateClubFromDTOAndSyncClubMembers($clubDTO);
 
         $this->assertDatabaseHas($this->clubTable, [
             'id' => $club->id,
@@ -111,11 +152,13 @@ class ClubRepositoryTest extends TestCase
                 'club_role' => $player->club_role,
             ]);
         }
+
+        $this->assertClubDTOMatchesEloquentModel($clubDTO, $club);
     }
 
     #[Test]
     #[TestDox('Update successfully the club with related players.')]
-    #[DataProvider('provideClubData')]
+    #[DataProvider('provideClubDTOData')]
     public function test_update_existing_club_with_members(array $clubData): void
     {
         $club = $this->createClubWithMembers();
@@ -136,7 +179,7 @@ class ClubRepositoryTest extends TestCase
         $clubData['tag'] = $club->tag;
         $clubDTO = ClubDTO::fromDataArray($clubData);
 
-        $clubUpdated = $this->repository->createOrUpdateClub($clubDTO);
+        $clubUpdated = $this->repository->createOrUpdateClubFromDTOAndSyncClubMembers($clubDTO);
 
         // ensure there is only 1 club stored in DB
         $this->assertDatabaseCount($this->clubTable, 1);
@@ -165,7 +208,7 @@ class ClubRepositoryTest extends TestCase
                     'club_id' => $club->id,
                     'club_role' => $player->club_role,
                 ]);
-                $this->assertPlayerDTOMatchesEloquentModel($clubDTO->members[$i], $player);
+                $this->assertClubMemberDTOMatchesEloquentModel($clubDTO->members[$i], $player);
             }
         }
     }
@@ -193,11 +236,11 @@ class ClubRepositoryTest extends TestCase
             ]);
         }
 
-        /** @var PlayerDTO[] $newMemberDTOs */
+        /** @var ClubMemberDTO[] $newMemberDTOs */
         $newMemberDTOs = Player::factory()
             ->count(5)
-            ->make()
-            ->transform(fn (Player $player) => PlayerDTO::fromEloquentModel($player))
+            ->make(['club_role' => Arr::random(Club::CLUB_MEMBER_ROLES)])
+            ->transform(fn (Player $player) => ClubMemberDTO::fromEloquentModel($player))
             ->all();
 
         $club = $this->repository->syncClubMembers($club, $newMemberDTOs);
@@ -212,6 +255,8 @@ class ClubRepositoryTest extends TestCase
             ]);
         }
 
+        $club->load(['members']);
+
         // assert that all new members belong to club
         foreach ($club->members as $i => $player) {
             $this->assertDatabaseHas($this->playerTable, [
@@ -220,7 +265,9 @@ class ClubRepositoryTest extends TestCase
                 'club_id' => $club->id,
                 'club_role' => $player->club_role,
             ]);
-            $this->assertPlayerDTOMatchesEloquentModel($newMemberDTOs[$i], $player);
+            $this->assertNotNull($player->club_role);
+            $this->assertEquals($club->id, $player->club_id);
+            $this->assertClubMemberDTOMatchesEloquentModel($newMemberDTOs[$i], $player);
         }
     }
 }

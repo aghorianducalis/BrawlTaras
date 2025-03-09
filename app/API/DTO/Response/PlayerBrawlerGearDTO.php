@@ -58,13 +58,13 @@ final readonly class PlayerBrawlerGearDTO
     /**
      * Factory method to create an array of DTO.
      *
-     * @param array $list
+     * @param array<array> $list
      * @return array<self>
      * @throws InvalidDTOException if required fields are missing or invalid.
      */
-    public static function fromList(array $list): array
+    public static function fromArrayList(array $list): array
     {
-        return array_map(fn($item) => self::fromArray($item), $list);
+        return array_map(fn(array $item) => self::fromArray($item), $list);
     }
 
     /**
@@ -75,7 +75,7 @@ final readonly class PlayerBrawlerGearDTO
      */
     public static function fromEloquentModel(PlayerBrawlerGear $playerBrawlerGear): self
     {
-        if (is_null($playerBrawlerGear->gear)) {
+        if (!$playerBrawlerGear->gear) {
             throw InvalidDTOException::fromMessage("There is no Gear associated with player brawler gear: {$playerBrawlerGear->toJson()}");
         }
 

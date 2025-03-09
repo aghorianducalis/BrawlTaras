@@ -29,9 +29,16 @@ class ClubDTOTest extends TestCase
     use RefreshDatabase;
     use TestClubs;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->clubDataList = self::provideClubDTOData();
+    }
+
     #[Test]
     #[TestDox('Covers correct instantiation from a valid data array. Ensuring valid input is transformed correctly.')]
-    #[DataProvider('provideClubData')]
+    #[DataProvider('provideClubDTOData')]
     public function test_fromDataArray_creates_valid_dto(array $clubData): void
     {
         $clubDTO = ClubDTO::fromDataArray($clubData);
@@ -43,14 +50,29 @@ class ClubDTOTest extends TestCase
     #[Test]
     #[TestDox('Ensuring invalid input without required fields is rejected.')]
     #[TestWith(['tag'])]
+    #[TestWith(['name'])]
+    #[TestWith(['description'])]
+    #[TestWith(['type'])]
+    #[TestWith(['badgeId'])]
+    #[TestWith(['requiredTrophies'])]
+    #[TestWith(['trophies'])]
+    #[TestWith(['members'])]
     public function test_fromDataArray_throws_exception_on_missing_required_data(string $property): void
     {
-        $clubData = self::provideClubData();
-        unset($clubData[$property]);
+        foreach ($this->clubDataList as $clubData) {
+            try {
+                $clubData = array_shift($clubData);
+                unset($clubData[$property]);
 
-        $this->expectException(InvalidDTOException::class);
-
-        ClubDTO::fromDataArray($clubData);
+                ClubDTO::fromDataArray($clubData);
+                $this->fail("Expected InvalidDTOException was not thrown for: " . json_encode($clubData));
+            } catch (InvalidDTOException $e) {
+                $this->assertEquals(
+                    "Invalid or missing '$property' field in club data.",
+                    $e->getMessage(),
+                );
+            }
+        }
     }
 
     #[Test]
@@ -77,11 +99,20 @@ class ClubDTOTest extends TestCase
     #[TestWith(['members', 'string'])]
     public function test_fromDataArray_throws_exception_on_invalid_data(string $property, mixed $value): void
     {
-        $clubData = array_merge(self::provideClubData(), [$property => $value]);
+        foreach ($this->clubDataList as $clubData) {
+            try {
+                $clubData = array_shift($clubData);
+                $clubData = array_merge($clubData, [$property => $value]);
 
-        $this->expectException(InvalidDTOException::class);
-
-        ClubDTO::fromDataArray($clubData);
+                ClubDTO::fromDataArray($clubData);
+                $this->fail("Expected InvalidDTOException was not thrown for: " . json_encode($clubData));
+            } catch (InvalidDTOException $e) {
+                $this->assertEquals(
+                    "Invalid or missing '$property' field in club data.",
+                    $e->getMessage(),
+                );
+            }
+        }
     }
 
     #[Test]
@@ -98,7 +129,7 @@ class ClubDTOTest extends TestCase
 
     #[Test]
     #[TestDox('Converts DTO to an array correctly. Covers proper serialization to array.')]
-    #[DataProvider('provideClubData')]
+    #[DataProvider('provideClubDTOData')]
     public function test_toArray_returns_correct_structure(array $clubData): void
     {
         $clubDTO = ClubDTO::fromDataArray($clubData);
@@ -111,7 +142,7 @@ class ClubDTOTest extends TestCase
 
     #[Test]
     #[TestDox('Serializes DTO to JSON. Ensuring JSON encoding works correctly.')]
-    #[DataProvider('provideClubData')]
+    #[DataProvider('provideClubDTOData')]
     public function test_toJson_encodes_correctly(array $clubData): void
     {
         $clubDTO = ClubDTO::fromDataArray($clubData);

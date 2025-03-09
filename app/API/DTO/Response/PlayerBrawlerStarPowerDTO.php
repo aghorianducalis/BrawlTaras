@@ -51,13 +51,13 @@ final readonly class PlayerBrawlerStarPowerDTO
     /**
      * Factory method to create an array of DTO.
      *
-     * @param array $list
+     * @param array<array> $list
      * @return array<self>
      * @throws InvalidDTOException if required fields are missing or invalid.
      */
-    public static function fromList(array $list): array
+    public static function fromArrayList(array $list): array
     {
-        return array_map(fn($item) => self::fromArray($item), $list);
+        return array_map(fn(array $item) => self::fromArray($item), $list);
     }
 
     /**
@@ -68,7 +68,7 @@ final readonly class PlayerBrawlerStarPowerDTO
      */
     public static function fromEloquentModel(PlayerBrawlerStarPower $playerBrawlerStarPower): self
     {
-        if (is_null($playerBrawlerStarPower->starPower)) {
+        if (!$playerBrawlerStarPower->starPower) {
             throw InvalidDTOException::fromMessage("There is no StarPower associated with player brawler star power: {$playerBrawlerStarPower->toJson()}");
         }
 

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Parser;
 
 use App\API\Contracts\APIClientInterface;
+use App\API\DTO\Response\ClubDTO;
 use App\API\Exceptions\InvalidDTOException;
 use App\API\Exceptions\ResponseException;
 use App\Models\Brawler;
@@ -16,6 +17,7 @@ use App\Services\Repositories\Contracts\BrawlerRepositoryInterface;
 use App\Services\Repositories\Contracts\ClubRepositoryInterface;
 use App\Services\Repositories\Contracts\Event\EventRotationRepositoryInterface;
 use App\Services\Repositories\Contracts\PlayerRepositoryInterface;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
@@ -67,8 +69,8 @@ readonly class Parser implements ParserInterface
         try {
             $clubDTO = $this->apiClient->getClubByTag($clubTag);
 
-            return $this->clubRepository->createOrUpdateClub($clubDTO);
-        } catch (ResponseException|InvalidDTOException $e) {
+            return $this->clubRepository->createOrUpdateClubFromDTOAndSyncClubMembers($clubDTO);
+        } catch (ResponseException|InvalidDTOException|ValidationException $e) {
             Log::error("Failed to parse Club with tag $clubTag: " . $e->getMessage(), [
                 'exception' => $e
             ]);
@@ -76,13 +78,16 @@ readonly class Parser implements ParserInterface
         }
     }
 
+    /**
+     * @throws ParsingException
+     */
     public function parseClubMembers(string $clubTag): Club
     {
         try {
-            $playerDTOs = $this->apiClient->getClubMembers($clubTag);
+            $memberDTOs = $this->apiClient->getClubMembers($clubTag);
 
-            return $this->clubRepository->syncClubMembersByTag($clubTag, $playerDTOs);
-        } catch (ResponseException|InvalidDTOException $e) {
+            return $this->clubRepository->createOrUpdateClubFromTagAndSyncClubMembers($clubTag, $memberDTOs);
+        } catch (ResponseException|InvalidDTOException|ValidationException $e) {
             Log::error("Failed to parse members of Club with tag $clubTag: " . $e->getMessage(), [
                 'exception' => $e
             ]);
@@ -112,13 +117,27 @@ readonly class Parser implements ParserInterface
     {
         try {
             $playerDTO = $this->apiClient->getPlayerByTag($playerTag);
+            $player = $this->playerRepository->createOrUpdatePlayerFromTagAndSyncRelations(
+                tag: $playerTag,
+                playerDTO: $playerDTO,
+            );
 
-            return $this->playerRepository->createOrUpdatePlayer($playerDTO);
-        } catch (ResponseException|InvalidDTOException $e) {
+            return $player;
+        } catch (ResponseException|InvalidDTOException|ValidationException $e) {
             Log::error("Failed to parse Player with tag $playerTag: " . $e->getMessage(), [
                 'exception' => $e
             ]);
             throw ParsingException::fromException($e);
         }
+    }
+
+    /**
+     * @throws ParsingException
+     */
+    public function test(): void
+    {
+        // app(\App\Services\Parser\Contracts\ParserInterface::class)->test();
+        $player = $this->parsePlayerByTag(env('BS_PLAYER_TAG'));
+//        $player = $this->parsePlayerByTag(env('BS_PLAYER_WITHOUT_CLUB_TAG'));
     }
 }
