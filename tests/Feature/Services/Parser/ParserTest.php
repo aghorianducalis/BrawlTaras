@@ -9,10 +9,12 @@ use App\API\Contracts\APIClientInterface;
 use App\API\DTO\Response\BrawlerDTO;
 use App\API\DTO\Response\ClubDTO;
 use App\API\DTO\Response\EventRotationDTO;
+use App\API\DTO\Response\PlayerDTO;
 use App\API\Exceptions\ResponseException;
 use App\Models\Brawler;
 use App\Models\Club;
 use App\Models\EventRotation;
+use App\Models\Player;
 use App\Services\Parser\Contracts\ParserInterface;
 use App\Services\Parser\Exceptions\ParsingException;
 use App\Services\Parser\Parser;
@@ -42,6 +44,7 @@ use Tests\Traits\TestClubs;
 #[CoversMethod(Parser::class, 'parseAllBrawlers')]
 #[CoversMethod(Parser::class, 'parseClubByTag')]
 #[CoversMethod(Parser::class, 'parseClubMembers')]
+#[CoversMethod(Parser::class, 'parsePlayerByTag')]
 #[CoversMethod(Parser::class, 'parseEventsRotation')]
 #[UsesClass(APIClient::class)]
 #[UsesClass(BrawlerRepository::class)]
@@ -263,6 +266,32 @@ class ParserTest extends TestCase
                 $result->members->pluck('tag')->toArray(),
                 'Club members do not match expected values'
             );
+        } catch (ParsingException $e) {
+            $this->fail('ParsingException was thrown: ' . $e->getMessage());
+        }
+    }
+
+    #[Test]
+    #[TestDox('Parses player info successfully.')]
+    public function test_parses_player_info_by_tag_successfully(): void
+    {
+        $player = Player::factory()->withClub()->withBrawlers()->create();
+        $playerDTO = PlayerDTO::fromEloquentModel($player);
+
+        $this->apiClient->shouldReceive('getPlayerByTag')
+            ->once()
+            ->with($player->tag)
+            ->andReturn($playerDTO);
+
+        $this->playerRepository->shouldReceive('createOrUpdatePlayerFromDTOAndSyncRelations')
+            ->once()
+            ->with($playerDTO)
+            ->andReturn($player);
+
+        try {
+            $result = $this->parser->parsePlayerByTag(playerTag: $player->tag);
+
+            $this->assertEqualPlayerModels($player, $result);
         } catch (ParsingException $e) {
             $this->fail('ParsingException was thrown: ' . $e->getMessage());
         }
