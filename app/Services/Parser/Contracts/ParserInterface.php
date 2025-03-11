@@ -52,14 +52,6 @@ interface ParserInterface
     public function parseClubMembers(string $clubTag): Club;
 
     /**
-     * Parse all event rotations from the API and store/update them in the local database.
-     *
-     * @return array<EventRotation> The list of parsed and saved event rotations.
-     * @throws ParsingException If an unrecoverable error occurs during parsing.
-     */
-    public function parseEventsRotation(): array;
-
-    /**
      * Get information about a single player by player tag.
      *
      * @param string $playerTag
@@ -67,4 +59,12 @@ interface ParserInterface
      * @throws ParsingException If an unrecoverable error occurs during parsing.
      */
     public function parsePlayerByTag(string $playerTag): Player;
+
+    /**
+     * Parse all event rotations from the API and store/update them in the local database.
+     *
+     * @return array<EventRotation> The list of parsed and saved event rotations.
+     * @throws ParsingException If an unrecoverable error occurs during parsing.
+     */
+    public function parseEventsRotation(): array;
 }
