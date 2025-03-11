@@ -162,4 +162,6 @@ trait CreatesBrawlers
             // todo players
         }
     }
+
+    // todo data provider data
 }

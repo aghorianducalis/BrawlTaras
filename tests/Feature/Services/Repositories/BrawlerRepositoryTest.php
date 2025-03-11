@@ -22,7 +22,7 @@ use Tests\Traits\CreatesBrawlers;
 #[Group('Repositories')]
 #[CoversClass(BrawlerRepository::class)]
 #[CoversMethod(BrawlerRepository::class, 'findBrawler')]
-#[CoversMethod(BrawlerRepository::class, 'createOrUpdateBrawler')]
+#[CoversMethod(BrawlerRepository::class, 'createOrUpdateBrawlerFromDTO')]
 #[CoversMethod(BrawlerRepository::class, 'syncRelations')]
 #[UsesClass(Brawler::class)]
 #[UsesClass(BrawlerFactory::class)]
@@ -74,7 +74,7 @@ class BrawlerRepositoryTest extends TestCase
             'name' => $brawlerDTO->name,
         ]);
 
-        $brawler = $this->repository->createOrUpdateBrawler($brawlerDTO);
+        $brawler = $this->repository->createOrUpdateBrawlerFromDTO($brawlerDTO);
 
         $this->assertDatabaseHas($table, [
             'id' => $brawler->id,
@@ -95,7 +95,7 @@ class BrawlerRepositoryTest extends TestCase
             'ext_id' => $brawler->ext_id,
         ]);
 
-        $brawlerUpdated = $this->repository->createOrUpdateBrawler($brawlerDTO);
+        $brawlerUpdated = $this->repository->createOrUpdateBrawlerFromDTO($brawlerDTO);
 
         $this->assertDatabaseHas($brawler->getTable(), [
             'id' => $brawler->id,

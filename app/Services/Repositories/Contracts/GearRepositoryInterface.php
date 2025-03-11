@@ -20,8 +20,16 @@ interface GearRepositoryInterface
     /**
      * Create or update a single gear in the database.
      *
+     * @param array{ext_id: int, name: string} $gearData
+     * @return Gear
+     */
+    public function createOrUpdateGearFromDataArray(array $gearData): Gear;
+
+    /**
+     * Create or update a single gear in the database.
+     *
      * @param GearDTO $gearDTO
      * @return Gear
      */
-    public function createOrUpdateGear(GearDTO $gearDTO): Gear;
+    public function createOrUpdateGearFromDTO(GearDTO $gearDTO): Gear;
 }

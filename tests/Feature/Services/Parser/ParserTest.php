@@ -98,7 +98,7 @@ class ParserTest extends TestCase
             ->with($brawler->ext_id)
             ->andReturn($brawlerDTO);
 
-        $this->brawlerRepository->shouldReceive('createOrUpdateBrawler')
+        $this->brawlerRepository->shouldReceive('createOrUpdateBrawlerFromDTO')
             ->once()
             ->with($brawlerDTO)
             ->andReturn($brawler);
@@ -126,7 +126,7 @@ class ParserTest extends TestCase
             ->with($externalId)
             ->andThrow(ResponseException::fromMessage('API failure'));
 
-        $this->brawlerRepository->shouldNotReceive('createOrUpdateBrawler');
+        $this->brawlerRepository->shouldNotReceive('createOrUpdateBrawlerFromDTO');
 
         $this->expectException(ParsingException::class);
         $this->parser->parseBrawlerByExternalId($externalId);
@@ -143,7 +143,7 @@ class ParserTest extends TestCase
             ->once()
             ->andReturn($brawlerDTOs);
 
-        $this->brawlerRepository->shouldReceive('createOrUpdateBrawlers')
+        $this->brawlerRepository->shouldReceive('createOrUpdateBrawlersFromDTOs')
             ->once()
             ->with($brawlerDTOs)
             ->andReturn($brawlers);
@@ -165,7 +165,7 @@ class ParserTest extends TestCase
             ->once()
             ->andReturn([]);
 
-        $this->brawlerRepository->shouldNotReceive('createOrUpdateBrawlers');
+        $this->brawlerRepository->shouldNotReceive('createOrUpdateBrawlersFromDTOs');
 
         $this->expectException(ParsingException::class);
         $this->parser->parseAllBrawlers();
@@ -182,7 +182,7 @@ class ParserTest extends TestCase
             ->once()
             ->andThrow(ResponseException::fromMessage('API failure'));
 
-        $this->brawlerRepository->shouldNotReceive('createOrUpdateBrawlers');
+        $this->brawlerRepository->shouldNotReceive('createOrUpdateBrawlersFromDTOs');
 
         $this->expectException(ParsingException::class);
         $this->parser->parseAllBrawlers();
@@ -291,7 +291,7 @@ class ParserTest extends TestCase
         try {
             $result = $this->parser->parsePlayerByTag(playerTag: $player->tag);
 
-            $this->assertEqualPlayerModels($player, $result);
+            $this->assertPlayerEloquentModelsAreEqual($player, $result);
         } catch (ParsingException $e) {
             $this->fail('ParsingException was thrown: ' . $e->getMessage());
         }

@@ -34,7 +34,7 @@ readonly class Parser implements ParserInterface
     {
         try {
             $brawlerDTO = $this->apiClient->getBrawler($externalId);
-            return $this->brawlerRepository->createOrUpdateBrawler($brawlerDTO);
+            return $this->brawlerRepository->createOrUpdateBrawlerFromDTO($brawlerDTO);
         } catch (ResponseException|InvalidDTOException $e) {
             Log::error("Failed to parse Brawler with external ID $externalId: " . $e->getMessage(), [
                 'exception' => $e,
@@ -53,7 +53,7 @@ readonly class Parser implements ParserInterface
                 throw ValidationException::withMessages(['No Brawlers found in the API response.']);
             }
 
-            return $this->brawlerRepository->createOrUpdateBrawlers($brawlerDTOs);
+            return $this->brawlerRepository->createOrUpdateBrawlersFromDTOs($brawlerDTOs);
         } catch (ResponseException|InvalidDTOException|ValidationException $e) {
             Log::error('Failed to parse all Brawlers: ' . $e->getMessage(), [
                 'exception' => $e,

@@ -4,12 +4,16 @@ declare(strict_types=1);
 
 namespace App\Services\Repositories;
 
-use App\API\DTO\Response\AccessoryDTO;
-use App\API\DTO\Response\BrawlerDTO;
+use App\API\DTO\Response\PlayerBrawlerDTO;
+use App\API\DTO\Response\PlayerBrawlerGearDTO;
 use App\API\DTO\Response\PlayerDTO;
+use App\Models\Accessory;
+use App\Models\Brawler;
 use App\Models\Club;
+use App\Models\Gear;
 use App\Models\Player;
 use App\Models\PlayerBrawler;
+use App\Models\StarPower;
 use App\Services\Repositories\Contracts\AccessoryRepositoryInterface;
 use App\Services\Repositories\Contracts\BrawlerRepositoryInterface;
 use App\Services\Repositories\Contracts\ClubRepositoryInterface;
@@ -52,7 +56,7 @@ final readonly class PlayerRepository implements PlayerRepositoryInterface
         return $query->first();
     }
 
-    public function createOrUpdatePlayerFromArray(array $attributes): Player
+    public function createOrUpdatePlayerFromDataArray(array $attributes): Player
     {
         $validated = self::validatePlayerData(attributes: $attributes);
 
@@ -61,63 +65,111 @@ final readonly class PlayerRepository implements PlayerRepositoryInterface
 
     public function createOrUpdatePlayerFromDTO(PlayerDTO $playerDTO): Player
     {
-        $attributes = [
-            'tag' => $playerDTO->tag,
-            'name' => $playerDTO->name,
-            'name_color' => $playerDTO->nameColor,
-            'icon_id' => $playerDTO->icon['id'],
-            'trophies' => $playerDTO->trophies,
-            'highest_trophies' => $playerDTO->highestTrophies,
-            'exp_level' => $playerDTO->expLevel,
-            'exp_points' => $playerDTO->expPoints,
+        $validated = [
+            'tag'                                   => $playerDTO->tag,
+            'name'                                  => $playerDTO->name,
+            'name_color'                            => $playerDTO->nameColor,
+            'icon_id'                               => $playerDTO->icon['id'],
+            'trophies'                              => $playerDTO->trophies,
+            'highest_trophies'                      => $playerDTO->highestTrophies,
+            'exp_level'                             => $playerDTO->expLevel,
+            'exp_points'                            => $playerDTO->expPoints,
             'is_qualified_from_championship_league' => $playerDTO->isQualifiedFromChampionshipChallenge,
-            'solo_victories' => $playerDTO->victoriesSolo,
-            'duo_victories' => $playerDTO->victoriesDuo,
-            'trio_victories' => $playerDTO->victories3vs3,
-            'best_time_robo_rumble' => $playerDTO->bestRoboRumbleTime,
-            'best_time_as_big_brawler' => $playerDTO->bestTimeAsBigBrawler,
+            'solo_victories'                        => $playerDTO->victoriesSolo,
+            'duo_victories'                         => $playerDTO->victoriesDuo,
+            'trio_victories'                        => $playerDTO->victories3vs3,
+            'best_time_robo_rumble'                 => $playerDTO->bestRoboRumbleTime,
+            'best_time_as_big_brawler'              => $playerDTO->bestTimeAsBigBrawler,
         ];
 
-        return $this->createOrUpdatePlayerFromArray($attributes);
+        return $this->createOrUpdatePlayerFromDataArray(attributes: $validated);
     }
 
-    public function createOrUpdatePlayerFromTagAndSyncRelations(string $tag, PlayerDTO $playerDTO): Player
+    public function createOrUpdatePlayerFromDTOAndSyncRelations(PlayerDTO $playerDTO): Player
     {
         $player = null;
 
         DB::transaction(function () use (&$player, $playerDTO) {
-            $player = $this->createOrUpdatePlayerFromDTO($playerDTO);
-
-            if (empty($playerDTO->club)) {
-                $this->createOrUpdatePlayerFromArray([
-                    'tag'       => $playerDTO->tag,
-                    'club_id'   => null,
-                    'club_role' => null,
-                ]);
-                // nice todo remove duplicates
-                $player->club()->disassociate();
-                $player->save();
-            } else {
-                $clubRepository = app(ClubRepositoryInterface::class);
-                $club = $clubRepository->createOrUpdateClubFromTag(tag: $playerDTO->club['tag']);
-                $player->club()->associate($club);
-                $player->save();
-                // todo at this moment player has no actual 'club_role' (that can be fetched from Club API)
-            }
-
-            $player = $this->syncPlayerBrawlers($player, $playerDTO->playerBrawlers);
+            $player = $this->createOrUpdatePlayerFromDTO(playerDTO: $playerDTO);
+            $this->syncPlayerRelations(
+                player: $player,
+                playerBrawlerDTOs: $playerDTO->playerBrawlers,
+                clubDataArray: $playerDTO->club,
+            );
         });
 
         if (!$player) {
-            throw ValidationException::withMessages(["Player {$tag} has not been created."]);
+            // todo try/catch here and continue with actual player (not null)
+            throw ValidationException::withMessages(["Player with tag $playerDTO->tag has not been created from DTO: {$playerDTO->toJson()}."]);
         }
 
-        $player->load(['club', 'brawlers',]);
+        $player->refresh();
+        $player->load([
+            'brawlers',
+            'club',
+        ]);
 
         return $player;
     }
 
-    public function syncPlayerBrawlers(Player $player, array $playerBrawlerDTOs): Player
+    public function syncPlayerRelations(Player $player, array $playerBrawlerDTOs = [], array $clubDataArray = []): void
+    {
+        DB::transaction(function () use (&$player, $playerBrawlerDTOs, $clubDataArray) {
+            $this->syncPlayerClub(
+                player: $player,
+                clubDataArray: $clubDataArray,
+            );
+            $player->load('club');
+            $this->syncPlayerBrawlers(
+                player: $player,
+                playerBrawlerDTOs: $playerBrawlerDTOs,
+            );
+        });
+    }
+
+    public function syncPlayerClub(Player $player, array $clubDataArray = []): bool
+    {
+        if (empty($clubDataArray)) {
+            $player->club_id = null;
+            $player->club_role = null;
+        } else {
+            $clubRepository = app(ClubRepositoryInterface::class);
+            $club = $clubRepository->createOrUpdateClubFromArray(attributes: [
+                'tag'  => $clubDataArray['tag'],
+                'name' => $clubDataArray['name'],
+            ]);
+
+            $player->club_id = $club->id;
+            // todo at this moment player has no actual 'club_role' (that can be fetched from Club API)
+            // Either way we need to actualise the player's role:
+            // - in the new club, if club has been changed; or
+            // - in the same (old/previous) club, anyway.
+
+            $isSameClub = ($player->club_id === $club->id);
+
+            // club role could be changed
+            $player->club_role = $isSameClub ? $player->club_role : null;
+//            $player->club_role = null;
+        }
+
+        return $player->save();
+    }
+
+    /**
+     * 1. Sync the list of player brawlers. Create new or update existing PlayerBrawlers. Then sync.
+     * For each player brawler:
+     * 2. Find or create Brawler
+     * 3. Find or create Accessories, Gears, Star Powers for Brawler
+     * 4. Attach Brawler to Accessories, Gears, Star Powers. Without sync.
+     * 5. Attach Brawler to Player. Find or create PlayerBrawler. Save properties (power, rank, trophies, highestTrophies)
+     * 6. Create or update PlayerBrawlerAccessory, PlayerBrawlerGear, PlayerBrawlerStarPower for PlayerBrawler
+     * 7. Sync PlayerBrawlerAccessory, PlayerBrawlerGear, PlayerBrawlerStarPower for PlayerBrawler.
+     *
+     * @param Player $player
+     * @param PlayerBrawlerDTO[] $playerBrawlerDTOs
+     * @return void
+     */
+    public function syncPlayerBrawlers(Player $player, array $playerBrawlerDTOs): void
     {
         DB::transaction(function () use (&$player, $playerBrawlerDTOs) {
             $brawlerRepository = app(BrawlerRepositoryInterface::class);
@@ -128,98 +180,161 @@ final readonly class PlayerRepository implements PlayerRepositoryInterface
             $brawlers = collect();
 
             foreach ($playerBrawlerDTOs as $playerBrawlerDTO) {
-                $brawler = $brawlerRepository->findBrawler(['ext_id' => $playerBrawlerDTO->extId]);
+                // 1. Find or create Brawler
+                $brawler = $brawlerRepository->createOrUpdateBrawlerFromDataArray([
+                    'ext_id' => $playerBrawlerDTO->extId,
+                    'name'   => $playerBrawlerDTO->name,
+                ]);
 
-                if (!$brawler) {
-                    $brawler = $brawlerRepository->createOrUpdateBrawler(BrawlerDTO::fromArray([
-                        'ext_id' => $playerBrawlerDTO->extId,
-                        'name'   => $playerBrawlerDTO->name,
-                    ]));
+                $accessories = collect();
+                $gears = collect();
+                $starPowers = collect();
+
+                // 2.1. Find or create Accessories for Brawler
+                foreach ($playerBrawlerDTO->accessories as $playerBrawlerAccessoryDTO) {
+                    $accessory = $accessoryRepository->createOrUpdateAccessoryFromDataArray(
+                        [
+                            'ext_id' => $playerBrawlerAccessoryDTO->extId,
+                            'name'   => $playerBrawlerAccessoryDTO->name,
+                        ]
+                    );
+
+                    $accessories->add($accessory);
                 }
 
-                /** @var PlayerBrawler $playerBrawler */
-                $playerBrawler = $player->brawlers()->save($brawler, [
+                // 2.2. Find or create Gears for Brawler
+                foreach ($playerBrawlerDTO->gears as $playerBrawlerGearDTO) {
+                    $gear = $gearRepository->createOrUpdateGearFromDataArray(
+                        [
+                            'ext_id' => $playerBrawlerGearDTO->extId,
+                            'name'   => $playerBrawlerGearDTO->name,
+                        ]
+                    );
+
+                    $gears->add($gear);
+                }
+
+                // 2.3. Find or create Star Powers for Brawler
+                foreach ($playerBrawlerDTO->starPowers as $playerBrawlerStarPowerDTO) {
+                    $starPower = $starPowerRepository->createOrUpdateStarPowerFromDataArray(
+                        [
+                            'ext_id' => $playerBrawlerStarPowerDTO->extId,
+                            'name'   => $playerBrawlerStarPowerDTO->name,
+                        ]
+                    );
+
+                    $starPowers->add($starPower);
+                }
+
+                // 3. Attach Brawler to Accessories, Gears, Star Powers
+                $brawler->accessories()->saveMany($accessories);
+                $brawler->gears()->saveMany($gears);
+                $brawler->starPowers()->saveMany($starPowers);
+                $brawler->save();
+
+                $brawlers->add($brawler);
+
+                // 4. Attach Brawler to Player. Save properties (power, rank, trophies, highestTrophies)
+                $brawler = $player->brawlers()->save($brawler, [
                     'power'            => $playerBrawlerDTO->power,
                     'rank'             => $playerBrawlerDTO->rank,
                     'trophies'         => $playerBrawlerDTO->trophies,
                     'highest_trophies' => $playerBrawlerDTO->highestTrophies,
                 ]);
 
-                /** @var PlayerBrawler $actualPlayerBrawler */
-                $actualPlayerBrawler = $playerBrawler->player_brawler;
-
-                /*
-                 *  sync player brawler accessories
-                 */
-
                 $brawler->load([
                     'accessories',
                     'gears',
                     'starPowers',
+                    'players',
                 ]);
 
-                $accessories = collect();
+                /** @var PlayerBrawler $playerBrawler */
+                $playerBrawler = $brawler->players->where('id', $player->id)->first()->player_brawler;
 
-                foreach ($playerBrawlerDTO->accessories as $playerBrawlerAccessoryDTO) {
-                    $accessory = $accessoryRepository->findAccessory(['ext_id' => $playerBrawlerAccessoryDTO->extId]);
+                // 5. Sync relations with accessories, gears and star powers for PlayerBrawler model
+                // 5.1. Detach PlayerBrawler's old relations
+                $playerBrawler->playerBrawlerAccessories()->delete();
+                $playerBrawler->playerBrawlerGears()->delete();
+                $playerBrawler->playerBrawlerStarPowers()->delete();
+                $playerBrawler->save();
 
-                    if (!$accessory) {
-                        $accessory = $accessoryRepository->createOrUpdateAccessory(AccessoryDTO::fromArray([
-                            'ext_id' => $playerBrawlerAccessoryDTO->extId,
-                            'name'   => $playerBrawlerAccessoryDTO->name,
-                        ]));
-                    }
+                // 5.2. Attach PlayerBrawler's new relations: create pivots with properties
 
-                    $accessories->add($accessory);
+                /** @var Accessory $accessoryForLoop */
+                foreach ($accessories as $accessoryForLoop) {
+                    /** @var Accessory $accessoryWithPivot */
+                    $accessoryWithPivot = $brawler->accessories->where('id', $accessoryForLoop->id)->first();
 
-                    // create or update the relation between Brawler and Accessory
-//                    $brawler->accessories()->save($accessory);
-                    $accessoryWithPivot = $brawler->accessories()->save($accessory);
-                    $brawler->save();
-
-                    // or create via PlayerBrawlerAccessory::create()
+                    // create the relation between PlayerBrawler and brawler_accessory
                     $playerBrawler->playerBrawlerAccessories()->create([
-//                    'player_brawler_id'    => $actualPlayerBrawler->id,
-//                        'brawler_accessory_id' => $accessoryWithPivot->brawler_accessory->id,
-                        'brawler_accessory_id' => $brawler->brawler_accessory->id,
-                    ]);
-                    $playerBrawler->save();
-                    $playerBrawler->refresh();
-                    $playerBrawler->load([
-                        'playerBrawlerAccessories',
+                        'brawler_accessory_id' => $accessoryWithPivot->brawler_accessory->id,
                     ]);
                 }
 
-                // Detach old accessories
-                $playerBrawler->playerBrawlerAccessories()
-                    // todo fix
-                    ->whereNotIn('id', $accessories->pluck('id')->toArray())
-                    ->delete();
+                /** @var Gear $gearForLoop */
+                foreach ($gears as $gearForLoop) {
+                    /** @var Gear $gearWithPivot */
+                    $gearWithPivot = $brawler->gears->where('id', $gearForLoop->id)->first();
+
+                    /** @var PlayerBrawlerGearDTO $playerBrawlerGearDTO */
+                    $playerBrawlerGearDTO = collect($playerBrawlerDTO->gears)->first(
+                        fn (PlayerBrawlerGearDTO $gearDTO) => (($gearDTO->extId === $gearForLoop->ext_id) && ($gearDTO->name === $gearForLoop->name))
+                    );
+
+                    // create the relation between PlayerBrawler and brawler_gear
+                    $playerBrawler->playerBrawlerGears()->create([
+                        'brawler_gear_id' => $gearWithPivot->brawler_gear->id,
+                        'level' => $playerBrawlerGearDTO->level,
+                    ]);
+                }
+
+                /** @var StarPower $starPowerForLoop */
+                foreach ($starPowers as $starPowerForLoop) {
+                    /** @var StarPower $starPowerWithPivot */
+                    $starPowerWithPivot = $brawler->starPowers->where('id', $starPowerForLoop->id)->first();
+
+                    // create the relation between PlayerBrawler and brawler_star_power
+                    $playerBrawler->playerBrawlerStarPowers()->create([
+                        'brawler_star_power_id' => $starPowerWithPivot->brawler_star_power->id,
+                    ]);
+                }
+
                 $playerBrawler->save();
-                $playerBrawler->refresh();
                 $playerBrawler->load([
                     'playerBrawlerAccessories',
+                    'playerBrawlerGears',
+                    'playerBrawlerStarPowers',
                 ]);
-
-                /*
-                 *  End of sync player brawler accessories
-                 */
-
-                $brawlers->add($brawler);
             }
 
-            // Detach old brawlers
-            $player->brawlers()
-                ->whereNotIn('id', $brawlers->pluck('id')->toArray())
-                ->detach();
+            $player->save();
+            $player->load([
+                'brawlers',
+            ]);
+
+            // Detach old brawlers: remove old PlayerBrawler pivots with related pivots
+            $brawlerIdsToKeep = $brawlers->pluck('id');
+            $playerBrawlersToDetach = $player->brawlers->filter(fn(Brawler $brawler) => $brawlerIdsToKeep->doesntContain($brawler->id));
+
+            /** @var Brawler $brawlerToDetach */
+            foreach ($playerBrawlersToDetach as $brawlerToDetach) {
+
+                /** @var PlayerBrawler $playerBrawlerToDetach */
+                $playerBrawlerToDetach = $brawlerToDetach->player_brawler;
+
+                // nice todo this can be done within handler (observer) of PlayerBrawler's "delete" event
+                $playerBrawlerToDetach->playerBrawlerAccessories()->delete();
+                $playerBrawlerToDetach->playerBrawlerGears()->delete();
+                $playerBrawlerToDetach->playerBrawlerStarPowers()->delete();
+                $playerBrawlerToDetach->delete();
+            }
+
+            $player->save();
+            $player->load([
+                'brawlers',
+            ]);
         });
-
-        $player->refresh();
-        $player->load([
-            'brawlers',
-        ]);
-
-        return $player;
     }
 
     private function createOrUpdatePlayerFromValidatedArray(array $attributes): Player

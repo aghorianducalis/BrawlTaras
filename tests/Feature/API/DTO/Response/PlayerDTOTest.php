@@ -130,7 +130,7 @@ class PlayerDTOTest extends TestCase
         $playerDTO = PlayerDTO::fromEloquentModel($player);
 
         $this->assertInstanceOf(PlayerDTO::class, $playerDTO);
-        $this->assertPlayerDTOMatchesEloquentModel($playerDTO, $player);
+        $this->assertPlayerEloquentModelMatchesPlayerDTO($playerDTO, $player);
     }
 
     #[Test]

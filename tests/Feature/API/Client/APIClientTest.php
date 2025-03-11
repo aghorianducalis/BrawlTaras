@@ -681,7 +681,7 @@ class APIClientTest extends TestCase
         $playerDTO = $this->apiClient->getPlayerByTag($player->tag);
 
         $this->assertInstanceOf(PlayerDTO::class, $playerDTO);
-        $this->assertPlayerDTOMatchesEloquentModel(playerDTO: $playerDTO, player: $player);
+        $this->assertPlayerEloquentModelMatchesPlayerDTO(playerDTO: $playerDTO, player: $player);
     }
 
     #[Test]

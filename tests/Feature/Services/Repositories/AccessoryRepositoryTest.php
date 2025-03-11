@@ -23,7 +23,7 @@ use Tests\TestCase;
 #[Group('Repositories')]
 #[CoversClass(AccessoryRepository::class)]
 #[CoversMethod(AccessoryRepository::class, 'findAccessory')]
-#[CoversMethod(AccessoryRepository::class, 'createOrUpdateAccessory')]
+#[CoversMethod(AccessoryRepository::class, 'createOrUpdateAccessoryFromDTO')]
 #[UsesClass(Accessory::class)]
 #[UsesClass(AccessoryFactory::class)]
 #[UsesClass(AccessoryDTO::class)]
@@ -116,7 +116,7 @@ class AccessoryRepositoryTest extends TestCase
 
         $dto = AccessoryDTO::fromEloquentModel($accessoryToCreate);
 
-        $accessoryCreated = $this->repository->createOrUpdateAccessory($dto);
+        $accessoryCreated = $this->repository->createOrUpdateAccessoryFromDTO($dto);
 
         $this->assertEquals($accessoryToCreate->ext_id, $accessoryCreated->ext_id);
         $this->assertEquals($accessoryToCreate->name, $accessoryCreated->name);
@@ -143,7 +143,7 @@ class AccessoryRepositoryTest extends TestCase
         $accessoryToUpdate = Accessory::factory()->make($accessory->only(['id', 'ext_id']));
         $dto = AccessoryDTO::fromEloquentModel($accessoryToUpdate);
 
-        $accessoryUpdated = $this->repository->createOrUpdateAccessory($dto);
+        $accessoryUpdated = $this->repository->createOrUpdateAccessoryFromDTO($dto);
 
         $this->assertEquals($accessoryToUpdate->id, $accessoryUpdated->id);
         $this->assertEquals($accessoryToUpdate->ext_id, $accessoryUpdated->ext_id);

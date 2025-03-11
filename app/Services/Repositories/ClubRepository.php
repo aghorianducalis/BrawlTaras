@@ -145,7 +145,7 @@ final readonly class ClubRepository implements ClubRepositoryInterface
         ];
         $playerAttributes = array_merge($playerRawAttributes, $clubValidatedAttributes);
 
-        return $this->playerRepository->createOrUpdatePlayerFromArray(attributes: $playerAttributes);
+        return $this->playerRepository->createOrUpdatePlayerFromDataArray(attributes: $playerAttributes);
     }
 
     public function detachClubMembers(int $clubId, array $exceptPlayerIds): int
@@ -222,34 +222,27 @@ final readonly class ClubRepository implements ClubRepositoryInterface
         $tagRules = self::getClubTagRules();
         $rules = [
             'name' => [
-                'required',
                 'string',
                 'max:255',
             ],
             'description' => [
-                'required',
                 'string',
                 'max:255',
             ],
             'type' => [
-                'required',
                 'string',
                 'max:255',
             ],
             'badge_id' => [
-                'required',
                 'integer',
             ],
             'required_trophies' => [
-                'required',
                 'integer',
             ],
             'trophies' => [
-                'required',
                 'integer',
             ],
             'members' => [
-//                'required', // todo this shit just do not work as expected
                 'array',
             ],
             'members.*' => [

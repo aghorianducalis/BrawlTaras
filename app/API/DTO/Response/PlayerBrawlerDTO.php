@@ -13,8 +13,8 @@ use App\Models\PlayerBrawlerStarPower;
 final readonly class PlayerBrawlerDTO
 {
     /**
-     * @param int $extId
-     * @param string $name
+     * @param int $extId of Brawler
+     * @param string $name of Brawler
      * @param int $power
      * @param int $rank
      * @param int $trophies

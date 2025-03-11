@@ -18,12 +18,20 @@ interface BrawlerRepositoryInterface
     public function findBrawler(array $searchCriteria): ?Brawler;
 
     /**
-     * Create or update a single brawler in the database and sync related entities.
+     * Create or update a single brawler in the database.
+     *
+     * @param array{ext_id: int, name: string} $brawlerData
+     * @return Brawler
+     */
+    public function createOrUpdateBrawlerFromDataArray(array $brawlerData): Brawler;
+
+    /**
+     * Create or update a single brawler in the database and todo sync related entities.
      *
      * @param BrawlerDTO $brawlerDTO
      * @return Brawler
      */
-    public function createOrUpdateBrawler(BrawlerDTO $brawlerDTO): Brawler;
+    public function createOrUpdateBrawlerFromDTO(BrawlerDTO $brawlerDTO): Brawler;
 
     /**
      * Bulk create or update brawlers in the database.
@@ -31,5 +39,5 @@ interface BrawlerRepositoryInterface
      * @param array<BrawlerDTO> $brawlerDTOs
      * @return array<Brawler>
      */
-    public function createOrUpdateBrawlers(array $brawlerDTOs): array;
+    public function createOrUpdateBrawlersFromDTOs(array $brawlerDTOs): array;
 }

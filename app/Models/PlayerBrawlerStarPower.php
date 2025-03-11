@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Services\Repositories\Contracts\StarPowerRepositoryInterface;
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 
 /**
  * @property int $id
@@ -15,7 +14,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property int $brawler_star_power_id
  * @property Carbon $created_at
  * @property Carbon $updated_at
- * @property-read StarPower|null $starPower
+ * @property-read StarPower $starPower
  */
 class PlayerBrawlerStarPower extends Model
 {
@@ -34,12 +33,17 @@ class PlayerBrawlerStarPower extends Model
     /**
      * Get the related star power.
      *
-     * @return Attribute
+     * @return HasOneThrough
      */
-    protected function starPower(): Attribute
+    public function starPower(): HasOneThrough
     {
-        return Attribute::make(
-            get: fn (mixed $value, array $attributes) => app(StarPowerRepositoryInterface::class)->findStarPower(['brawler_star_power_id' => $this->brawler_star_power_id]),
-        )->shouldCache();
+        return $this->hasOneThrough(
+            StarPower::class,         // Final related model
+            BrawlerStarPower::class,  // Intermediate model
+            'id',                     // Foreign key on BrawlerStarPower (pivot ID)
+            'id',                   // Foreign key on StarPower
+            'brawler_star_power_id',  // Local key on PlayerBrawlerStarPower
+            'star_power_id',    // Key on BrawlerStarPower pointing to StarPower
+        );
     }
 }

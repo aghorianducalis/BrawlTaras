@@ -20,8 +20,16 @@ interface AccessoryRepositoryInterface
     /**
      * Create or update a single accessory in the database.
      *
+     * @param array{ext_id: int, name: string} $accessoryData
+     * @return Accessory
+     */
+    public function createOrUpdateAccessoryFromDataArray(array $accessoryData): Accessory;
+
+    /**
+     * Create or update a single accessory in the database.
+     *
      * @param AccessoryDTO $accessoryDTO
      * @return Accessory
      */
-    public function createOrUpdateAccessory(AccessoryDTO $accessoryDTO): Accessory;
+    public function createOrUpdateAccessoryFromDTO(AccessoryDTO $accessoryDTO): Accessory;
 }

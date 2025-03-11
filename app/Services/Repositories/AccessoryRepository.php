@@ -7,7 +7,6 @@ namespace App\Services\Repositories;
 use App\API\DTO\Response\AccessoryDTO;
 use App\Models\Accessory;
 use App\Services\Repositories\Contracts\AccessoryRepositoryInterface;
-use Illuminate\Support\Facades\DB;
 
 final readonly class AccessoryRepository implements AccessoryRepositoryInterface
 {
@@ -30,23 +29,35 @@ final readonly class AccessoryRepository implements AccessoryRepositoryInterface
         return $query->first();
     }
 
-    public function createOrUpdateAccessory(AccessoryDTO $accessoryDTO): Accessory
+    public function createOrUpdateAccessoryFromDataArray(array $accessoryData): Accessory
     {
-        $accessory = $this->findAccessory([
+        // TODO: validation
+        $validated = $accessoryData;
+
+        return $this->createOrUpdateAccessoryFromValidatedArray(attributes: $validated);
+    }
+
+    public function createOrUpdateAccessoryFromDTO(AccessoryDTO $accessoryDTO): Accessory
+    {
+        $validated = [
             'ext_id' => $accessoryDTO->extId,
-        ]);
-        $newData = [
-            'ext_id' => $accessoryDTO->extId, // unnecessary since 'ext_id' remains unchanged
-            'name' => $accessoryDTO->name,
+            'name'   => $accessoryDTO->name,
         ];
 
-        DB::transaction(function () use (&$accessory, $newData) {
-            if ($accessory) {
-                $accessory->update($newData);
-            } else {
-                $accessory = Accessory::query()->create($newData);
-            }
-        });
+        return $this->createOrUpdateAccessoryFromValidatedArray(attributes: $validated);
+    }
+
+    private function createOrUpdateAccessoryFromValidatedArray(array $attributes): Accessory
+    {
+        $accessory = $this->findAccessory([
+            'ext_id' => $attributes['ext_id'],
+        ]);
+
+        if ($accessory) {
+            $accessory->update(attributes: $attributes);
+        } else {
+            $accessory = Accessory::query()->create(attributes: $attributes);
+        }
 
         return $accessory;
     }
