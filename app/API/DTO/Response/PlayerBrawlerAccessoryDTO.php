@@ -20,8 +20,8 @@ final readonly class PlayerBrawlerAccessoryDTO
     public function toArray(): array
     {
         return [
-            'extId' => $this->extId,
-            'name'  => $this->name,
+            'id'   => $this->extId,
+            'name' => $this->name,
         ];
     }
 

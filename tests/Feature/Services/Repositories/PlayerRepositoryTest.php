@@ -17,6 +17,8 @@ use App\Services\Repositories\PlayerRepository;
 use Database\Factories\ClubFactory;
 use Database\Factories\PlayerFactory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Validation\ValidationException;
+use JsonException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -111,6 +113,9 @@ class PlayerRepositoryTest extends TestCase
         $this->assertPlayerEloquentModelsAreEqual($memberCreated, $memberFound);
     }
 
+    /**
+     * @throws ValidationException
+     */
     #[Test]
     #[TestDox('Create successfully the player model from attributes array.')]
     #[DataProvider('providePlayerModelData')]
@@ -132,6 +137,9 @@ class PlayerRepositoryTest extends TestCase
         );
     }
 
+    /**
+     * @throws ValidationException
+     */
     #[Test]
     #[TestDox('Create successfully the player model from DTO.')]
     public function test_create_player_from_dto(): void
@@ -164,6 +172,10 @@ class PlayerRepositoryTest extends TestCase
         // todo
     }
 
+    /**
+     * @throws ValidationException
+     * @throws JsonException
+     */
     #[Test]
     #[TestDox('Create successfully the player model with related entities from DTO.')]
     public function test_create_player_with_relations_from_dto(): void
@@ -180,17 +192,6 @@ class PlayerRepositoryTest extends TestCase
 
         $player = $this->repository->createOrUpdatePlayerFromDTOAndSyncRelations($playerDTO);
 
-        foreach ($player->brawlers as $brawler) {
-            $playerBrawler = $brawler->player_brawler;
-
-            foreach ($playerBrawler->playerBrawlerAccessories as $playerBrawlerAccessory) {
-//                dd(
-//                    111,
-//                    $playerBrawlerAccessory->accessory,
-//                    $playerBrawlerAccessory,
-//                );
-            }
-        }
         $this->assertDatabaseCount($this->playerTable, 1);
         $this->assertDatabaseHas($this->playerTable, [
             'id' => $player->id,
@@ -245,19 +246,7 @@ class PlayerRepositoryTest extends TestCase
                 'gears',
                 'starPowers',
             ]);
-//            dd(
-//                $brawler->player_brawler->playerBrawlerAccessories,
-//                $brawler->accessories,
-//            );
         }
-//        dd(
-//            playerDTO: $playerDTO,
-//            player: $player,
-//        );
-//        dd(
-//            playerDTO: $playerDTO,
-//            player: $player,
-//        );
 
         $this->assertPlayerEloquentModelMatchesPlayerDTO(
             playerDTO: $playerDTO,

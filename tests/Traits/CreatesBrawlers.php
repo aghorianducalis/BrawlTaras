@@ -81,6 +81,7 @@ trait CreatesBrawlers
         /** @var Brawler $brawler */
         $brawler = Brawler::factory()->make($attributes);
 
+        // todo data provider
         $accessories = Accessory::factory()
             ->count($accessoryCount)
             ->make()
@@ -137,12 +138,16 @@ trait CreatesBrawlers
         }
     }
 
-    public function assertBrawlerModelMatchesDTO(Brawler $brawler, BrawlerDTO $brawlerDTO): void
+    public function assertBrawlerModelMatchesDTO(
+        Brawler $brawler,
+        BrawlerDTO $brawlerDTO,
+        bool $checkRelations = true
+    ) : void
     {
         $this->assertSame($brawler->ext_id, $brawlerDTO->extId);
         $this->assertSame($brawler->name, $brawlerDTO->name);
 
-        if ($brawler->exists) {
+        if ($brawler->exists && $checkRelations) {
             $brawler->load(self::BRAWLER_RELATIONS);
 
             $this->assertEquals(

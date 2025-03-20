@@ -70,7 +70,8 @@ final readonly class PlayerDTO
             'bestRoboRumbleTime'                   => $this->bestRoboRumbleTime,
             'bestTimeAsBigBrawler'                 => $this->bestTimeAsBigBrawler,
             'club'                                 => $this->club,
-            'brawlers' => array_map(fn(PlayerBrawlerDTO $brawlerDTO) => $brawlerDTO->toArray(), $this->playerBrawlers),        ];
+            'brawlers' => array_map(fn(PlayerBrawlerDTO $playerBrawlerDTO) => $playerBrawlerDTO->toArray(), $this->playerBrawlers),
+        ];
     }
 
     /**

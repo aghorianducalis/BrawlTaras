@@ -21,7 +21,7 @@ final readonly class PlayerBrawlerGearDTO
     public function toArray(): array
     {
         return [
-            'extId' => $this->extId,
+            'id'    => $this->extId,
             'name'  => $this->name,
             'level' => $this->level,
         ];

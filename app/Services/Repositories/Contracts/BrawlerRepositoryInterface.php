@@ -26,12 +26,20 @@ interface BrawlerRepositoryInterface
     public function createOrUpdateBrawlerFromDataArray(array $brawlerData): Brawler;
 
     /**
-     * Create or update a single brawler in the database and todo sync related entities.
+     * Create or update a single brawler in the database.
      *
      * @param BrawlerDTO $brawlerDTO
      * @return Brawler
      */
     public function createOrUpdateBrawlerFromDTO(BrawlerDTO $brawlerDTO): Brawler;
+
+    /**
+     * Create or update a single brawler in the database and sync related entities.
+     *
+     * @param BrawlerDTO $brawlerDTO
+     * @return Brawler
+     */
+    public function createOrUpdateBrawlerFromDTOAndSyncRelations(BrawlerDTO $brawlerDTO): Brawler;
 
     /**
      * Bulk create or update brawlers in the database.
@@ -40,4 +48,12 @@ interface BrawlerRepositoryInterface
      * @return array<Brawler>
      */
     public function createOrUpdateBrawlersFromDTOs(array $brawlerDTOs): array;
+
+    /**
+     * Bulk create or update brawlers in the database with related entities.
+     *
+     * @param array<BrawlerDTO> $brawlerDTOs
+     * @return array<Brawler>
+     */
+    public function createOrUpdateBrawlersFromDTOsAndSyncRelations(array $brawlerDTOs): array;
 }

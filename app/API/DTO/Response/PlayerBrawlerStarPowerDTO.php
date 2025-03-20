@@ -20,8 +20,8 @@ final readonly class PlayerBrawlerStarPowerDTO
     public function toArray(): array
     {
         return [
-            'extId' => $this->extId,
-            'name'  => $this->name,
+            'id'   => $this->extId,
+            'name' => $this->name,
         ];
     }
 

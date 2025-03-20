@@ -27,6 +27,11 @@ use Illuminate\Validation\ValidationException;
 
 final readonly class PlayerRepository implements PlayerRepositoryInterface
 {
+    public const PLAYER_RELATIONS = [
+        'brawlers',
+        'club',
+    ];
+
     public function __construct() {}
 
     public function findPlayer(array $searchCriteria): ?Player
@@ -104,10 +109,7 @@ final readonly class PlayerRepository implements PlayerRepositoryInterface
         }
 
         $player->refresh();
-        $player->load([
-            'brawlers',
-            'club',
-        ]);
+        $player->load(self::PLAYER_RELATIONS);
 
         return $player;
     }
