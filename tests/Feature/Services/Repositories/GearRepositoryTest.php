@@ -22,7 +22,7 @@ use Tests\TestCase;
 #[Group('Repositories')]
 #[CoversClass(GearRepository::class)]
 #[CoversMethod(GearRepository::class, 'findGear')]
-#[CoversMethod(GearRepository::class, 'createOrUpdateGear')]
+#[CoversMethod(GearRepository::class, 'createOrUpdateGearFromDTO')]
 #[UsesClass(Gear::class)]
 #[UsesClass(GearFactory::class)]
 #[UsesClass(GearDTO::class)]
@@ -79,7 +79,7 @@ class GearRepositoryTest extends TestCase
 
         $dto = GearDTO::fromEloquentModel($gearToCreate);
 
-        $gearCreated = $this->repository->createOrUpdateGear($dto);
+        $gearCreated = $this->repository->createOrUpdateGearFromDTO($dto);
 
         $this->assertEquals($gearToCreate->ext_id, $gearCreated->ext_id);
         $this->assertEquals($gearToCreate->name, $gearCreated->name);
@@ -107,7 +107,7 @@ class GearRepositoryTest extends TestCase
         $gearToUpdate = Gear::factory()->make($gear->only(['id', 'ext_id']));
         $dto = GearDTO::fromEloquentModel($gearToUpdate);
 
-        $gearUpdated = $this->repository->createOrUpdateGear($dto);
+        $gearUpdated = $this->repository->createOrUpdateGearFromDTO($dto);
 
         $this->assertEquals($gearToUpdate->id, $gearUpdated->id);
         $this->assertEquals($gearToUpdate->ext_id, $gearUpdated->ext_id);

@@ -70,16 +70,38 @@ class PlayerFactory extends Factory
     /**
      * Attach brawlers to the player.
      *
+     * @see BrawlerFactory::withPlayers()
+     *
      * @param int $count
-     * @param array|callable $attributes
+     * @param array|callable $brawlerAttributes
+     * @param array|callable $playerBrawlerAttributes for pivot
      * @return self
      */
-    public function withBrawlers(int $count = 10, array|callable $attributes = []): self
+    public function withBrawlers(
+        int $count = 1,
+        array|callable $brawlerAttributes = [],
+        array|callable $playerBrawlerAttributes = [],
+    ): self
     {
-        return $this->afterCreating(fn(Player $player) => Brawler::factory()
-            ->hasAttached($player)
-            ->count($count)
-            ->create($attributes)
+        $trophies = $this->faker->numberBetween(0, 1200);
+        $requiredPlayerBrawlerAttributes = [
+            'power'            => $this->faker->numberBetween(1, 11),
+            'rank'             => $this->faker->numberBetween(1, 50),
+            'trophies'         => $trophies,
+            'highest_trophies' => $this->faker->numberBetween($trophies, $trophies + 100),
+        ];
+
+        foreach ($requiredPlayerBrawlerAttributes as $key => $value) {
+            if (!array_key_exists($key, $playerBrawlerAttributes)) {
+                $playerBrawlerAttributes[$key] = $value;
+            }
+        }
+
+        return $this->afterCreating(
+            fn(Player $player) => Brawler::factory()
+                ->hasAttached($player, $playerBrawlerAttributes)
+                ->count($count)
+                ->create($brawlerAttributes)
         );
     }
 }

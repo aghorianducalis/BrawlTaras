@@ -7,7 +7,6 @@ namespace App\Services\Repositories;
 use App\API\DTO\Response\GearDTO;
 use App\Models\Gear;
 use App\Services\Repositories\Contracts\GearRepositoryInterface;
-use Illuminate\Support\Facades\DB;
 
 final readonly class GearRepository implements GearRepositoryInterface
 {
@@ -30,23 +29,35 @@ final readonly class GearRepository implements GearRepositoryInterface
         return $query->first();
     }
 
-    public function createOrUpdateGear(GearDTO $gearDTO): Gear
+    public function createOrUpdateGearFromDataArray(array $gearData): Gear
     {
-        $gear = $this->findGear([
+        // TODO: validation
+        $validated = $gearData;
+
+        return $this->createOrUpdateGearFromValidatedArray(attributes: $validated);
+    }
+
+    public function createOrUpdateGearFromDTO(GearDTO $gearDTO): Gear
+    {
+        $validated = [
             'ext_id' => $gearDTO->extId,
-        ]);
-        $newData = [
-            'ext_id' => $gearDTO->extId, // unnecessary since 'ext_id' remains unchanged
-            'name' => $gearDTO->name,
+            'name'   => $gearDTO->name,
         ];
 
-        DB::transaction(function () use (&$gear, $newData) {
-            if ($gear) {
-                $gear->update($newData);
-            } else {
-                $gear = Gear::query()->create($newData);
-            }
-        });
+        return $this->createOrUpdateGearFromValidatedArray(attributes: $validated);
+    }
+
+    private function createOrUpdateGearFromValidatedArray(array $attributes): Gear
+    {
+        $gear = $this->findGear([
+            'ext_id' => $attributes['ext_id'],
+        ]);
+
+        if ($gear) {
+            $gear->update(attributes: $attributes);
+        } else {
+            $gear = Gear::query()->create(attributes: $attributes);
+        }
 
         return $gear;
     }

@@ -10,13 +10,12 @@ use App\API\DTO\Request\BrawlerListDTO as BrawlerListRequestDTO;
 use App\API\DTO\Request\EventRotationListDTO;
 use App\API\DTO\Response\BrawlerDTO as BrawlerResponseDTO;
 use App\API\DTO\Response\ClubDTO;
+use App\API\DTO\Response\ClubMemberDTO;
 use App\API\DTO\Response\EventRotationDTO;
-use App\API\DTO\Response\PlayerBrawlerDTO;
 use App\API\DTO\Response\PlayerDTO;
 use App\API\Enums\APIEndpoints;
 use App\API\Exceptions\InvalidDTOException;
 use App\API\Exceptions\ResponseException;
-use App\Models\Brawler;
 use App\Models\Event;
 use App\Models\EventRotation;
 use App\Models\Player;
@@ -68,8 +67,8 @@ use Tests\Traits\TestClubs;
 #[CoversMethod(APIClient::class, 'getPlayerByTag')]
 class APIClientTest extends TestCase
 {
-    use TestClubs;
     use CreatesBrawlers;
+    use TestClubs;
     use TestPlayers;
     use RefreshDatabase;
 
@@ -113,7 +112,12 @@ class APIClientTest extends TestCase
     public function it_fetches_brawler_by_id_successfully(): void
     {
         $apiEndpoint = APIEndpoints::BrawlerById;
-        $brawlerExpected = $this->createBrawlerWithRelations();
+        $brawlerExpected = $this->createBrawlerWithRelations(
+            accessoryCount: 2,
+            gearCount: 2,
+            starPowerCount: 2,
+            playerCount: 2,
+        );
         $mockResponse = new Response(200, [], BrawlerRequestDTO::fromBrawlerModel($brawlerExpected)->toJson());
         $this->httpClientMock
             ->shouldReceive('request')
@@ -209,7 +213,12 @@ class APIClientTest extends TestCase
     public function it_fetches_all_brawlers_successfully(): void
     {
         $apiEndpoint = APIEndpoints::Brawlers;
-        $brawlersExpected = array_map(fn () => $this->createBrawlerWithRelations(), range(1, 2));
+        $brawlersExpected = array_map(fn () => $this->createBrawlerWithRelations(
+            accessoryCount: 2,
+            gearCount: 2,
+            starPowerCount: 2,
+            playerCount: 2,
+        ), range(1, 2));
         $mockResponse = new Response(200, [], BrawlerListRequestDTO::fromListOfBrawlerModels($brawlersExpected)->toJson());
 
         $this->httpClientMock
@@ -542,7 +551,7 @@ class APIClientTest extends TestCase
     {
         $club = $this->createClubWithMembers();
         $apiEndpoint = APIEndpoints::ClubMembers;
-        $mockResponse = new Response(200, [], json_encode(['items' => array_map(fn(Player $player) => PlayerDTO::fromEloquentModel($player)->toArray(), $club->members->all())], JSON_THROW_ON_ERROR));
+        $mockResponse = new Response(200, [], json_encode(['items' => array_map(fn(Player $member) => ClubMemberDTO::fromEloquentModel($member)->toArray(), $club->members->all())], JSON_THROW_ON_ERROR));
 
         $this->httpClientMock
             ->shouldReceive('request')
@@ -562,11 +571,11 @@ class APIClientTest extends TestCase
         $this->assertCount($club->members->count(), $memberDTOs);
 
         foreach ($memberDTOs as $i => $memberDTO) {
-            $this->assertInstanceOf(PlayerDTO::class, $memberDTO);
+            $this->assertInstanceOf(ClubMemberDTO::class, $memberDTO);
             /** @var Player $member */
             $member = $club->members->get($i);
 
-            $this->assertPlayerDTOMatchesEloquentModel($memberDTO, $member);
+            $this->assertClubMemberDTOMatchesEloquentModel($memberDTO, $member);
         }
     }
 
@@ -672,38 +681,7 @@ class APIClientTest extends TestCase
         $playerDTO = $this->apiClient->getPlayerByTag($player->tag);
 
         $this->assertInstanceOf(PlayerDTO::class, $playerDTO);
-        $this->assertSame($player->tag, $playerDTO->tag);
-        $this->assertSame($player->name, $playerDTO->name);
-        $this->assertSame($player->name_color, $playerDTO->nameColor);
-        $this->assertSame($player->icon_id, $playerDTO->icon['id']);
-        $this->assertSame($player->trophies, $playerDTO->trophies);
-        $this->assertSame($player->highest_trophies, $playerDTO->highestTrophies);
-        $this->assertSame($player->exp_level, $playerDTO->expLevel);
-        $this->assertSame($player->exp_points, $playerDTO->expPoints);
-        $this->assertSame($player->is_qualified_from_championship_league, $playerDTO->isQualifiedFromChampionshipChallenge);
-        $this->assertSame($player->solo_victories, $playerDTO->victoriesSolo);
-        $this->assertSame($player->duo_victories, $playerDTO->victoriesDuo);
-        $this->assertSame($player->trio_victories, $playerDTO->victories3vs3);
-        $this->assertSame($player->best_time_robo_rumble, $playerDTO->bestRoboRumbleTime);
-        $this->assertSame($player->best_time_as_big_brawler, $playerDTO->bestTimeAsBigBrawler);
-
-        $this->assertIsArray($playerDTO->club);
-        $this->assertSame($player->club->tag, $playerDTO->club['tag']);
-        $this->assertSame($player->club->name, $playerDTO->club['name']);
-
-        if ($playerDTO->playerBrawlers) {
-
-            $this->assertIsArray($playerDTO->playerBrawlers);
-            $this->assertCount($player->brawlers()->count(), $playerDTO->playerBrawlers);
-
-            foreach ($playerDTO->playerBrawlers as $i => $playerBrawlerDTO) {
-                $this->assertInstanceOf(PlayerBrawlerDTO::class, $playerBrawlerDTO);
-                /** @var Brawler $playerBrawler */
-                $playerBrawler = $player->brawlers->get($i);
-
-                $this->assertBrawlerModelMatchesDTO($playerBrawler, $playerBrawlerDTO);
-            }
-        }
+        $this->assertPlayerEloquentModelMatchesPlayerDTO(playerDTO: $playerDTO, player: $player);
     }
 
     #[Test]

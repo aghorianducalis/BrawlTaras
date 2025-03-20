@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Services\Repositories\Contracts\GearRepositoryInterface;
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 
 /**
  * @property int $id
@@ -16,7 +15,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property int $level
  * @property Carbon $created_at
  * @property Carbon $updated_at
- * @property-read Gear|null $gear
+ * @property-read Gear $gear
  */
 class PlayerBrawlerGear extends Model
 {
@@ -37,12 +36,17 @@ class PlayerBrawlerGear extends Model
     /**
      * Get the related gear.
      *
-     * @return Attribute
+     * @return HasOneThrough
      */
-    protected function gear(): Attribute
+    public function gear(): HasOneThrough
     {
-        return Attribute::make(
-            get: fn (mixed $value, array $attributes) => app(GearRepositoryInterface::class)->findGear(['brawler_gear_id' => $this->brawler_gear_id]),
-        )->shouldCache();
+        return $this->hasOneThrough(
+            Gear::class,         // Final related model
+            BrawlerGear::class,  // Intermediate model
+            'id',                // Foreign key on BrawlerGear (pivot ID)
+            'id',              // Foreign key on Gear
+            'brawler_gear_id',   // Local key on PlayerBrawlerGear
+            'gear_id',     // Key on BrawlerGear pointing to Gear
+        );
     }
 }

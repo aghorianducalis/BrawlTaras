@@ -20,8 +20,16 @@ interface StarPowerRepositoryInterface
     /**
      * Create or update a single star power in the database.
      *
+     * @param array{ext_id: int, name: string} $starPowerData
+     * @return StarPower
+     */
+    public function createOrUpdateStarPowerFromDataArray(array $starPowerData): StarPower;
+
+    /**
+     * Create or update a single star power in the database.
+     *
      * @param StarPowerDTO $starPowerDTO
      * @return StarPower
      */
-    public function createOrUpdateStarPower(StarPowerDTO $starPowerDTO): StarPower;
+    public function createOrUpdateStarPowerFromDTO(StarPowerDTO $starPowerDTO): StarPower;
 }

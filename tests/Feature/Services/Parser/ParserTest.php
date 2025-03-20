@@ -9,10 +9,12 @@ use App\API\Contracts\APIClientInterface;
 use App\API\DTO\Response\BrawlerDTO;
 use App\API\DTO\Response\ClubDTO;
 use App\API\DTO\Response\EventRotationDTO;
+use App\API\DTO\Response\PlayerDTO;
 use App\API\Exceptions\ResponseException;
 use App\Models\Brawler;
 use App\Models\Club;
 use App\Models\EventRotation;
+use App\Models\Player;
 use App\Services\Parser\Contracts\ParserInterface;
 use App\Services\Parser\Exceptions\ParsingException;
 use App\Services\Parser\Parser;
@@ -42,6 +44,7 @@ use Tests\Traits\TestClubs;
 #[CoversMethod(Parser::class, 'parseAllBrawlers')]
 #[CoversMethod(Parser::class, 'parseClubByTag')]
 #[CoversMethod(Parser::class, 'parseClubMembers')]
+#[CoversMethod(Parser::class, 'parsePlayerByTag')]
 #[CoversMethod(Parser::class, 'parseEventsRotation')]
 #[UsesClass(APIClient::class)]
 #[UsesClass(BrawlerRepository::class)]
@@ -95,7 +98,7 @@ class ParserTest extends TestCase
             ->with($brawler->ext_id)
             ->andReturn($brawlerDTO);
 
-        $this->brawlerRepository->shouldReceive('createOrUpdateBrawler')
+        $this->brawlerRepository->shouldReceive('createOrUpdateBrawlerFromDTOAndSyncRelations')
             ->once()
             ->with($brawlerDTO)
             ->andReturn($brawler);
@@ -123,7 +126,7 @@ class ParserTest extends TestCase
             ->with($externalId)
             ->andThrow(ResponseException::fromMessage('API failure'));
 
-        $this->brawlerRepository->shouldNotReceive('createOrUpdateBrawler');
+        $this->brawlerRepository->shouldNotReceive('createOrUpdateBrawlerFromDTOAndSyncRelations');
 
         $this->expectException(ParsingException::class);
         $this->parser->parseBrawlerByExternalId($externalId);
@@ -140,7 +143,7 @@ class ParserTest extends TestCase
             ->once()
             ->andReturn($brawlerDTOs);
 
-        $this->brawlerRepository->shouldReceive('createOrUpdateBrawlers')
+        $this->brawlerRepository->shouldReceive('createOrUpdateBrawlersFromDTOsAndSyncRelations')
             ->once()
             ->with($brawlerDTOs)
             ->andReturn($brawlers);
@@ -162,7 +165,7 @@ class ParserTest extends TestCase
             ->once()
             ->andReturn([]);
 
-        $this->brawlerRepository->shouldNotReceive('createOrUpdateBrawlers');
+        $this->brawlerRepository->shouldNotReceive('createOrUpdateBrawlersFromDTOsAndSyncRelations');
 
         $this->expectException(ParsingException::class);
         $this->parser->parseAllBrawlers();
@@ -179,7 +182,7 @@ class ParserTest extends TestCase
             ->once()
             ->andThrow(ResponseException::fromMessage('API failure'));
 
-        $this->brawlerRepository->shouldNotReceive('createOrUpdateBrawlers');
+        $this->brawlerRepository->shouldNotReceive('createOrUpdateBrawlersFromDTOsAndSyncRelations');
 
         $this->expectException(ParsingException::class);
         $this->parser->parseAllBrawlers();
@@ -222,7 +225,7 @@ class ParserTest extends TestCase
             ->with($club->tag)
             ->andReturn($clubDTO);
 
-        $this->clubRepository->shouldReceive('createOrUpdateClub')
+        $this->clubRepository->shouldReceive('createOrUpdateClubFromDTOAndSyncClubMembers')
             ->once()
             ->with($clubDTO)
             ->andReturn($club);
@@ -249,7 +252,7 @@ class ParserTest extends TestCase
             ->with($club->tag)
             ->andReturn($clubDTO->members);
 
-        $this->clubRepository->shouldReceive('syncClubMembersByTag')
+        $this->clubRepository->shouldReceive('createOrUpdateClubFromTagAndSyncClubMembers')
             ->once()
             ->with($club->tag, $clubDTO->members)
             ->andReturn($club);
@@ -263,6 +266,32 @@ class ParserTest extends TestCase
                 $result->members->pluck('tag')->toArray(),
                 'Club members do not match expected values'
             );
+        } catch (ParsingException $e) {
+            $this->fail('ParsingException was thrown: ' . $e->getMessage());
+        }
+    }
+
+    #[Test]
+    #[TestDox('Parses player info successfully.')]
+    public function test_parses_player_info_by_tag_successfully(): void
+    {
+        $player = Player::factory()->withClub()->withBrawlers()->create();
+        $playerDTO = PlayerDTO::fromEloquentModel($player);
+
+        $this->apiClient->shouldReceive('getPlayerByTag')
+            ->once()
+            ->with($player->tag)
+            ->andReturn($playerDTO);
+
+        $this->playerRepository->shouldReceive('createOrUpdatePlayerFromDTOAndSyncRelations')
+            ->once()
+            ->with($playerDTO)
+            ->andReturn($player);
+
+        try {
+            $result = $this->parser->parsePlayerByTag(playerTag: $player->tag);
+
+            $this->assertPlayerEloquentModelsAreEqual($player, $result);
         } catch (ParsingException $e) {
             $this->fail('ParsingException was thrown: ' . $e->getMessage());
         }

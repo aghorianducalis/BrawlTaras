@@ -9,6 +9,8 @@ use App\Services\Repositories\BrawlerRepository;
 use App\Services\Repositories\Contracts\BrawlerRepositoryInterface;
 use Database\Factories\BrawlerFactory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Validation\ValidationException;
+use JsonException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\Group;
@@ -22,8 +24,9 @@ use Tests\Traits\CreatesBrawlers;
 #[Group('Repositories')]
 #[CoversClass(BrawlerRepository::class)]
 #[CoversMethod(BrawlerRepository::class, 'findBrawler')]
-#[CoversMethod(BrawlerRepository::class, 'createOrUpdateBrawler')]
-#[CoversMethod(BrawlerRepository::class, 'syncRelations')]
+#[CoversMethod(BrawlerRepository::class, 'createOrUpdateBrawlerFromDTO')]
+#[CoversMethod(BrawlerRepository::class, 'createOrUpdateBrawlerFromDTOAndSyncRelations')]
+#[CoversMethod(BrawlerRepository::class, 'syncBrawlerRelations')]
 #[UsesClass(Brawler::class)]
 #[UsesClass(BrawlerFactory::class)]
 class BrawlerRepositoryTest extends TestCase
@@ -37,6 +40,7 @@ class BrawlerRepositoryTest extends TestCase
     {
         parent::setUp();
         $this->repository = app(BrawlerRepositoryInterface::class);
+        $this->brawlerTable = (new Brawler())->getTable();
     }
 
     #[Test]
@@ -45,12 +49,11 @@ class BrawlerRepositoryTest extends TestCase
     #[TestWith(['name', 'Shelly'])]
     public function test_find_brawler_by_criteria(string $property, int|string $value): void
     {
-        $table = (new Brawler())->getTable();
-        $this->assertDatabaseMissing($table, [$property => $value]);
+        $this->assertDatabaseEmpty($this->brawlerTable);
 
         $brawlerCreated = $this->createBrawlerWithRelations(attributes: [$property => $value]);
 
-        $this->assertDatabaseHas($table, [
+        $this->assertDatabaseHas($this->brawlerTable, [
             'id' => $brawlerCreated->id,
             $property => $value,
         ]);
@@ -63,31 +66,58 @@ class BrawlerRepositoryTest extends TestCase
     }
 
     #[Test]
-    #[TestDox('Create successfully the brawler with related entities.')]
-    public function test_create_brawler(): void
+    #[TestDox('Create successfully the brawler.')]
+    public function test_create_brawler_from_dto(): void
     {
-        $table = (new Brawler())->getTable();
         $brawlerDTO = $this->makeBrawlerDTOWithRelations();
 
-        $this->assertDatabaseMissing($table, [
+        $this->assertDatabaseEmpty($this->brawlerTable);
+
+        $brawler = $this->repository->createOrUpdateBrawlerFromDTO($brawlerDTO);
+
+        $this->assertDatabaseHas($this->brawlerTable, [
+            'id'     => $brawler->id,
             'ext_id' => $brawlerDTO->extId,
-            'name' => $brawlerDTO->name,
+            'name'   => $brawlerDTO->name,
         ]);
 
-        $brawler = $this->repository->createOrUpdateBrawler($brawlerDTO);
+        $this->assertBrawlerModelMatchesDTO(
+            brawler: $brawler,
+            brawlerDTO: $brawlerDTO,
+            checkRelations: false,
+        );
+    }
 
-        $this->assertDatabaseHas($table, [
-            'id' => $brawler->id,
+    /**
+     * @throws ValidationException
+     * @throws JsonException
+     */
+    #[Test]
+    #[TestDox('Create successfully the brawler with related entities.')]
+    public function test_create_brawler_from_dto_and_sync_relations(): void
+    {
+        $brawlerDTO = $this->makeBrawlerDTOWithRelations();
+
+        $this->assertDatabaseEmpty($this->brawlerTable);
+
+        $brawler = $this->repository->createOrUpdateBrawlerFromDTOAndSyncRelations($brawlerDTO);
+
+        $this->assertDatabaseHas($this->brawlerTable, [
+            'id'     => $brawler->id,
             'ext_id' => $brawlerDTO->extId,
-            'name' => $brawlerDTO->name,
+            'name'   => $brawlerDTO->name,
         ]);
 
-        $this->assertBrawlerModelMatchesDTO($brawler, $brawlerDTO);
+        $this->assertBrawlerModelMatchesDTO(
+            brawler: $brawler,
+            brawlerDTO: $brawlerDTO,
+            checkRelations: true,
+        );
     }
 
     #[Test]
     #[TestDox('Update successfully the brawler with related entities.')]
-    public function test_update_existing_brawler(): void
+    public function test_update_existing_brawler_from_dto(): void
     {
         $brawler = $this->createBrawlerWithRelations();
         // create DTO to store the new data for brawler with the same ext ID
@@ -95,14 +125,60 @@ class BrawlerRepositoryTest extends TestCase
             'ext_id' => $brawler->ext_id,
         ]);
 
-        $brawlerUpdated = $this->repository->createOrUpdateBrawler($brawlerDTO);
-
-        $this->assertDatabaseHas($brawler->getTable(), [
-            'id' => $brawler->id,
-            'ext_id' => $brawlerDTO->extId,
-            'name' => $brawlerDTO->name,
+        $this->assertDatabaseCount($this->brawlerTable, 1);
+        $this->assertDatabaseHas($this->brawlerTable, [
+            'id'     => $brawler->id,
+            'ext_id' => $brawler->ext_id,
+            'name'   => $brawler->name,
         ]);
 
+        $brawlerUpdated = $this->repository->createOrUpdateBrawlerFromDTO($brawlerDTO);
+
+        $this->assertDatabaseCount($this->brawlerTable, 1);
+        $this->assertDatabaseHas($this->brawlerTable, [
+            'id'     => $brawler->id,
+            'ext_id' => $brawlerDTO->extId,
+            'name'   => $brawlerDTO->name,
+        ]);
+        $this->assertBrawlerModelMatchesDTO(
+            brawler: $brawlerUpdated,
+            brawlerDTO: $brawlerDTO,
+            checkRelations: false,
+        );
+    }
+
+    /**
+     * @throws ValidationException
+     * @throws JsonException
+     */
+    #[Test]
+    #[TestDox('Update successfully the brawler with related entities.')]
+    public function test_update_existing_brawler_from_dto_and_sync_relations(): void
+    {
+        $brawler = $this->createBrawlerWithRelations();
+        // create DTO to store the new data for brawler with the same ext ID
+        $brawlerDTO = $this->makeBrawlerDTOWithRelations([
+            'ext_id' => $brawler->ext_id,
+        ]);
+
+        $this->assertDatabaseCount($this->brawlerTable, 1);
+        $this->assertDatabaseHas($this->brawlerTable, [
+            'id'     => $brawler->id,
+            'ext_id' => $brawler->ext_id,
+            'name'   => $brawler->name,
+        ]);
+
+        $brawlerUpdated = $this->repository->createOrUpdateBrawlerFromDTOAndSyncRelations($brawlerDTO);
+
+        $this->assertDatabaseCount($this->brawlerTable, 1);
+        $this->assertDatabaseHas($this->brawlerTable, [
+            'id'     => $brawler->id,
+            'ext_id' => $brawlerDTO->extId,
+            'name'   => $brawlerDTO->name,
+        ]);
         $this->assertBrawlerModelMatchesDTO($brawlerUpdated, $brawlerDTO);
     }
+
+    // todo test createOrUpdateBrawlerFromDataArray
+    // todo use data provider to provide data for brawler with relations
 }

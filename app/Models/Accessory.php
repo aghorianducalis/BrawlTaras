@@ -18,6 +18,7 @@ use Illuminate\Support\Collection;
  * @property Carbon $created_at
  * @property Carbon $updated_at
  * @property-read Collection|Brawler[]|array $brawlers all brawlers who may have the current accessory.
+ * @property-read BrawlerAccessory|null $brawler_accessory
  */
 class Accessory extends Model
 {
@@ -42,11 +43,19 @@ class Accessory extends Model
      */
     public function brawlers(): BelongsToMany
     {
-        return $this->belongsToMany(
-            related: Brawler::class,
-            table: 'brawler_accessory',
-            foreignPivotKey: 'accessory_id',
-            relatedPivotKey: 'brawler_id',
-        );
+        return $this
+            ->belongsToMany(
+                related: Brawler::class,
+                table: 'brawler_accessory',
+                foreignPivotKey: 'accessory_id',
+                relatedPivotKey: 'brawler_id',
+            )
+            ->using(BrawlerAccessory::class)
+            ->withPivot([
+                'id',
+                'brawler_id',
+                'accessory_id',
+            ])
+            ->as('brawler_accessory');
     }
 }

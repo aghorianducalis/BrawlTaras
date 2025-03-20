@@ -6,17 +6,24 @@ namespace App\Services\Repositories;
 
 use App\API\DTO\Response\AccessoryDTO;
 use App\API\DTO\Response\BrawlerDTO;
-use App\API\DTO\Response\PlayerBrawlerDTO;
 use App\API\DTO\Response\StarPowerDTO;
 use App\Models\Brawler;
-use App\Models\Player;
 use App\Services\Repositories\Contracts\AccessoryRepositoryInterface;
 use App\Services\Repositories\Contracts\BrawlerRepositoryInterface;
 use App\Services\Repositories\Contracts\StarPowerRepositoryInterface;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
+use JsonException;
 
 final readonly class BrawlerRepository implements BrawlerRepositoryInterface
 {
+    public const BRAWLER_RELATIONS = [
+        'accessories',
+        'gears',
+        'starPowers',
+        'players',
+    ];
+
     public function __construct(
         private AccessoryRepositoryInterface $accessoryRepository,
         private StarPowerRepositoryInterface $starPowerRepository
@@ -46,44 +53,91 @@ final readonly class BrawlerRepository implements BrawlerRepositoryInterface
         return $query->first();
     }
 
-    public function createOrUpdateBrawler(BrawlerDTO $brawlerDTO): Brawler
+    public function createOrUpdateBrawlerFromDataArray(array $brawlerData): Brawler
     {
-        $brawler = $this->findBrawler([
-            'ext_id' => $brawlerDTO->extId,
-        ]);
-        $attributes = [
-            'ext_id' => $brawlerDTO->extId,
-            'name' => $brawlerDTO->name,
-        ];
+        // TODO: validation
+        $validated = $brawlerData;
 
-        DB::transaction(function () use (&$brawler, $brawlerDTO, $attributes) {
-            if ($brawler) {
-                $brawler->update(attributes: $attributes);
-            } else {
-                $brawler = Brawler::query()->create(attributes: $attributes);
-            }
-
-            $this->syncRelations($brawler, $brawlerDTO);
-        });
-
-        return $brawler->refresh();
+        return $this->createOrUpdateBrawlerFromValidatedArray(attributes: $validated);
     }
 
-    public function createOrUpdateBrawlers(array $brawlerDTOs): array
+    public function createOrUpdateBrawlerFromDTO(BrawlerDTO $brawlerDTO): Brawler
     {
-        // todo calls can lead to N+1 query issues. Consider bulk inserts/updates if the data size is significant.
-        return array_map(fn (BrawlerDTO $dto) => $this->createOrUpdateBrawler($dto), $brawlerDTOs);
+        $validated = [
+            'ext_id' => $brawlerDTO->extId,
+            'name'   => $brawlerDTO->name,
+        ];
+
+        return $this->createOrUpdateBrawlerFromValidatedArray(attributes: $validated);
     }
 
     /**
-     * @see ClubRepository::syncClubMembers
-     * @param Player $player
-     * @param PlayerBrawlerDTO[] $playerBrawlerDTOs
-     * @return Player
+     * @throws ValidationException
+     * @throws JsonException
      */
-    public function syncPlayerBrawlers(Player $player, array $playerBrawlerDTOs): Player
+    public function createOrUpdateBrawlerFromDTOAndSyncRelations(BrawlerDTO $brawlerDTO): Brawler
     {
-        return $player;
+        $brawler = null;
+
+        DB::transaction(function () use (&$brawler, $brawlerDTO) {
+            $brawler = $this->createOrUpdateBrawlerFromDTO($brawlerDTO);
+
+            $this->syncBrawlerRelations(
+                brawler: $brawler,
+                brawlerDTO: $brawlerDTO,
+            );
+        });
+
+        if (!$brawler) {
+            // todo try/catch here and continue with actual brawler (not null)
+            throw ValidationException::withMessages(["Brawler with name $brawlerDTO->name has not been created from DTO: {$brawlerDTO->toJson()}."]);
+        }
+
+        $brawler->refresh();
+        $brawler->load(self::BRAWLER_RELATIONS);
+
+        return $brawler;
+    }
+
+    public function createOrUpdateBrawlersFromDTOs(array $brawlerDTOs): array
+    {
+        $brawlers = [];
+
+        DB::transaction(function () use (&$brawlers, $brawlerDTOs) {
+            // todo calls can lead to N+1 query issues. Consider bulk inserts/updates if the data size is significant.
+            $brawlers = array_map(fn (BrawlerDTO $dto) => $this->createOrUpdateBrawlerFromDTO($dto), $brawlerDTOs);
+        });
+
+        return $brawlers;
+    }
+
+    public function createOrUpdateBrawlersFromDTOsAndSyncRelations(array $brawlerDTOs): array
+    {
+        $brawlers = [];
+
+        DB::transaction(function () use (&$brawlers, $brawlerDTOs) {
+            foreach ($brawlerDTOs as $brawlerDTO) {
+                $brawler = $this->createOrUpdateBrawlerFromDTOAndSyncRelations(brawlerDTO: $brawlerDTO);
+                $brawlers[] = $brawler;
+            }
+        });
+
+        return $brawlers;
+    }
+
+    private function createOrUpdateBrawlerFromValidatedArray(array $attributes): Brawler
+    {
+        $brawler = $this->findBrawler([
+            'ext_id' => $attributes['ext_id'],
+        ]);
+
+        if ($brawler) {
+            $brawler->update(attributes: $attributes);
+        } else {
+            $brawler = Brawler::query()->create(attributes: $attributes);
+        }
+
+        return $brawler;
     }
 
     /**
@@ -95,10 +149,10 @@ final readonly class BrawlerRepository implements BrawlerRepositoryInterface
      * @param BrawlerDTO $brawlerDTO
      * @return void
      */
-    private function syncRelations(Brawler $brawler, BrawlerDTO $brawlerDTO): void
+    private function syncBrawlerRelations(Brawler $brawler, BrawlerDTO $brawlerDTO): void
     {
         $accessoryIds = collect($brawlerDTO->accessories)
-            ->map(fn (AccessoryDTO $dto) => $this->accessoryRepository->createOrUpdateAccessory($dto))
+            ->map(fn (AccessoryDTO $dto) => $this->accessoryRepository->createOrUpdateAccessoryFromDTO($dto))
             ->pluck('id')
             ->toArray();
 
@@ -107,7 +161,7 @@ final readonly class BrawlerRepository implements BrawlerRepositoryInterface
         $brawler->accessories()->attach($accessoryIds);
 
         $starPowerIds = collect($brawlerDTO->starPowers)
-            ->map(fn (StarPowerDTO $dto) => $this->starPowerRepository->createOrUpdateStarPower($dto))
+            ->map(fn (StarPowerDTO $dto) => $this->starPowerRepository->createOrUpdateStarPowerFromDTO($dto))
             ->pluck('id')
             ->toArray();
 

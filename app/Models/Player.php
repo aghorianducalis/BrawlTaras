@@ -20,7 +20,7 @@ use Illuminate\Support\Collection;
  * @property int $icon_id
  * @property int $trophies
  * @property int|null $highest_trophies
- * @property int|null $highest_power_play_points
+ * @property int|null $highest_power_play_points // todo remove
  * @property int|null $exp_level
  * @property int|null $exp_points
  * @property bool|null $is_qualified_from_championship_league
@@ -35,6 +35,7 @@ use Illuminate\Support\Collection;
  * @property Carbon $updated_at
  * @property-read Club|null $club
  * @property-read Brawler[]|Collection|array $brawlers
+ * @property-read PlayerBrawler|null $player_brawler
  */
 class Player extends Model
 {

@@ -18,6 +18,7 @@ use Illuminate\Support\Collection;
  * @property Carbon $created_at
  * @property Carbon $updated_at
  * @property-read Collection|Brawler[]|array $brawlers all brawlers who may have the current star power.
+ * @property-read BrawlerStarPower|null $brawler_star_power
  */
 class StarPower extends Model
 {
@@ -42,11 +43,19 @@ class StarPower extends Model
      */
     public function brawlers(): BelongsToMany
     {
-        return $this->belongsToMany(
-            related: Brawler::class,
-            table: 'brawler_star_power',
-            foreignPivotKey: 'star_power_id',
-            relatedPivotKey: 'brawler_id',
-        );
+        return $this
+            ->belongsToMany(
+                related: Brawler::class,
+                table: 'brawler_star_power',
+                foreignPivotKey: 'star_power_id',
+                relatedPivotKey: 'brawler_id',
+            )
+            ->using(BrawlerStarPower::class)
+            ->withPivot([
+                'id',
+                'brawler_id',
+                'star_power_id',
+            ])
+            ->as('brawler_star_power');
     }
 }

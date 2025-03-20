@@ -8,6 +8,7 @@ use App\API\Exceptions\InvalidDTOException;
 use App\Models\Accessory;
 use App\Models\Brawler;
 use App\Models\StarPower;
+use JsonException;
 
 final readonly class BrawlerDTO
 {
@@ -23,6 +24,27 @@ final readonly class BrawlerDTO
         public array $accessories,
         public array $starPowers,
     ) {}
+
+    /**
+     * @return array{extId: int, name: string, accessories: array<array{extId: string, name: string}>, starPowers: array<array{extId: string, name: string}>}
+     */
+    public function toArray(): array
+    {
+        return [
+            'extId'       => $this->extId,
+            'name'        => $this->name,
+            'accessories' => array_map(fn(AccessoryDTO $accessoryDTO) => $accessoryDTO->toArray(), $this->accessories),
+            'starPowers'  => array_map(fn(StarPowerDTO $brawlerDTO) => $brawlerDTO->toArray(), $this->starPowers),
+        ];
+    }
+
+    /**
+     * @throws JsonException
+     */
+    public function toJson(): string
+    {
+        return json_encode($this->toArray(), JSON_THROW_ON_ERROR);
+    }
 
     /**
      * Factory method to create BrawlerDTO.

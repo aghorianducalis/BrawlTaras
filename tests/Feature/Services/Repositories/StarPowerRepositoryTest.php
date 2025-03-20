@@ -22,7 +22,7 @@ use Tests\TestCase;
 #[Group('Repositories')]
 #[CoversClass(StarPowerRepository::class)]
 #[CoversMethod(StarPowerRepository::class, 'findStarPower')]
-#[CoversMethod(StarPowerRepository::class, 'createOrUpdateStarPower')]
+#[CoversMethod(StarPowerRepository::class, 'createOrUpdateStarPowerFromDTO')]
 #[UsesClass(StarPower::class)]
 #[UsesClass(StarPowerFactory::class)]
 class StarPowerRepositoryTest extends TestCase
@@ -78,7 +78,7 @@ class StarPowerRepositoryTest extends TestCase
 
         $dto = StarPowerDTO::fromEloquentModel($starPowerToCreate);
 
-        $starPowerCreated = $this->repository->createOrUpdateStarPower($dto);
+        $starPowerCreated = $this->repository->createOrUpdateStarPowerFromDTO($dto);
 
         $this->assertEquals($starPowerToCreate->ext_id, $starPowerCreated->ext_id);
         $this->assertEquals($starPowerToCreate->name, $starPowerCreated->name);
@@ -106,7 +106,7 @@ class StarPowerRepositoryTest extends TestCase
         $starPowerToUpdate = StarPower::factory()->make($starPower->only(['id', 'ext_id']));
         $dto = StarPowerDTO::fromEloquentModel($starPowerToUpdate);
 
-        $starPowerUpdated = $this->repository->createOrUpdateStarPower($dto);
+        $starPowerUpdated = $this->repository->createOrUpdateStarPowerFromDTO($dto);
 
         $this->assertEquals($starPowerToUpdate->id, $starPowerUpdated->id);
         $this->assertEquals($starPowerToUpdate->ext_id, $starPowerUpdated->ext_id);

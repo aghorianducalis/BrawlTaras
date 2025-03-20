@@ -30,23 +30,35 @@ final readonly class StarPowerRepository implements StarPowerRepositoryInterface
         return $query->first();
     }
 
-    public function createOrUpdateStarPower(StarPowerDTO $starPowerDTO): StarPower
+    public function createOrUpdateStarPowerFromDataArray(array $starPowerData): StarPower
     {
-        $starPower = $this->findStarPower([
+        // TODO: validation
+        $validated = $starPowerData;
+
+        return $this->createOrUpdateStarPowerFromValidatedArray(attributes: $validated);
+    }
+
+    public function createOrUpdateStarPowerFromDTO(StarPowerDTO $starPowerDTO): StarPower
+    {
+        $validated = [
             'ext_id' => $starPowerDTO->extId,
-        ]);
-        $newData = [
-            'ext_id' => $starPowerDTO->extId, // unnecessary since 'ext_id' remains unchanged
-            'name' => $starPowerDTO->name,
+            'name'   => $starPowerDTO->name,
         ];
 
-        DB::transaction(function () use (&$starPower, $newData) {
-            if ($starPower) {
-                $starPower->update($newData);
-            } else {
-                $starPower = StarPower::query()->create($newData);
-            }
-        });
+        return $this->createOrUpdateStarPowerFromValidatedArray(attributes: $validated);
+    }
+
+    private function createOrUpdateStarPowerFromValidatedArray(array $attributes): StarPower
+    {
+        $starPower = $this->findStarPower([
+            'ext_id' => $attributes['ext_id'],
+        ]);
+
+        if ($starPower) {
+            $starPower->update(attributes: $attributes);
+        } else {
+            $starPower = StarPower::query()->create(attributes: $attributes);
+        }
 
         return $starPower;
     }

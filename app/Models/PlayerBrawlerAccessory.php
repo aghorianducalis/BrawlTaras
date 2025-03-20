@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Services\Repositories\Contracts\AccessoryRepositoryInterface;
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 
 /**
@@ -15,7 +14,7 @@ use Illuminate\Database\Eloquent\Relations\Pivot;
  * @property int $brawler_accessory_id
  * @property Carbon $created_at
  * @property Carbon $updated_at
- * @property-read Accessory|null $accessory
+ * @property-read Accessory $accessory
  */
 class PlayerBrawlerAccessory extends Pivot
 {
@@ -34,12 +33,17 @@ class PlayerBrawlerAccessory extends Pivot
     /**
      * Get the related accessory.
      *
-     * @return Attribute
+     * @return HasOneThrough
      */
-    protected function accessory(): Attribute
+    public function accessory(): HasOneThrough
     {
-        return Attribute::make(
-            get: fn (mixed $value, array $attributes) => app(AccessoryRepositoryInterface::class)->findAccessory(['brawler_accessory_id' => $this->brawler_accessory_id]),
-        )->shouldCache();
+        return $this->hasOneThrough(
+            Accessory::class,         // Final related model
+            BrawlerAccessory::class,  // Intermediate model
+            'id',                     // Foreign key on BrawlerAccessory (pivot ID)
+            'id',                   // Foreign key on Accessory
+            'brawler_accessory_id',   // Local key on PlayerBrawlerAccessory
+            'accessory_id',     // Key on BrawlerAccessory pointing to Accessory
+        );
     }
 }
