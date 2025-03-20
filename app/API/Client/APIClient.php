@@ -177,7 +177,6 @@ final readonly class APIClient implements APIClientInterface
 
     private function prepareTagValue(string $value): string
     {
-        // todo ensure club or player tag starts with "%23" instead of "#"
-        return $value;
+        return str_replace('#', '%23', $value);
     }
 }
