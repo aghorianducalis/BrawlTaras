@@ -451,10 +451,10 @@ class APIClientTest extends TestCase
     #[TestDox('Fetch a single club with its members successfully')]
     public function it_fetches_club_by_tag_successfully(): void
     {
-        $club = $this->createClubWithMembers();
-
         $apiEndpoint = APIEndpoints::ClubByTag;
-        $mockResponse = new Response(200, [], ClubDTO::fromEloquentModel($club)->toJson());
+        $club = $this->createClubWithMembers();
+        $jsonResponse = ClubDTO::fromEloquentModel($club)->toJson();
+        $mockResponse = new Response(200, [], $jsonResponse);
 
         $this->httpClientMock
             ->shouldReceive('request')
