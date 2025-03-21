@@ -125,7 +125,30 @@ readonly class Parser implements ParserInterface
     public function test(): void
     {
         // app(\App\Services\Parser\Contracts\ParserInterface::class)->test();
+        // app(\App\Services\Parser\Contracts\ParserInterface::class)->parseBrawlerByExternalId((int) env('BS_BRAWLER_EXT_ID'));
+        // app(\App\Services\Parser\Contracts\ParserInterface::class)->parseAllBrawlers();
+        // app(\App\Services\Parser\Contracts\ParserInterface::class)->parseClubByTag(env('BS_CLUB_TAG'));
+        // app(\App\Services\Parser\Contracts\ParserInterface::class)->parseClubMembers(env('BS_CLUB_TAG'));
+        // app(\App\Services\Parser\Contracts\ParserInterface::class)->parsePlayerByTag(env('BS_PLAYER_TAG'));
+        // app(\App\Services\Parser\Contracts\ParserInterface::class)->parseEventsRotation();
+
+        $brawler = $this->parseBrawlerByExternalId((int) env('BS_BRAWLER_EXT_ID'));
+        $brawlers = $this->parseAllBrawlers();
+        $club = $this->parseClubByTag(env('BS_CLUB_TAG'));
+        $clubMembers = $this->parseClubMembers(env('BS_CLUB_TAG'));
         $player = $this->parsePlayerByTag(env('BS_PLAYER_TAG'));
 //        $player = $this->parsePlayerByTag(env('BS_PLAYER_WITHOUT_CLUB_TAG'));
+        $events = $this->parseEventsRotation();
+
+        dd(
+            start: 'THIS IS THE START OF DD',
+            brawler: $brawler,
+            brawlers: $brawlers,
+            club: $club,
+            clubMembers: $clubMembers,
+            player: $player,
+            events: $events,
+            end: 'THIS IS THE END OF DD',
+        );
     }
 }

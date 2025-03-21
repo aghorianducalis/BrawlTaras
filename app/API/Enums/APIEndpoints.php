@@ -45,9 +45,31 @@ enum APIEndpoints: string
         $uri = $apiBaseURI . $this->value;
 
         foreach ($requestData as $key => $value) {
-            $uri = str_replace("{{$key}}", (string) $value, $uri);
+            $value = $this->formatRequestValue($key, (string) $value);
+            $uri = str_replace("{{$key}}", $value, $uri);
         }
 
         return $uri;
+    }
+
+    /**
+     * @see \App\API\Client\APIClient::formatTagValue()
+     *
+     * @param string $key
+     * @param string $value
+     * @return string
+     */
+    private function formatRequestValue(string $key, string $value): string
+    {
+        $tagKeys = [
+            'club_tag',
+            'player_tag',
+        ];
+
+        if (in_array($key, $tagKeys)) {
+            $value = str_replace('#', '%23', $value);
+        }
+
+        return $value;
     }
 }

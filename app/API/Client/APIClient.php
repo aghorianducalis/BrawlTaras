@@ -62,7 +62,7 @@ final readonly class APIClient implements APIClientInterface
     public function getClubByTag(string $clubTag): ClubDTO
     {
         try {
-            $clubTag = $this->prepareTagValue($clubTag);
+            $clubTag = $this->formatTagValue($clubTag);
             $responseData = $this->makeRequest(APIEndpoints::ClubByTag, ['club_tag' => $clubTag]);
 
             return ClubDTO::fromDataArray($responseData);
@@ -76,7 +76,7 @@ final readonly class APIClient implements APIClientInterface
     public function getClubMembers(string $clubTag): array
     {
         try {
-            $clubTag = $this->prepareTagValue($clubTag);
+            $clubTag = $this->formatTagValue($clubTag);
             $responseData = $this->makeRequest(APIEndpoints::ClubMembers, ['club_tag' => $clubTag]);
 
             if (!(isset($responseData['items']) && is_array($responseData['items']))) {
@@ -104,7 +104,7 @@ final readonly class APIClient implements APIClientInterface
     public function getPlayerByTag(string $playerTag): PlayerDTO
     {
         try {
-            $playerTag = $this->prepareTagValue($playerTag);
+            $playerTag = $this->formatTagValue($playerTag);
             $responseData = $this->makeRequest(APIEndpoints::PlayerByTag, ['player_tag' => $playerTag]);
 
             return PlayerDTO::fromArray($responseData);
@@ -117,7 +117,7 @@ final readonly class APIClient implements APIClientInterface
     public function getPlayerBattleLog(string $playerTag): array
     {
         try {
-            $playerTag = $this->prepareTagValue($playerTag);
+            $playerTag = $this->formatTagValue($playerTag);
             $responseData = $this->makeRequest(APIEndpoints::PlayerBattleLog, ['player_tag' => $playerTag]);
 
             if (!(isset($responseData['items']) && is_array($responseData['items']))) {
@@ -175,9 +175,14 @@ final readonly class APIClient implements APIClientInterface
         }
     }
 
-    private function prepareTagValue(string $value): string
+    /**
+     * @see \App\API\Enums\APIEndpoints::formatRequestValue()
+     *
+     * @param string $value
+     * @return string
+     */
+    private function formatTagValue(string $value): string
     {
-        // todo ensure club or player tag starts with "%23" instead of "#"
-        return $value;
+        return str_replace('#', '%23', $value);
     }
 }

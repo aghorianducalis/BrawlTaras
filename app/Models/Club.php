@@ -37,7 +37,7 @@ class Club extends Model
 
     public const CLUB_MEMBER_ROLES = [
         'president',
-        'vice president',
+        'vicePresident',
         'senior',
         'member',
     ];

@@ -157,7 +157,9 @@ final readonly class BrawlerRepository implements BrawlerRepositoryInterface
             ->toArray();
 
         // todo check logic
-        $brawler->accessories()->whereNotIn('id', $accessoryIds)->detach();
+
+        // remove only those rows that are not used in `player_brawler_accessory`.`brawler_accessory_id`
+//        $brawler->accessories()->whereNotIn('id', $accessoryIds)->detach();
         $brawler->accessories()->attach($accessoryIds);
 
         $starPowerIds = collect($brawlerDTO->starPowers)
@@ -165,8 +167,8 @@ final readonly class BrawlerRepository implements BrawlerRepositoryInterface
             ->pluck('id')
             ->toArray();
 
-        // todo check logic
-        $brawler->starPowers()->whereNotIn('id', $starPowerIds)->detach();
+        // remove only those rows that are not used in `player_brawler_star_power`.`brawler_star_power_id`
+//        $brawler->starPowers()->whereNotIn('id', $starPowerIds)->detach();
         $brawler->starPowers()->attach($starPowerIds);
     }
 }
