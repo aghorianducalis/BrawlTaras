@@ -120,7 +120,7 @@ readonly class Parser implements ParserInterface
     }
 
     /**
-     * @throws ParsingException
+     * @throws ParsingException|ResponseException
      */
     public function test(): void
     {
@@ -139,16 +139,18 @@ readonly class Parser implements ParserInterface
         $player = $this->parsePlayerByTag(env('BS_PLAYER_TAG'));
 //        $player = $this->parsePlayerByTag(env('BS_PLAYER_WITHOUT_CLUB_TAG'));
         $events = $this->parseEventsRotation();
+        $battleLog = $this->apiClient->getPlayerBattleLog(env('BS_PLAYER_TAG'));
 
         dd(
-            start: 'THIS IS THE START OF DD',
-            brawler: $brawler,
-            brawlers: $brawlers,
-            club: $club,
+            start:       'THIS IS THE START OF DD',
+            brawler:     $brawler,
+            brawlers:    $brawlers,
+            club:        $club,
             clubMembers: $clubMembers,
-            player: $player,
-            events: $events,
-            end: 'THIS IS THE END OF DD',
+            player:      $player,
+            events:      $events,
+            battleLog:   $battleLog,
+            end:         'THIS IS THE END OF DD',
         );
     }
 }
