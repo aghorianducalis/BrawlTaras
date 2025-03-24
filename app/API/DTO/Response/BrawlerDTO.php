@@ -84,6 +84,7 @@ final readonly class BrawlerDTO
      */
     public static function fromList(array $list): array
     {
+        // todo move 'items' on higher level
         // Validate the structure of the list
         if (!isset($list['items']) || !is_array($list['items'])) {
             throw InvalidDTOException::fromMessage("Invalid Brawler list data");
