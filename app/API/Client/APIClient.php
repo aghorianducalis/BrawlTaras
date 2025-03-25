@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace App\API\Client;
 
 use App\API\Contracts\APIClientInterface;
+use App\API\DTO\Response\Battle\BattleDTO;
 use App\API\DTO\Response\BrawlerDTO;
 use App\API\DTO\Response\ClubDTO;
 use App\API\DTO\Response\ClubMemberDTO;
 use App\API\DTO\Response\EventRotationDTO;
-use App\API\DTO\Response\Player\Battle\BattleDTO;
 use App\API\DTO\Response\PlayerDTO;
 use App\API\Enums\APIEndpoints;
 use App\API\Exceptions\InvalidDTOException;

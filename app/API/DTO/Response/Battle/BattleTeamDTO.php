@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\API\DTO\Response\Player\Battle;
+namespace App\API\DTO\Response\Battle;
 
 use App\API\Exceptions\InvalidDTOException;
 
