@@ -9,7 +9,7 @@ use App\API\Exceptions\InvalidDTOException;
 final readonly class BattleTeamDTO
 {
     /**
-     * @param BattleTeamPlayerDTO[] $teamPlayers
+     * @param BattlePlayerDTO[] $teamPlayers
      */
     private function __construct(
         public array $teamPlayers,
@@ -25,7 +25,7 @@ final readonly class BattleTeamDTO
     public static function fromArray(array $data): self
     {
         return new self(
-            teamPlayers: BattleTeamPlayerDTO::fromArrayList($data),
+            teamPlayers: BattlePlayerDTO::fromArrayList($data),
         );
     }
 

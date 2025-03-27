@@ -9,22 +9,26 @@ use App\API\Exceptions\InvalidDTOException;
 final readonly class BattleResultDTO
 {
     /**
-     * @param string              $mode
-     * @param string              $type
-     * @param string              $result
-     * @param int                 $duration
-     * @param BattleStarPlayerDTO $starPlayer
-     * @param BattleTeamDTO[]     $teams
-     * @param int|null            $trophyChange
+     * @param string                 $mode
+     * @param string                 $type
+     * @param string|null            $result
+     * @param int|null               $duration
+     * @param int|null               $trophyChange
+     * @param int|null               $rank
+     * @param BattlePlayerDTO|null   $starPlayer
+     * @param BattleTeamDTO[]|null   $teams
+     * @param BattlePlayerDTO[]|null $players
      */
     private function __construct(
-        public string              $mode,
-        public string              $type,
-        public string              $result,
-        public int                 $duration,
-        public BattleStarPlayerDTO $starPlayer,
-        public array               $teams,
-        public ?int                $trophyChange,
+        public string           $mode,
+        public string           $type,
+        public ?string          $result,
+        public ?int             $duration,
+        public ?int             $trophyChange,
+        public ?int             $rank,
+        public ?BattlePlayerDTO $starPlayer,
+        public ?array           $teams,
+        public ?array           $players,
     ) {}
 
     /**
@@ -36,25 +40,30 @@ final readonly class BattleResultDTO
      */
     public static function fromArray(array $data): self
     {
-        $dataKeys = array_keys($data);
         $requiredKeys = [
             'mode',
             'type',
-            'result',
-            'duration',
-            'starPlayer',
-            'teams',
         ];
         $optionalKeys = [
+            'result',
+            'duration',
             'trophyChange',
+            'rank',
+            'starPlayer',
+            'teams',
+            'players',
         ];
         $allKeys = array_merge($requiredKeys, $optionalKeys);
+        $dataKeys = array_keys($data);
 
-        $whetherNewKeysWereAdded = (sizeof(array_diff($allKeys, $dataKeys)) > 1) || (sizeof(array_diff($dataKeys, $allKeys)) > 0);
+        // todo proper check
+        $doRequiredKeysPresent = sizeof(array_diff($requiredKeys, $dataKeys)) === 0;
+        $whetherNewKeysWereAdded = sizeof(array_diff($dataKeys, $allKeys)) > 0;
+        $whetherNewKeysWereAdded = sizeof(array_diff($allKeys, $dataKeys)) > sizeof($optionalKeys);
 
         if ($whetherNewKeysWereAdded) {
             throw InvalidDTOException::fromMessage(
-                "List of keys in battle result data array was changed."
+                "List of keys in battle result data array was changed." . json_encode($data)
             );
         }
 
@@ -70,15 +79,15 @@ final readonly class BattleResultDTO
             );
         }
 
-        if (!(isset($data['result']) && is_string($data['result']) && !empty(trim($data['result'])))) {
+        if (key_exists('result', $data) && !(is_string($data['result']) && !empty(trim($data['result'])))) {
             throw InvalidDTOException::fromMessage(
-                "Invalid or missing 'result' field in battle result data."
+                "Invalid 'result' field in battle result data."
             );
         }
 
-        if (!(isset($data['duration']) && is_numeric($data['duration']))) {
+        if (key_exists('duration', $data) && !is_numeric($data['duration'])) {
             throw InvalidDTOException::fromMessage(
-                "Invalid or missing 'duration' field in battle result data."
+                "Invalid 'duration' field in battle result data."
             );
         }
 
@@ -88,26 +97,44 @@ final readonly class BattleResultDTO
             );
         }
 
-        if (!(isset($data['starPlayer']) && is_array($data['starPlayer']))) {
+        if (key_exists('rank', $data) && !is_numeric($data['rank'])) {
             throw InvalidDTOException::fromMessage(
-                "Invalid or missing 'starPlayer' field in battle result data."
+                "Invalid 'rank' field in battle result data."
             );
         }
 
-        if (!(isset($data['teams']) && is_array($data['teams']))) {
+        if (key_exists('starPlayer', $data) && !(is_null($data['starPlayer']) || is_array($data['starPlayer']))) {
             throw InvalidDTOException::fromMessage(
-                "Invalid or missing 'teams' field in battle result data."
+                "Invalid 'starPlayer' field in battle result data."
             );
         }
+
+        if (key_exists('teams', $data) && !is_array($data['teams'])) {
+            throw InvalidDTOException::fromMessage(
+                "Invalid 'teams' field in battle result data."
+            );
+        }
+
+        if (key_exists('players', $data) && !is_array($data['players'])) {
+            throw InvalidDTOException::fromMessage(
+                "Invalid 'players' field in battle result data."
+            );
+        }
+
+        $starPlayer = isset($data['starPlayer']) ? BattlePlayerDTO::fromArray($data['starPlayer']) : null;
+        $teams = isset($data['teams']) ? BattleTeamDTO::fromArrayList($data['teams']) : null;
+        $players = isset($data['players']) ? BattlePlayerDTO::fromArrayList($data['players']) : null;
 
         return new self(
             mode:         $data['mode'],
             type:         $data['type'],
-            result:       $data['result'],
-            duration:     (int) $data['duration'],
-            starPlayer:   BattleStarPlayerDTO::fromArray($data['starPlayer']),
-            teams:        BattleTeamDTO::fromArrayList($data['teams']),
+            result:       $data['result'] ?? null,
+            duration:     isset($data['duration']) ? (int) $data['duration'] : null,
             trophyChange: isset($data['trophyChange']) ? (int) $data['trophyChange'] : null,
+            rank:         isset($data['rank']) ? (int) $data['rank'] : null,
+            starPlayer:   $starPlayer,
+            teams:        $teams,
+            players:      $players,
         );
     }
 }
