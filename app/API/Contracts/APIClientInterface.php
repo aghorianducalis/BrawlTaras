@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\API\Contracts;
 
+use App\API\DTO\Response\Battle\BattleDTO;
 use App\API\DTO\Response\BrawlerDTO;
 use App\API\DTO\Response\ClubDTO;
 use App\API\DTO\Response\ClubMemberDTO;
 use App\API\DTO\Response\EventRotationDTO;
-use App\API\DTO\Response\PlayerBattleLogDTO;
 use App\API\DTO\Response\PlayerDTO;
 use App\API\Exceptions\InvalidDTOException;
 use App\API\Exceptions\ResponseException;
@@ -77,7 +77,7 @@ interface APIClientInterface
      * Get list of recent battle results for a player.
      *
      * @param string $playerTag
-     * @return PlayerBattleLogDTO[]
+     * @return BattleDTO[]
      * @throws InvalidDTOException
      * @throws ResponseException
      */
