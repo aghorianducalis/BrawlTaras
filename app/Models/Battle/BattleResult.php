@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Models\Battle;
 
 use Carbon\Carbon;
+use Database\Factories\Battle\BattleResultFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -25,6 +27,20 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class BattleResult extends Model
 {
+    /** @use HasFactory<BattleResultFactory> */
+    use HasFactory;
+
+    public const TYPES = [
+        'ranked',
+        'soloRanked',
+    ];
+
+    public const RESULTS = [
+        'victory',
+        'defeat',
+        'draw'
+    ];
+
     protected $table = 'battle_results';
 
     protected $fillable = [
@@ -53,7 +69,11 @@ class BattleResult extends Model
      */
     public function battle(): BelongsTo
     {
-        return $this->belongsTo(Battle::class, 'battle_id', 'id');
+        return $this->belongsTo(
+            related: Battle::class,
+            foreignKey: 'battle_id',
+            ownerKey: 'id'
+        );
     }
 
     /**
