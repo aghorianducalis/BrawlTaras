@@ -6,7 +6,7 @@ namespace App\Models\Battle;
 
 use App\Models\Event;
 use Carbon\Carbon;
-use Database\Factories\BattleFactory;
+use Database\Factories\Battle\BattleFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -45,7 +45,11 @@ class Battle extends Model
      */
     public function event(): BelongsTo
     {
-        return $this->belongsTo(Event::class, 'event_id', 'id');
+        return $this->belongsTo(
+            related: Event::class,
+            foreignKey: 'event_id',
+            ownerKey: 'id'
+        );
     }
 
     /**
@@ -55,6 +59,10 @@ class Battle extends Model
      */
     public function battleResult(): HasOne
     {
-        return $this->hasOne(BattleResult::class, 'battle_id', 'id');
+        return $this->hasOne(
+            related: BattleResult::class,
+            foreignKey: 'battle_id',
+            localKey: 'id'
+        );
     }
 }
