@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Models\Battle\Battle;
 use Carbon\Carbon;
 use Database\Factories\EventFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -24,6 +25,7 @@ use Illuminate\Support\Collection;
  * @property-read EventMode $mode
  * @property-read Collection|EventModifier[]|array $modifiers
  * @property-read Collection|EventRotation[]|array $rotations
+ * @property-read Collection|Battle[]|array $battles
  */
 class Event extends Model
 {
@@ -87,5 +89,15 @@ class Event extends Model
     public function rotations(): HasMany
     {
         return $this->hasMany(EventRotation::class, 'event_id', 'id');
+    }
+
+    /**
+     * Get the event's battles.
+     *
+     * @return HasMany
+     */
+    public function battles(): HasMany
+    {
+        return $this->hasMany(Battle::class, 'event_id', 'id');
     }
 }
