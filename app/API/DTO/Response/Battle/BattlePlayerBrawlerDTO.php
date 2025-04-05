@@ -9,8 +9,8 @@ use App\API\Exceptions\InvalidDTOException;
 final readonly class BattlePlayerBrawlerDTO
 {
     /**
-     * @param int      $id
-     * @param string   $name
+     * @param int      $id           // Brawler's external ID
+     * @param string   $name         // Brawler's name
      * @param int      $power
      * @param int      $trophies
      * @param int|null $trophyChange
