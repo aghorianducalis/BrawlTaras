@@ -23,9 +23,8 @@ return new class extends Migration
             $table->unsignedBigInteger('battle_id');
             $table->foreign('battle_id')->references('id')->on('battles');
 
-            // todo
-//            $table->unsignedBigInteger('star_player_id')->nullable();
-//            $table->foreign('star_player_id')->references('id')->on('battle_players');
+            $table->unsignedBigInteger('star_player_id')->nullable();
+            $table->foreign('star_player_id')->references('id')->on('battle_players');
 
             $table->timestamps();
         });

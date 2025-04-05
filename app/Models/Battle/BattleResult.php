@@ -17,10 +17,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int|null $trophy_change
  * @property int|null $rank
  * @property int $battle_id
-// * @property int|null $star_player_id
+ * @property int|null $star_player_id
  * @property Carbon $created_at
  * @property Carbon $updated_at
  * @property-read Battle $battle
+ * @property-read BattlePlayer|null $starPlayer
  */
 class BattleResult extends Model
 {
@@ -53,5 +54,19 @@ class BattleResult extends Model
     public function battle(): BelongsTo
     {
         return $this->belongsTo(Battle::class, 'battle_id', 'id');
+    }
+
+    /**
+     * Get the star player of battle.
+     *
+     * @return BelongsTo
+     */
+    public function starPlayer(): BelongsTo
+    {
+        return $this->belongsTo(
+            related: BattlePlayer::class,
+            foreignKey: 'star_player_id',
+            ownerKey: 'id',
+        );
     }
 }
