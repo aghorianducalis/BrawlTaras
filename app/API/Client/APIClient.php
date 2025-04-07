@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\API\Client;
 
 use App\API\Contracts\APIClientInterface;
-use App\API\DTO\Response\Battle\BattleDTO;
+use App\API\DTO\Response\Battle\BattleLogDTO;
 use App\API\DTO\Response\BrawlerDTO;
 use App\API\DTO\Response\ClubDTO;
 use App\API\DTO\Response\ClubMemberDTO;
@@ -114,7 +114,7 @@ final readonly class APIClient implements APIClientInterface
         }
     }
 
-    public function getPlayerBattleLog(string $playerTag): array
+    public function getPlayerBattleLog(string $playerTag): BattleLogDTO
     {
         try {
             $playerTag = $this->formatTagValue($playerTag);
@@ -124,7 +124,7 @@ final readonly class APIClient implements APIClientInterface
                 throw InvalidDTOException::fromMessage('invalid structure of player battle log.');
             }
 
-            return BattleDTO::fromArrayList($responseData['items']);
+            return BattleLogDTO::fromArray($responseData['items']);
         } catch (ResponseException|InvalidDTOException $e) {
             Log::error("Error fetching battle log of player with tag $playerTag: {$e->getMessage()}");
             throw $e;

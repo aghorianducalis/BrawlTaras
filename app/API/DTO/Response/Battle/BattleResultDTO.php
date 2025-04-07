@@ -137,4 +137,29 @@ final readonly class BattleResultDTO
             players:      $players,
         );
     }
+
+    /**
+     * Converts the DTO to JSON-serializable format.
+     *
+     * @return array
+     */
+    public function jsonSerialize(): array
+    {
+        $array = [
+            'mode'         => $this->mode,
+            'type'         => $this->type,
+            'result'       => $this->result,
+            'duration'     => $this->duration,
+            'rank'         => $this->rank,
+            'trophyChange' => $this->trophyChange,
+            'starPlayer'   => $this->starPlayer?->jsonSerialize(),
+            'teams'        => $this->teams ? array_map(fn(BattleTeamDTO $team) => $team->jsonSerialize(), $this->teams) : null,
+            'players'      => $this->players ? array_map(fn(BattlePlayerDTO $player) => $player->jsonSerialize(), $this->players) : null,
+        ];
+
+        return array_filter(
+            $array,
+            static fn($value) => $value !== null
+        );
+    }
 }

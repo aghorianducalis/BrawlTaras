@@ -71,4 +71,18 @@ final readonly class BattleEventDTO
             mode: $event->mode->name,
         );
     }
+
+    /**
+     * Converts the DTO to JSON-serializable format.
+     *
+     * @return array
+     */
+    public function jsonSerialize(): array
+    {
+        return [
+            'id'   => $this->id,
+            'mode' => $this->mode,
+            'map'  => $this->map,
+        ];
+    }
 }

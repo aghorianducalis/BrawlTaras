@@ -40,4 +40,14 @@ final readonly class BattleTeamDTO
     {
         return array_map(fn(array $item) => self::fromArray($item), $list);
     }
+
+    /**
+     * Converts the DTO to JSON-serializable format.
+     *
+     * @return array
+     */
+    public function jsonSerialize(): array
+    {
+        return array_map(fn(BattlePlayerDTO $teamPlayer) => $teamPlayer->jsonSerialize(), $this->teamPlayers);
+    }
 }

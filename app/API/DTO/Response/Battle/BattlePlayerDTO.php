@@ -73,4 +73,24 @@ final readonly class BattlePlayerDTO
     {
         return array_map(fn(array $item) => self::fromArray($item), $list);
     }
+
+    /**
+     * Converts the DTO to JSON-serializable format.
+     *
+     * @return array
+     */
+    public function jsonSerialize(): array
+    {
+        $array = [
+            'tag'      => $this->tag,
+            'name'     => $this->name,
+            'brawler'  => $this->brawler?->jsonSerialize(),
+            'brawlers' => $this->brawlers ? array_map(fn(BattlePlayerBrawlerDTO $player) => $player->jsonSerialize(), $this->brawlers) : null,
+        ];
+
+        return array_filter(
+            $array,
+            static fn($value) => $value !== null
+        );
+    }
 }

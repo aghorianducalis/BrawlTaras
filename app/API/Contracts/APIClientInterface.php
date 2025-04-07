@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\API\Contracts;
 
-use App\API\DTO\Response\Battle\BattleDTO;
+use App\API\DTO\Response\Battle\BattleLogDTO;
 use App\API\DTO\Response\BrawlerDTO;
 use App\API\DTO\Response\ClubDTO;
 use App\API\DTO\Response\ClubMemberDTO;
@@ -77,9 +77,9 @@ interface APIClientInterface
      * Get list of recent battle results for a player.
      *
      * @param string $playerTag
-     * @return BattleDTO[]
+     * @return BattleLogDTO
      * @throws InvalidDTOException
      * @throws ResponseException
      */
-    public function getPlayerBattleLog(string $playerTag): array;
+    public function getPlayerBattleLog(string $playerTag): BattleLogDTO;
 }
