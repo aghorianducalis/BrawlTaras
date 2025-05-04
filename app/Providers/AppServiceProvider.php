@@ -6,12 +6,18 @@ namespace App\Providers;
 
 use App\API\Client\APIClient;
 use App\API\Contracts\APIClientInterface;
+use App\Services\Application\BattleLogInteractor;
+use App\Services\Application\Contracts\Battle\BattleLogInteractorInterface;
 use App\Services\Parser\Contracts\ParserInterface;
 use App\Services\Parser\Parser;
 use App\Services\Repositories\AccessoryRepository;
+use App\Services\Repositories\Battle\BattleRepository;
+use App\Services\Repositories\Battle\BattleResultRepository;
 use App\Services\Repositories\BrawlerRepository;
 use App\Services\Repositories\ClubRepository;
 use App\Services\Repositories\Contracts\AccessoryRepositoryInterface;
+use App\Services\Repositories\Contracts\Battle\BattleRepositoryInterface;
+use App\Services\Repositories\Contracts\Battle\BattleResultRepositoryInterface;
 use App\Services\Repositories\Contracts\BrawlerRepositoryInterface;
 use App\Services\Repositories\Contracts\ClubRepositoryInterface;
 use App\Services\Repositories\Contracts\Event\EventMapRepositoryInterface;
@@ -105,6 +111,22 @@ class AppServiceProvider extends ServiceProvider
             );
         });
 
+        // repositories for battle log
+        $this->app->singleton(abstract: BattleLogInteractorInterface::class, concrete: function ($app) {
+            return new BattleLogInteractor(
+                battleRepository: $app->make(abstract: BattleRepositoryInterface::class),
+            );
+        });
+        $this->app->singleton(abstract: BattleRepositoryInterface::class, concrete: function ($app) {
+            return new BattleRepository(
+                eventRepository: $app->make(abstract: EventRepositoryInterface::class),
+                battleResultRepository: $app->make(abstract: BattleResultRepositoryInterface::class),
+            );
+        });
+        $this->app->singleton(abstract: BattleResultRepositoryInterface::class, concrete: function ($app) {
+            return new BattleResultRepository();
+        });
+
         // Register Parser
         $this->app->singleton(abstract: ParserInterface::class, concrete: function ($app) {
             return new Parser(
@@ -112,6 +134,7 @@ class AppServiceProvider extends ServiceProvider
                 brawlerRepository: $app->make(BrawlerRepositoryInterface::class),
                 clubRepository: $app->make(ClubRepositoryInterface::class),
                 playerRepository: $app->make(PlayerRepositoryInterface::class),
+                battleLogInteractor: $app->make(BattleLogInteractorInterface::class),
                 eventRotationRepository: $app->make(EventRotationRepositoryInterface::class),
             );
         });
