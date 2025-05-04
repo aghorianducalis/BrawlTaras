@@ -27,11 +27,6 @@ final readonly class APIClient implements APIClientInterface
         protected string     $apiKey
     ) {}
 
-    /**
-     * app(\App\API\Client\APIClient::class)->getBrawler(16000000)
-     *
-     * @inheritdoc
-     */
     public function getBrawler(int $externalId): BrawlerDTO
     {
         try {
@@ -43,11 +38,6 @@ final readonly class APIClient implements APIClientInterface
         }
     }
 
-    /**
-     * app(\App\API\Client\APIClient::class)->getBrawlers();
-     *
-     * @inheritdoc
-     */
     public function getBrawlers(): array
     {
         try {
@@ -55,6 +45,17 @@ final readonly class APIClient implements APIClientInterface
             return BrawlerDTO::fromList($responseData);
         } catch (ResponseException|InvalidDTOException $e) {
             Log::error("Error fetching brawlers: {$e->getMessage()}");
+            throw $e;
+        }
+    }
+
+    public function getEventsRotation(): array
+    {
+        try {
+            $responseData = $this->makeRequest(APIEndpoints::EventRotation);
+            return EventRotationDTO::fromList($responseData);
+        } catch (ResponseException|InvalidDTOException $e) {
+            Log::error("Error fetching events rotation: {$e->getMessage()}");
             throw $e;
         }
     }
@@ -86,17 +87,6 @@ final readonly class APIClient implements APIClientInterface
             return array_map(fn(array $memberData) => ClubMemberDTO::fromArray($memberData), $responseData['items']);
         } catch (ResponseException|InvalidDTOException $e) {
             Log::error("Error fetching members of club with tag $clubTag: {$e->getMessage()}.");
-            throw $e;
-        }
-    }
-
-    public function getEventsRotation(): array
-    {
-        try {
-            $responseData = $this->makeRequest(APIEndpoints::EventRotation);
-            return EventRotationDTO::fromList($responseData);
-        } catch (ResponseException|InvalidDTOException $e) {
-            Log::error("Error fetching events rotation: {$e->getMessage()}");
             throw $e;
         }
     }

@@ -11,6 +11,7 @@ use App\API\Exceptions\ResponseException;
 use App\Models\Brawler;
 use App\Models\Club;
 use App\Models\Player;
+use App\Services\Application\Contracts\Battle\BattleLogInteractorInterface;
 use App\Services\Parser\Contracts\ParserInterface;
 use App\Services\Parser\Exceptions\ParsingException;
 use App\Services\Repositories\Contracts\BrawlerRepositoryInterface;
@@ -19,6 +20,8 @@ use App\Services\Repositories\Contracts\Event\EventRotationRepositoryInterface;
 use App\Services\Repositories\Contracts\PlayerRepositoryInterface;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use JsonException;
+use Throwable;
 
 readonly class Parser implements ParserInterface
 {
@@ -27,6 +30,7 @@ readonly class Parser implements ParserInterface
         private BrawlerRepositoryInterface       $brawlerRepository,
         private ClubRepositoryInterface          $clubRepository,
         private PlayerRepositoryInterface        $playerRepository,
+        private BattleLogInteractorInterface     $battleLogInteractor,
         private EventRotationRepositoryInterface $eventRotationRepository,
     ) {}
 
@@ -56,6 +60,24 @@ readonly class Parser implements ParserInterface
             return $this->brawlerRepository->createOrUpdateBrawlersFromDTOsAndSyncRelations($brawlerDTOs);
         } catch (ResponseException|InvalidDTOException|ValidationException $e) {
             Log::error('Failed to parse all Brawlers: ' . $e->getMessage(), [
+                'exception' => $e,
+            ]);
+            throw ParsingException::fromException($e);
+        }
+    }
+
+    public function parseEventsRotation(): array
+    {
+        try {
+            $rotationDTOs = $this->apiClient->getEventsRotation();
+
+            if (empty($rotationDTOs)) {
+                throw ValidationException::withMessages(['No events rotation found in the API response.']);
+            }
+
+            return $this->eventRotationRepository->createOrUpdateEventRotations($rotationDTOs);
+        } catch (ResponseException|InvalidDTOException|ValidationException $e) {
+            Log::error('Failed to parse events rotation: ' . $e->getMessage(), [
                 'exception' => $e,
             ]);
             throw ParsingException::fromException($e);
@@ -93,7 +115,7 @@ readonly class Parser implements ParserInterface
         try {
             $playerDTO = $this->apiClient->getPlayerByTag($playerTag);
             return $this->playerRepository->createOrUpdatePlayerFromDTOAndSyncRelations(playerDTO: $playerDTO);
-        } catch (ResponseException|InvalidDTOException|ValidationException $e) {
+        } catch (ResponseException|InvalidDTOException|ValidationException|JsonException $e) {
             Log::error("Failed to parse Player with tag $playerTag: " . $e->getMessage(), [
                 'exception' => $e,
             ]);
@@ -101,18 +123,13 @@ readonly class Parser implements ParserInterface
         }
     }
 
-    public function parseEventsRotation(): array
+    public function parsePlayerBattleLog(string $playerTag): array
     {
         try {
-            $rotationDTOs = $this->apiClient->getEventsRotation();
-
-            if (empty($rotationDTOs)) {
-                throw ValidationException::withMessages(['No events rotation found in the API response.']);
-            }
-
-            return $this->eventRotationRepository->createOrUpdateEventRotations($rotationDTOs);
+            $battleLogDTO = $this->apiClient->getPlayerBattleLog(playerTag: $playerTag);
+            return $this->battleLogInteractor->syncBattleLog(dto: $battleLogDTO);
         } catch (ResponseException|InvalidDTOException|ValidationException $e) {
-            Log::error('Failed to parse events rotation: ' . $e->getMessage(), [
+            Log::error("Failed to parse battle log for Player with tag $playerTag: " . $e->getMessage(), [
                 'exception' => $e,
             ]);
             throw ParsingException::fromException($e);
@@ -120,7 +137,7 @@ readonly class Parser implements ParserInterface
     }
 
     /**
-     * @throws ParsingException|ResponseException
+     * @throws ParsingException
      */
     public function test(): void
     {
@@ -131,15 +148,16 @@ readonly class Parser implements ParserInterface
         // app(\App\Services\Parser\Contracts\ParserInterface::class)->parseClubMembers(env('BS_CLUB_TAG'));
         // app(\App\Services\Parser\Contracts\ParserInterface::class)->parsePlayerByTag(env('BS_PLAYER_TAG'));
         // app(\App\Services\Parser\Contracts\ParserInterface::class)->parseEventsRotation();
+        // app(\App\Services\Parser\Contracts\ParserInterface::class)->parsePlayerBattleLog(playerTag: ('BS_PLAYER_TAG'));
 
         $brawler = $this->parseBrawlerByExternalId((int) env('BS_BRAWLER_EXT_ID'));
         $brawlers = $this->parseAllBrawlers();
+        $events = $this->parseEventsRotation();
         $club = $this->parseClubByTag(env('BS_CLUB_TAG'));
         $clubMembers = $this->parseClubMembers(env('BS_CLUB_TAG'));
-        $player = $this->parsePlayerByTag(env('BS_PLAYER_TAG'));
-//        $player = $this->parsePlayerByTag(env('BS_PLAYER_WITHOUT_CLUB_TAG'));
-        $events = $this->parseEventsRotation();
-        $battleLog = $this->apiClient->getPlayerBattleLog(env('BS_PLAYER_TAG'));
+//        $player = $this->parsePlayerByTag(playerTag: ('BS_PLAYER_WITHOUT_CLUB_TAG'));
+        $player = $this->parsePlayerByTag(playerTag: ('BS_PLAYER_TAG'));
+        $battleLog = $this->parsePlayerBattleLog(playerTag: ('BS_PLAYER_TAG'));
 
         dd(
             start:       'THIS IS THE START OF DD',
@@ -151,6 +169,34 @@ readonly class Parser implements ParserInterface
             events:      $events,
             battleLog:   $battleLog,
             end:         'THIS IS THE END OF DD',
+        );
+    }
+
+    public function testPlayerBattleLog(string $playerTag = null): void
+    {
+        $playerTags = $playerTag ? [ env($playerTag) ] : [
+            env('BS_PLAYER_TAG_1'),
+            env('BS_PLAYER_TAG_2'),
+            env('BS_PLAYER_TAG_3'),
+            env('BS_PLAYER_TAG_4'),
+            env('BS_PLAYER_TAG_5'),
+        ];
+        $battleLogs = [];
+
+        foreach ($playerTags as $playerTag) {
+            try {
+                $battleLog = $this->apiClient->getPlayerBattleLog(playerTag: $playerTag);
+                $battleLogs[$playerTag] = $battleLog;
+            } catch (InvalidDTOException|Throwable $e) {
+                dd(
+                    player_tag: $playerTag,
+                    message:    $e->getMessage(),
+                );
+            }
+        }
+        dd(
+            battle_logs: $battleLogs,
+            count:       sizeof($battleLogs),
         );
     }
 }

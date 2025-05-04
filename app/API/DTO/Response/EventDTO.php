@@ -44,10 +44,10 @@ final readonly class EventDTO
 
         // Create a new DTO instance
         return new self(
-            (int) $data['id'],
-            $data['map'],
-            $data['mode'],
-            $data['modifiers'] ?? [],
+            id: (int) $data['id'],
+            map: $data['map'],
+            mode: $data['mode'],
+            modifiers: $data['modifiers'] ?? [],
         );
     }
 

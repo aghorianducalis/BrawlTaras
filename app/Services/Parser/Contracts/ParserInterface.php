@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Parser\Contracts;
 
+use App\Models\Battle\Battle;
 use App\Models\Brawler;
 use App\Models\Club;
 use App\Models\EventRotation;
@@ -34,6 +35,14 @@ interface ParserInterface
     public function parseAllBrawlers(): array;
 
     /**
+     * Parse all event rotations from the API and store/update them in the local database.
+     *
+     * @return array<EventRotation> The list of parsed and saved event rotations.
+     * @throws ParsingException If an unrecoverable error occurs during parsing.
+     */
+    public function parseEventsRotation(): array;
+
+    /**
      * Get information about a single clan by club tag and store/update them in the local database.
      *
      * @param string $clubTag
@@ -61,10 +70,11 @@ interface ParserInterface
     public function parsePlayerByTag(string $playerTag): Player;
 
     /**
-     * Parse all event rotations from the API and store/update them in the local database.
+     * Get list of recent battles for a player.
      *
-     * @return array<EventRotation> The list of parsed and saved event rotations.
+     * @param string $playerTag
+     * @return Battle[] array of battles
      * @throws ParsingException If an unrecoverable error occurs during parsing.
      */
-    public function parseEventsRotation(): array;
+    public function parsePlayerBattleLog(string $playerTag): array;
 }

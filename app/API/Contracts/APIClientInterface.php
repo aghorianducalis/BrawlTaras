@@ -35,6 +35,15 @@ interface APIClientInterface
     public function getBrawlers(): array;
 
     /**
+     * Fetch events rotation.
+     *
+     * @return EventRotationDTO[]
+     * @throws InvalidDTOException
+     * @throws ResponseException
+     */
+    public function getEventsRotation(): array;
+
+    /**
      * Get information about a single clan by club tag.
      *
      * @param string $clubTag
@@ -53,15 +62,6 @@ interface APIClientInterface
      * @throws ResponseException
      */
     public function getClubMembers(string $clubTag): array;
-
-    /**
-     * Fetch events rotation.
-     *
-     * @return EventRotationDTO[]
-     * @throws InvalidDTOException
-     * @throws ResponseException
-     */
-    public function getEventsRotation(): array;
 
     /**
      * Get information about a single player by player tag.
