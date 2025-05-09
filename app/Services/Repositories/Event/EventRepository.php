@@ -43,8 +43,51 @@ final readonly class EventRepository implements EventRepositoryInterface
         return $query->first();
     }
 
-    public function createOrUpdateEvent(EventDTO $eventDTO): Event
+    public function findOrCreateEventFromDTO(EventDTO $eventDTO): Event
     {
+        $event = $this->findEvent([
+            'ext_id' => $eventDTO->id,
+        ]);
+
+        return $event ?? $this->createEventFromDTO(eventDTO: $eventDTO);
+    }
+
+    public function createEventFromDTO(EventDTO $eventDTO): Event
+    {
+        $event = null;
+
+        DB::transaction(function () use (&$event, $eventDTO) {
+            // Create an Event's related entities: map, mode and modifiers.
+            $map = $this->mapRepository->createOrUpdateEventMap($eventDTO->map);
+            $mode = $this->modeRepository->createOrUpdateEventMode($eventDTO->mode);
+
+            $modifierIds = [];
+
+            foreach ($eventDTO->modifiers as $modifier) {
+                $modifier = $this->modifierRepository->createOrUpdateEventModifier($modifier);
+                $modifierIds[] = $modifier->id;
+            }
+
+            $attributes = [
+                'ext_id'  => $eventDTO->id,
+                'map_id'  => $map->id,
+                'mode_id' => $mode->id,
+            ];
+
+            $event = Event::query()->create(attributes: $attributes);
+
+            // Attach an Event's related entities: map, mode and modifiers.
+            $event->map()->associate($map);
+            $event->mode()->associate($mode);
+            $event->modifiers()->attach($modifierIds);
+        });
+
+        return $event->refresh();
+    }
+
+    public function createOrUpdateEventFromDTO(EventDTO $eventDTO): Event
+    {
+        // todo rewrite this method to create or update without find
         $event = $this->findEvent([
             'ext_id' => $eventDTO->id,
         ]);

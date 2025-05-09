@@ -52,7 +52,7 @@ final readonly class EventRotationRepository implements EventRotationRepositoryI
         DB::transaction(function () use (&$rotation, $rotationDTO) {
             $startTime = Carbon::createFromFormat('Ymd\THis.u\Z', $rotationDTO->start_time)->toDateTimeString();
             $endTime = Carbon::createFromFormat('Ymd\THis.u\Z', $rotationDTO->end_time)->toDateTimeString();
-            $event = $this->eventRepository->createOrUpdateEvent($rotationDTO->event);
+            $event = $this->eventRepository->createOrUpdateEventFromDTO($rotationDTO->event);
             $slot = $this->slotRepository->createOrUpdateEventRotationSlot($rotationDTO->slot);
 
             $rotation = $this->findEventRotation([

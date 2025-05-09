@@ -31,7 +31,7 @@ use Tests\Traits\CreatesEvents;
 #[Group('Repositories')]
 #[CoversClass(EventRepository::class)]
 #[CoversMethod(EventRepository::class, 'findEvent')]
-#[CoversMethod(EventRepository::class, 'createOrUpdateEvent')]
+#[CoversMethod(EventRepository::class, 'createOrUpdateEventFromDTO')]
 #[CoversClass(EventMapRepository::class)]
 #[CoversClass(EventModeRepository::class)]
 #[CoversClass(EventModifierRepository::class)]
@@ -85,7 +85,7 @@ class EventRepositoryTest extends TestCase
             'ext_id' => $eventDTO->id,
         ]);
 
-        $event = $this->repository->createOrUpdateEvent($eventDTO);
+        $event = $this->repository->createOrUpdateEventFromDTO($eventDTO);
 
         $this->assertDatabaseHas($event->getTable(), [
             'id' => $event->id,
@@ -105,7 +105,7 @@ class EventRepositoryTest extends TestCase
             'ext_id' => $event->ext_id,
         ]);
 
-        $eventUpdated = $this->repository->createOrUpdateEvent($eventDTO);
+        $eventUpdated = $this->repository->createOrUpdateEventFromDTO($eventDTO);
 
         $this->assertDatabaseHas($eventUpdated->getTable(), [
             'id' => $eventUpdated->id,

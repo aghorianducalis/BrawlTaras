@@ -18,10 +18,26 @@ interface EventRepositoryInterface
     public function findEvent(array $searchCriteria): ?Event;
 
     /**
+     * Create a single event with related entities in the database.
+     *
+     * @param EventDTO $eventDTO
+     * @return Event
+     */
+    public function createEventFromDTO(EventDTO $eventDTO): Event;
+
+    /**
+     * Find or create a single event with related entities in the database.
+     *
+     * @param EventDTO $eventDTO
+     * @return Event
+     */
+    public function findOrCreateEventFromDTO(EventDTO $eventDTO): Event;
+
+    /**
      * Create or update a single event in the database and sync related entities.
      *
      * @param EventDTO $eventDTO
      * @return Event
      */
-    public function createOrUpdateEvent(EventDTO $eventDTO): Event;
+    public function createOrUpdateEventFromDTO(EventDTO $eventDTO): Event;
 }

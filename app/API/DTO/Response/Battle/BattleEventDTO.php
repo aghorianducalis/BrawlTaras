@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\API\DTO\Response\Battle;
 
+use App\API\DTO\Response\EventDTO;
 use App\API\Exceptions\InvalidDTOException;
 use App\Models\Event;
 
@@ -19,6 +20,29 @@ final readonly class BattleEventDTO
         public string $map,
         public string $mode,
     ) {}
+
+    /**
+     * Converts the DTO to JSON-serializable format.
+     *
+     * @return array
+     */
+    public function jsonSerialize(): array
+    {
+        return [
+            'id'   => $this->id,
+            'map'  => $this->map,
+            'mode' => $this->mode,
+        ];
+    }
+
+    public function toEventDTO(): EventDTO
+    {
+        return EventDTO::fromArray([
+            'id'   => $this->id,
+            'map'  => $this->map,
+            'mode' => $this->mode,
+        ]);
+    }
 
     /**
      * Factory method to create DTO.
@@ -70,19 +94,5 @@ final readonly class BattleEventDTO
             map:  $event->map->name,
             mode: $event->mode->name,
         );
-    }
-
-    /**
-     * Converts the DTO to JSON-serializable format.
-     *
-     * @return array
-     */
-    public function jsonSerialize(): array
-    {
-        return [
-            'id'   => $this->id,
-            'mode' => $this->mode,
-            'map'  => $this->map,
-        ];
     }
 }
