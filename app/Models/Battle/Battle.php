@@ -7,6 +7,7 @@ namespace App\Models\Battle;
 use App\Models\Event;
 use Carbon\Carbon;
 use Database\Factories\Battle\BattleFactory;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -37,6 +38,21 @@ class Battle extends Model
         'battle_time' => 'datetime',
         'event_id'    => 'integer',
     ];
+
+
+    /**
+     * Interact with the battle time.
+     *
+     * @return Attribute
+     */
+    protected function battleTime(): Attribute
+    {
+        return Attribute::make(
+            set: fn($value) => is_string($value)
+                ? Carbon::createFromFormat('Ymd\THis.v\Z', $value)
+                : $value,
+        );
+    }
 
     /**
      * Get the battle event.
